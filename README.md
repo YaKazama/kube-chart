@@ -7,8 +7,8 @@
 
     ```bash
     dependencies:
-    - name: library-charts
-      version: v0.1.0
+    - name: kube-chart
+      version: v1.33
       repository: https://helm-repository.example.com/
     ```
 
@@ -40,7 +40,7 @@ helm dependency update
 
 ```bash
 cd path/to/example
-export VERSION="0.1.0"
+export VERSION="1.33"
 
 helm package .
 helm repo index . --url https://helm-repository.example.com
@@ -48,3 +48,4 @@ curl -XPUT https://helm-repository.example.com/upload/<example>-${VERSION}.tgz -
 curl -XPUT https://helm-repository.example.com/upload/index.yaml --data-binary @index.yaml
 rm -rf <example>-${VERSION}.tgz index.yaml
 ```
+
