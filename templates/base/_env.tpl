@@ -14,6 +14,7 @@ regexOctalHex: "^0(x|X|o|O)"
 regexSplitStr: "\\s*[,\\:\\.\\|\\/\\*\\^@#\\s]+\\s*"
 
 regexRFC1035: "^([a-z]{1,63}|[a-z][a-z0-9-]{0,61}[a-z0-9])$"
+regexRFC1123: "^([a-z0-9]{1,63}|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$"
 regexQuantity: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
 regexTime: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
 regexFieldsV1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
