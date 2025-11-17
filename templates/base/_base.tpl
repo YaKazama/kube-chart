@@ -26,7 +26,9 @@
     {{- if .Chart }}
       {{- $__name = coalesce $__name .Chart.Name }}
     {{- end }}
-    {{- $__name = index (values .) 0 }}
+    {{- if empty $__name }}
+      {{- $__name = index (values . | sortAlpha) 0 }}
+    {{- end }}
     {{- $__name = include "base.string" $__name | lower | nospace | trimSuffix "-" }}
   {{- else }}
     {{- include "base.faild" . }}
