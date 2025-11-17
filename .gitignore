@@ -29,3 +29,5 @@
 **/library-charts*.tgz
 **/*.tgz
 
+# 临时
+Chart.yaml
