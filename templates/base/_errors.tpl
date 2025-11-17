@@ -2,7 +2,7 @@
   打印失败信息，包括传入的值、类型
 */ -}}
 {{- define "base.faild" }}
-  {{- fail (printf "Type not support! Values: %v, Type: %s" . (typeOf .)) }}
+  {{- fail (printf "Type not support! Values: %v, Type: %s(%s)" . (typeOf .) (kindOf .)) }}
 {{- end }}
 
 {{- /*
