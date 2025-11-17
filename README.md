@@ -8,7 +8,7 @@
     ```bash
     dependencies:
     - name: kube-chart
-      version: v1.33
+      version: v1.34
       repository: https://helm-repository.example.com/
     ```
 
@@ -40,7 +40,7 @@ helm dependency update
 
 ```bash
 cd path/to/example
-export VERSION="1.33"
+export VERSION="1.34"
 
 helm package .
 helm repo index . --url https://helm-repository.example.com
@@ -49,3 +49,16 @@ curl -XPUT https://helm-repository.example.com/upload/index.yaml --data-binary @
 rm -rf <example>-${VERSION}.tgz index.yaml
 ```
 
+## 需知
+
+- 尽早报错退出。
+- 应用前需要对值进行类型判断。
+- 类型处理原则：
+  - `string`：同名替换。
+  - `list`：合并、去空、去重。参考 [concat](https://helm.sh/zh/docs/chart_template_guide/function_list/#concat)、[mustCompact](https://helm.sh/zh/docs/chart_template_guide/function_list/#compact-mustcompact)、[mustUniq](https://helm.sh/zh/docs/chart_template_guide/function_list/#uniq-mustuniq)
+  - `dict`：合并、同名替换。从右到左覆盖，参考 [mustMergeOverwrite](https://helm.sh/zh/docs/chart_template_guide/function_list/#mergeoverwrite-mustmergeoverwrite)
+- 取值顺序（先后）：命令行传值覆盖 > `.Context` > `.Values` > `.Values.global`
+  - 命令行参数传值：由模板决定。
+  - 从组件自身命名空间（一般会映射到 `.Context`）取值：由模板决定。
+  - 从 `.Values` 取值：跳出组件自身命名空间的定义，但也不在 `.Values.global` 中定义。
+  - 从 `.Values.global` 取值：有限的定义，一般是 **跨组件、跨模板甚至跨子 chart 共享的通用配置**。
