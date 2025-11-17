@@ -9,7 +9,34 @@
 {{- end }}
 
 {{- define "base.name" -}}
-  {{- $__name := coalesce .Context.fullname .Context.name .Values.fullname .Values.name .Values.global.fullname .Values.global.name .Chart.Name }}
+  {{- $__name := "" }}
+
+  {{- if kindIs "string" . }}
+    {{- $__name = . }}
+  {{- else if kindIs "map" . }}
+    {{- if .Context }}
+      {{- $__name = coalesce $__name .Context.fullname .Context.name }}
+    {{- end }}
+    {{- if .Values }}
+      {{- $__name = coalesce $__name .Values.fullname .Values.name }}
+      {{- if .Values.global }}
+        {{- $__name = coalesce $__name .Values.global.fullname .Values.global.name }}
+      {{- end }}
+    {{- end }}
+    {{- if .Chart }}
+      {{- $__name = coalesce $__name .Chart.Name }}
+    {{- end }}
+    {{- $__name = index (values .) 0 }}
+    {{- $__name = include "base.string" $__name | lower | nospace | trimSuffix "-" }}
+  {{- else }}
+    {{- include "base.faild" . }}
+  {{- end }}
 
   {{- $__const := include "base.env" . | fromYaml }}
+
+  {{- if regexMatch $__const.regexRFC1035 $__name }}
+    {{- $__name }}
+  {{- else }}
+    {{- include "base.faild" . }}
+  {{- end }}
 {{- end }}
