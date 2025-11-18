@@ -14,32 +14,11 @@
   {{- if kindIs "string" . }}
     {{- $name = . }}
   {{- else if kindIs "map" . }}
-    {{- /* 优先从 Context 获取名称 */ -}}
-    {{- if .Context }}
-      {{- $ctxName := coalesce .Context.fullname .Context.name }}
-      {{- if $ctxName }}
-        {{- $clean := include "base.name" $ctxName }}
-        {{- $name = coalesce $name $clean }}
-      {{- end }}
-    {{- end }}
-
-    {{- /* 从 Values 获取名称（次于 Context） */ -}}
-    {{- if .Values }}
-      {{- $valName := coalesce .Values.fullname .Values.name }}
-      {{- if $valName }}
-        {{- $clean := include "base.name" $valName }}
-        {{- $name = coalesce $name $clean }}
-      {{- end }}
-
-      {{- /* 从全局 Values 获取名称（次于 Values） */ -}}
-      {{- if .Values.global }}
-        {{- $gloName := coalesce .Values.global.fullname .Values.global.name }}
-        {{- if $gloName }}
-          {{- $clean := include "base.name" $gloName }}
-          {{- $name = coalesce $name $clean }}
-        {{- end }}
-      {{- end }}
-    {{- end }}
+    {{- /* 从多来源获取 "fullname" 和 "name"（优先 fullname） */ -}}
+    {{- $fullnameVal := include "base.getValWithKey" (list . "fullname") | default "" }}
+    {{- $nameVal := include "base.getValWithKey" (list . "name") | default "" }}
+    {{- $name = coalesce $fullnameVal $nameVal }}
+    {{- $isMap := kindIs "map" (fromYaml $name) }}
 
     {{- /* 从 Chart 名称 fallback（次于 Values.global） */ -}}
     {{- if not $name }}
@@ -49,14 +28,15 @@
     {{- end }}
 
     {{- /* 最终 fallback：从 map 值中取第一个字符串（确保安全） */ -}}
-    {{- if empty $name }}
-      {{- $values := values . | sortAlpha }}
+    {{- if $isMap }}
+      {{- $nameMap := fromYaml $name }}
+      {{- $values := values $nameMap | sortAlpha }}
       {{- if empty $values }}
-        {{- include "base.faild" "empty map provided with no valid name sources" }}
+        {{- fail "empty map provided with no valid name sources" }}
       {{- end }}
       {{- $firstVal := index $values 0 }}
       {{- if not (kindIs "string" $firstVal) }}
-        {{- include "base.faild" (printf "no valid string name found, fallback value is %T (not string)" $firstVal) }}
+        {{- fail (printf "no valid string name found, fallback value is %T (not string)" $firstVal) }}
       {{- end }}
       {{- $name = $firstVal }}
     {{- end }}
@@ -72,7 +52,7 @@
   {{- if regexMatch $const.regexRFC1035 $name }}
     {{- $name }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- fail (printf "name '%s' does not match RFC1035 standard (regex: %s)" $name $const.regexRFC1035) }}
   {{- end }}
 {{- end }}
 
