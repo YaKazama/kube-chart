@@ -105,28 +105,35 @@
 
   {{- if $result }}
     {{- $result }}
-  {{- else if gt (len $slices) 0 }}
-    {{- $merged := list }}
-    {{- range $slices }}
-      {{- $merged = append $merged . }}
-    {{- end }}
 
+  {{- else if gt (len $slices) 0 }}
     {{- $clean := list }}
-    {{- range $merged }}
-      {{- if or (kindIs "slice" .) (kindIs "map" .) }}
-        {{- $clean = append $clean (include "base.getValWithKey" (list $root $key) | fromYaml) }}
-      {{- else }}
-        {{- $clean = append $clean . }}
+    {{- range $slices }}
+      {{- range . }}
+        {{- if kindIs "map" . }}
+          {{- $maps = append $maps . }}
+        {{- else }}
+          {{- $clean = append $clean . }}
+        {{- end }}
       {{- end }}
     {{- end }}
 
-    {{- toYaml (uniq (mustCompact $clean)) }}
+    {{- if ge (len $maps) 0 }}
+      {{- $clean := dict }}
+      {{- range $maps }}
+        {{- $clean = mustMerge $clean . }}
+      {{- end }}
+      {{- toYaml $clean }}
+    {{- else }}
+      {{- toYaml (uniq (mustCompact $clean)) }}
+    {{- end }}
+
+
   {{- else if gt (len $maps) 0 }}
     {{- $clean := dict }}
     {{- range $maps }}
       {{- $clean = mustMerge $clean . }}
     {{- end }}
-
     {{- toYaml $clean }}
   {{- end }}
 {{- end }}
