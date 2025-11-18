@@ -8,144 +8,172 @@
   {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{- /* 修复点：用 get 替代 dig，避免类型转换错误 */}}
 {{- define "base.name" -}}
   {{- $name := "" }}
 
-  {{- if kindIs "string" . }}
-    {{- $name = . }}
-  {{- else if kindIs "map" . }}
-    {{- /* 从多来源获取 "fullname" 和 "name"（优先 fullname） */ -}}
-    {{- $fullnameVal := include "base.getValWithKey" (list . "fullname") | default "" }}
-    {{- $nameVal := include "base.getValWithKey" (list . "name") | default "" }}
-    {{- $name = coalesce $fullnameVal $nameVal }}
-    {{- $isMap := kindIs "map" (fromYaml $name) }}
-
-    {{- /* 从 Chart 名称 fallback（次于 Values.global） */ -}}
-    {{- if not $name }}
-      {{- if .Chart }}
-        {{- $name = .Chart.Name | default "" }}
-      {{- end }}
-    {{- end }}
-
-    {{- /* 最终 fallback：从 map 值中取第一个字符串（确保安全） */ -}}
-    {{- if $isMap }}
-      {{- $nameMap := fromYaml $name }}
-      {{- $values := values $nameMap | sortAlpha }}
-      {{- if empty $values }}
-        {{- fail "empty map provided with no valid name sources" }}
-      {{- end }}
-      {{- $firstVal := index $values 0 }}
-      {{- if not (kindIs "string" $firstVal) }}
-        {{- fail (printf "no valid string name found, fallback value is %T (not string)" $firstVal) }}
-      {{- end }}
-      {{- $name = $firstVal }}
-    {{- end }}
-  {{- else }}
-    {{- include "base.faild" . }}
+  {{- /* 1. 最高优先级：Context.name */}}
+  {{- $ctx := get . "Context" | default dict }}
+  {{- $ctxName := get $ctx "name" | default "" }}
+  {{- if $ctxName }}
+    {{- $name = include "base._extractName" $ctxName }}
   {{- end }}
 
-  {{- /* 标准化名称格式：字符串处理 + 小写 + 去空格 + 清除结尾所有横线 */ -}}
-  {{- $name = include "base.string" $name | lower | nospace | trimSuffix "-" }}
-
-  {{- /* 验证名称是否符合 RFC1035 标准 */ -}}
-  {{- $const := include "base.env" . | fromYaml }}
-  {{- if regexMatch $const.regexRFC1035 $name }}
-    {{- $name }}
-  {{- else }}
-    {{- fail (printf "name '%s' does not match RFC1035 standard (regex: %s)" $name $const.regexRFC1035) }}
+  {{- /* 2. 次高优先级：Values.name */}}
+  {{- if not $name }}
+    {{- $values := get . "Values" | default dict }}
+    {{- $valName := get $values "name" | default "" }}
+    {{- if $valName }}
+      {{- $name = include "base._extractName" $valName }}
+    {{- end }}
   {{- end }}
+
+  {{- /* 3. 次低优先级：Values.global.name */}}
+  {{- if not $name }}
+    {{- $values := get . "Values" | default dict }}
+    {{- $global := get $values "global" | default dict }}
+    {{- $globalName := get $global "name" | default "" }}
+    {{- if $globalName }}
+      {{- $name = include "base._extractName" $globalName }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* 4. 最低优先级：Chart.Name */}}
+  {{- if not $name }}
+    {{- $chart := get . "Chart" | default dict }}
+    {{- $name = get $chart "Name" | default "" }}
+  {{- end }}
+
+  {{- /* 名称标准化 + RFC1035 验证 */}}
+  {{- if not $name }}
+    {{- fail "No valid name found in any source (Context/Values/global/Chart)" }}
+  {{- end }}
+  {{- $name = $name | lower | nospace | trimSuffix "-" }}
+  {{- $rfc1035Regex := "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" }}
+  {{- if not (regexMatch $rfc1035Regex $name) }}
+    {{- fail (printf "Name '%s' invalid (must match RFC1035: %s)" $name $rfc1035Regex) }}
+  {{- end }}
+
+  {{- $name }}
 {{- end }}
 
-{{/*
-  功能：通过 range 遍历数据源，高效处理各类值（利用 mustMerge 递归合并 map）
-  参数：list 格式，依次为：上下文(.)、目标键名
-  返回：
-    - 基本类型：原始值
-    - slice：合并、去重、递归处理嵌套元素后的 YAML
-    - map：通过 mustMerge 递归合并后的 YAML
-*/}}
-{{- define "base.getValWithKey" -}}
-  {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
-    {{- fail "Must be a slice and requires 2 parameters. format: '[.(any), key(string)]'" }}
-  {{- end }}
+{{- /* 辅助模板：从 string/slice/map 提取第一个有效字符串 */}}
+{{- define "base._extractName" -}}
+  {{- $input := . }}
+  {{- $extracted := "" }}
 
-  {{- $root := index . 0 }}
-  {{- $key := index . 1 }}
-
-  {{- /* 初始化数据源（确保为dict，避免nil） */ -}}
-  {{- $ctx := $root.Context | default dict }}
-  {{- $values := $root.Values | default dict }}
-  {{- $global := $values.global | default dict }}
-
-  {{- /* 取值 */ -}}
-  {{- $ctxVal := get $ctx $key | default "" }}
-  {{- $valVal := get $values $key | default "" }}
-  {{- $globalVal := get $global $key | default "" }}
-
-  {{- /* 定义数据源 按优先级: .Context > .Values > .Values.global */ -}}
-  {{- $sources := list $ctxVal $valVal $globalVal }}
-
-  {{- $result := "" }}
-  {{- $slices := list }}
-  {{- $maps := list }}
-  {{- $basicTypes := list "string" "float64" "int" "int64" "bool" }}
-
-  {{- range $sources }}
-    {{- if and . (not $result) }}
-      {{- $valType := kindOf . }}
-      {{- if has $valType $basicTypes }}
-        {{- $result = . }}
-      {{- else if kindIs "slice" . }}
-        {{- $slices = append $slices . }}
-      {{- else if kindIs "map" . }}
-        {{- $maps = append $maps . }}
-      {{- end }}
-    {{- end }}
-  {{- end }}
-
-  {{- /* 如果上述数据源中都没有找到值，尝试直接从根对象中取值 */ -}}
-  {{- if not $result }}
-    {{- if hasKey $root $key }}
-      {{- $directVal := get $root $key }}
-      {{- $valType := kindOf $directVal }}
-      {{- if has $valType $basicTypes }}
-        {{- $result = $directVal }}
-      {{- else if kindIs "slice" $directVal }}
-        {{- $slices = append $slices $directVal }}
-      {{- else if kindIs "map" $directVal }}
-        {{- $maps = append $maps $directVal }}
-      {{- end }}
-    {{- end }}
-  {{- end }}
-
-  {{- if $result }}
-    {{- $result }}
-  {{- else if gt (len $slices) 0 }}
-    {{- $clean := list }}
-    {{- range $slices }}
-      {{- range . }}
-        {{- if kindIs "map" . }}
-          {{- $maps = append $maps . }}
-        {{- else }}
-          {{- $clean = append $clean . }}
+  {{- if kindIs "string" $input }}
+    {{- $extracted = $input }}
+  {{- else if kindIs "slice" $input }}
+    {{- range $item := $input }}
+      {{- if kindIs "string" $item }}
+        {{- $extracted = $item }}
+        {{- break }}
+      {{- else if kindIs "map" $item }}
+        {{- $vals := values $item | sortAlpha }}
+        {{- if $vals }}
+          {{- $firstVal := index $vals 0 }}
+          {{- if kindIs "string" $firstVal }}
+            {{- $extracted = $firstVal }}
+            {{- break }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}
-
-    {{- if gt (len $maps) 0 }}
-      {{- $clean := dict }}
-      {{- range $maps }}
-        {{- $clean = mustMerge $clean . }}
+  {{- else if kindIs "map" $input }}
+    {{- $vals := values $input | sortAlpha }}
+    {{- if $vals }}
+      {{- $firstVal := index $vals 0 }}
+      {{- if kindIs "string" $firstVal }}
+        {{- $extracted = $firstVal }}
       {{- end }}
-      {{- toYaml $clean }}
-    {{- else }}
-      {{- toYaml (uniq (mustCompact $clean)) }}
     {{- end }}
-  {{- else if gt (len $maps) 0 }}
-    {{- $clean := dict }}
-    {{- range $maps }}
-      {{- $clean = mustMerge $clean . }}
+  {{- end }}
+
+  {{- if not $extracted }}
+    {{- fail (printf "No valid string name in input: %v" $input) }}
+  {{- end }}
+  {{- $extracted }}
+{{- end }}
+
+{{- /* 修复点：移除 dig 函数，改用 get 处理非 map 类型，避免接口转换错误 */}}
+{{- define "base.getValWithKey" -}}
+  {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
+    {{- fail "Must be a slice with 2 elements: [rootContext, key]" }}
+  {{- end }}
+
+  {{- $root := index . 0 }}  {{/* 根上下文（通常是 Helm 模板中的 .） */}}
+  {{- $key := index . 1 }}   {{/* 目标键名（如 "annotations"、"labels"） */}}
+
+  {{- /* 1. 按优先级读取数据源（从高到低） */}}
+  {{- /* 最高优先级：Context.key */}}
+  {{- $ctx := get $root "Context" | default dict }}  {{/* 即使 Context 不是 map，get 也返回空 dict */}}
+  {{- $ctxVal := get $ctx $key | default "" }}
+
+  {{- /* 次高优先级：Values.key */}}
+  {{- $values := get $root "Values" | default dict }}
+  {{- $valVal := get $values $key | default "" }}
+
+  {{- /* 次低优先级：Values.global.key */}}
+  {{- $global := get $values "global" | default dict }}
+  {{- $globalVal := get $global $key | default "" }}
+
+  {{- /* 最低优先级：根对象直接取 key */}}
+  {{- $directVal := get $root $key | default "" }}
+
+  {{- /* 数据源列表（按优先级从低到高排列，确保高优先级后合并覆盖） */}}
+  {{- $sources := list $directVal $globalVal $valVal $ctxVal }}
+
+  {{- /* 2. 提取所有 map 和基本类型 */}}
+  {{- $result := "" }}               {{/* 存储基本类型结果 */}}
+  {{- $allMaps := list }}            {{/* 存储所有待合并的 map（包括 slice 中的 map） */}}
+  {{- $basicTypes := list "string" "float64" "int" "int64" "bool" }}
+
+  {{- range $sources }}
+    {{- $val := . }}
+    {{- if not $val }}
+      {{- continue }}  {{/* 跳过空值 */}}
     {{- end }}
-    {{- toYaml $clean }}
+
+    {{- /* 处理基本类型：取第一个非空的高优先级值 */}}
+    {{- if and (not $result) (has (kindOf $val) $basicTypes) }}
+      {{- $result = $val }}
+    {{- end }}
+
+    {{- /* 提取 map（直接的 map 或 slice 中的 map） */}}
+    {{- if kindIs "map" $val }}
+      {{- $allMaps = append $allMaps $val }}
+    {{- else if kindIs "slice" $val }}
+      {{- range $item := $val }}
+        {{- if kindIs "map" $item }}
+          {{- $allMaps = append $allMaps $item }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* 3. 输出结果 */}}
+  {{- if $result }}
+    {{- $result }}  {{/* 基本类型直接返回 */}}
+  {{- else if gt (len $allMaps) 0 }}
+    {{- /* 合并所有 map（高优先级覆盖低优先级） */}}
+    {{- $mergedMap := dict }}
+    {{- range $m := $allMaps }}
+      {{- $mergedMap = mustMerge $mergedMap $m }}
+    {{- end }}
+    {{- toYaml $mergedMap | nindent 2 }}  {{/* 保持缩进一致 */}}
+  {{- else }}
+    {{- /* 处理纯 slice（非 map 元素） */}}
+    {{- $cleanElements := list }}
+    {{- range $sources }}
+      {{- if kindIs "slice" . }}
+        {{- range $e := . }}
+          {{- if not (kindIs "map" $e) }}
+            {{- $cleanElements = append $cleanElements $e }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- toYaml (uniq (mustCompact $cleanElements)) | nindent 2 }}
   {{- end }}
 {{- end }}
