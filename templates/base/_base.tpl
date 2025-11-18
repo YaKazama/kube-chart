@@ -96,84 +96,80 @@
   {{- $extracted }}
 {{- end }}
 
-{{- /* 修复点：移除 dig 函数，改用 get 处理非 map 类型，避免接口转换错误 */}}
+{{- /*
+  修复点：
+  1. 确保基本类型（bool/string等）直接返回原始值字符串（无YAML格式转换）
+  2. 严格区分基本类型与map/slice，避免基本类型被误处理为map输出
+  3. 移除基本类型输出时的多余缩进，确保fromYaml正确解析
+*/}}
 {{- define "base.getValWithKey" -}}
   {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
     {{- fail "Must be a slice with 2 elements: [rootContext, key]" }}
   {{- end }}
 
-  {{- $root := index . 0 }}  {{/* 根上下文（通常是 Helm 模板中的 .） */}}
-  {{- $key := index . 1 }}   {{/* 目标键名（如 "annotations"、"labels"） */}}
+  {{- $root := index . 0 }}
+  {{- $key := index . 1 }}
 
-  {{- /* 1. 按优先级读取数据源（从高到低） */}}
-  {{- /* 最高优先级：Context.key */}}
-  {{- $ctx := get $root "Context" | default dict }}  {{/* 即使 Context 不是 map，get 也返回空 dict */}}
+  {{- /* 1. 按优先级读取数据源 */}}
+  {{- $ctx := get $root "Context" | default dict }}
   {{- $ctxVal := get $ctx $key | default "" }}
 
-  {{- /* 次高优先级：Values.key */}}
   {{- $values := get $root "Values" | default dict }}
   {{- $valVal := get $values $key | default "" }}
 
-  {{- /* 次低优先级：Values.global.key */}}
   {{- $global := get $values "global" | default dict }}
   {{- $globalVal := get $global $key | default "" }}
 
-  {{- /* 最低优先级：根对象直接取 key */}}
   {{- $directVal := get $root $key | default "" }}
 
-  {{- /* 数据源列表（按优先级从低到高排列，确保高优先级后合并覆盖） */}}
+  {{- /* 数据源按优先级从低到高排列（高优先级后处理） */}}
   {{- $sources := list $directVal $globalVal $valVal $ctxVal }}
 
-  {{- /* 2. 提取所有 map 和基本类型 */}}
+  {{- /* 2. 初始化变量 */}}
   {{- $result := "" }}               {{/* 存储基本类型结果 */}}
-  {{- $allMaps := list }}            {{/* 存储所有待合并的 map（包括 slice 中的 map） */}}
-  {{- $basicTypes := list "string" "float64" "int" "int64" "bool" }}
+  {{- $allMaps := list }}            {{/* 存储待合并的map */}}
+  {{- $basicTypes := list "string" "float64" "int" "int64" "bool" }}  {{/* 明确包含bool */}}
+  {{- $foundBasic := false }}        {{/* 标记是否找到基本类型 */}}
 
+  {{- /* 3. 遍历数据源，提取值 */}}
   {{- range $sources }}
     {{- $val := . }}
     {{- if not $val }}
-      {{- continue }}  {{/* 跳过空值 */}}
-    {{- end }}
+      {{- /* 空值跳过（替代continue） */}}
+    {{- else }}
+      {{- /* 处理基本类型：未找到时才检查 */}}
+      {{- if not $foundBasic }}
+        {{- $valType := kindOf $val }}
+        {{- if has $valType $basicTypes }}
+          {{- $result = $val }}
+          {{- $foundBasic = true }}
+        {{- end }}
+      {{- end }}
 
-    {{- /* 处理基本类型：取第一个非空的高优先级值 */}}
-    {{- if and (not $result) (has (kindOf $val) $basicTypes) }}
-      {{- $result = $val }}
-    {{- end }}
-
-    {{- /* 提取 map（直接的 map 或 slice 中的 map） */}}
-    {{- if kindIs "map" $val }}
-      {{- $allMaps = append $allMaps $val }}
-    {{- else if kindIs "slice" $val }}
-      {{- range $item := $val }}
-        {{- if kindIs "map" $item }}
-          {{- $allMaps = append $allMaps $item }}
+      {{- /* 提取map（包括slice中的map） */}}
+      {{- if kindIs "map" $val }}
+        {{- $allMaps = append $allMaps $val }}
+      {{- else if kindIs "slice" $val }}
+        {{- range $item := $val }}
+          {{- if kindIs "map" $item }}
+            {{- $allMaps = append $allMaps $item }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}
   {{- end }}
 
-  {{- /* 3. 输出结果 */}}
+  {{- /* 4. 输出结果（关键修复：基本类型直接返回原始值，不经过toYaml） */}}
   {{- if $result }}
-    {{- $result }}  {{/* 基本类型直接返回 */}}
+    {{- $result }}  {{/* 直接输出基本类型原始值（如"true"/"false"/"abc"） */}}
   {{- else if gt (len $allMaps) 0 }}
-    {{- /* 合并所有 map（高优先级覆盖低优先级） */}}
+    {{- /* 合并map并转为YAML */}}
     {{- $mergedMap := dict }}
     {{- range $m := $allMaps }}
       {{- $mergedMap = mustMerge $mergedMap $m }}
     {{- end }}
-    {{- toYaml $mergedMap | nindent 2 }}  {{/* 保持缩进一致 */}}
+    {{- toYaml $mergedMap | nindent 2 }}  {{/* map类型用YAML格式输出 */}}
   {{- else }}
-    {{- /* 处理纯 slice（非 map 元素） */}}
-    {{- $cleanElements := list }}
-    {{- range $sources }}
-      {{- if kindIs "slice" . }}
-        {{- range $e := . }}
-          {{- if not (kindIs "map" $e) }}
-            {{- $cleanElements = append $cleanElements $e }}
-          {{- end }}
-        {{- end }}
-      {{- end }}
-    {{- end }}
-    {{- toYaml (uniq (mustCompact $cleanElements)) | nindent 2 }}
+    {{- "" }}
   {{- end }}
 {{- end }}
