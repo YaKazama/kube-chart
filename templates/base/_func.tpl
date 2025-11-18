@@ -37,59 +37,50 @@
 
 
 {{- /*
-  按 Key 从左到右合并多个 Map
-  Key 对应的值会作为新键存在
+  按 Key 合并多个 Map，支持覆盖策略控制
+  Key 键的值会作为新键存在，合并策略由 overwrite 决定：
+  - 当 overwrite 为 false 时：从左到右合并，保留左侧键（不覆盖）
+  - 当 overwrite 为 true 时：从右到左合并，右侧键覆盖左侧（覆盖）
 
-  variables:
-  - k: 用于提取新键的 Key
-  - s: 待合并的 Map 列表
+  variables(slice):
+  - index 0: key - 用于提取新键的 Key
+  - index 1: overwrite - 布尔值，是否启用覆盖模式
+  - index 2+: maps - 待合并的 Map 列表（至少 1 个）
 
-  return: 合并后的新 Map
+  return: 合并后的新 Map（YAML 格式）
 */ -}}
 {{- define "base.map.merge" -}}
-  {{- if not (kindIs "map" .) }}
-    {{- fail "Must be a map(dict)." }}
+  {{- /* 参数校验：必须是切片且至少包含 3 个元素（key, overwrite, 至少1个map） */ -}}
+  {{- if or (not (kindIs "slice" .)) (lt (len .) 3) }}
+    {{- fail "Must be a slice and requires at least 3 parameters. format: '[key, overwrite(bool), map1, map2, ...]'" }}
   {{- end }}
 
-  {{- $__key := .k }}
-  {{- $__maps := .s }}
+  {{- /* 提取参数并校验类型 */ -}}
+  {{- $__key := index . 0 }}
+  {{- $__overwrite := index . 1 }}
+  {{- $__maps := mustSlice . 2 }}
+
+  {{- /* 校验 overwrite 必须是布尔值 */ -}}
+  {{- if not (kindIs "bool" $__overwrite) }}
+    {{- fail "The 'overwrite' parameter must be a boolean (true/false)." }}
+  {{- end }}
+
+  {{- /* 初始化结果Map */ -}}
   {{- $__rslt := dict }}
 
+  {{- /* 根据覆盖策略选择合并方式 */ -}}
   {{- range $__maps }}
     {{- if hasKey . $__key }}
-      {{- $__rslt = mustMerge $__rslt (dict (get . $__key) .) }}
+      {{- $__newEntry := dict (get . $__key) . }} {{/* 用当前map的key值作为新键 */}}
+      {{- if $__overwrite }}
+        {{- $__rslt = mustMergeOverwrite $__rslt $__newEntry }} {{/* 覆盖模式：右到左合并 */}}
+      {{- else }}
+        {{- $__rslt = mustMerge $__rslt $__newEntry }} {{/* 非覆盖模式：左到右合并 */}}
+      {{- end }}
     {{- end }}
   {{- end }}
 
-  {{- toYaml $__rslt }}
-{{- end }}
-
-
-{{- /*
-  按 Key 从右到左合并多个 Map
-  Key 对应的值会作为新键存在
-
-  variables:
-  - k: 用于提取新键的 Key
-  - s: 待合并的 Map 列表
-
-  return: 合并后的新 Map
-*/ -}}
-{{- define "base.map.mergeOverwrite" -}}
-  {{- if not (kindIs "map" .) }}
-    {{- fail "Must be a map(dict)." }}
-  {{- end }}
-
-  {{- $__key := .k }}
-  {{- $__maps := .s }}
-  {{- $__rslt := dict }}
-
-  {{- range $__maps }}
-    {{- if hasKey . $__key }}
-      {{- $__rslt = mustMergeOverwrite $__rslt (dict (get . $__key) .) }}
-    {{- end }}
-  {{- end }}
-
+  {{- /* 输出合并结果（YAML格式） */ -}}
   {{- toYaml $__rslt }}
 {{- end }}
 
