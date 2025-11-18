@@ -43,7 +43,9 @@
 
     {{- /* 从 Chart 名称 fallback（次于 Values.global） */}}
     {{- if not $__name }}
-      {{- $__name = .Chart.Name | default "" }}
+      {{- if .Chart }}
+        {{- $__name = .Chart.Name | default "" }}
+      {{- end }}
     {{- end }}
 
     {{- /* 最终 fallback：从 map 值中取第一个字符串（确保安全） */}}
