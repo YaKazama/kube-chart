@@ -1,58 +1,54 @@
 {{- /*
-  variables(slice): any[key(string), value(any), define(string), allow(slice)]
-  - 2: define 强制为 base.string
-  - 3: define 使用传入值
-  - 4: define 强制为 base.string
+  variables(slice): any[key(string), value(any), define(string)?, allow(slice)?]
+    - index 0: key (字符串，必传)
+    - index 1: value (任意类型，必传)
+    - index 2: define (处理value的模板名，可选)
+    - index 3: allow (允许的值列表，可选)
 
   return: key: value
 */ -}}
 {{- define "base.field" -}}
   {{- if not (kindIs "slice" .) }}
-    {{- fail "Must be a slice and requires 2 to 4 parameters. Format: '[key(string), value(any), define(string), allow(slice)]'" }}
+    {{- fail "Must be a slice and requires 2 to 4 parameters. Format: '[key(string), value(any), define(string)?, allow(slice)?]'" }}
   {{- end }}
 
-  {{- $__len := len . }}
+  {{- $sliceLen := len . }}
+  {{- if or (lt $sliceLen 2) (gt $sliceLen 4) }}
+    {{- fail (printf "The slice length must be 2-4, but the actual length is %d" $sliceLen) }}
+  {{- end }}
 
-  {{- if eq $__len 2 }}
-    {{- $__key := include "base.string" (index . 0) }}
-    {{- $__val := include "base.string" (index . 1) }}
+  {{- $key := include "base.string" (index . 0) }}
+  {{- $rawValue := index . 1 }}
+  {{- $define := "base.string" }}
+  {{- if eq $sliceLen 3 }}
+    {{- $define = index . 2 }}
+  {{- end }}
+  {{- $val := include $define $rawValue }}
+  {{- $isValid := fromYaml $val }}
 
-    {{- if (fromYaml $__val) }}
-      {{- nindent 0 "" -}}{{ $__key }}: {{ $__val }}
+  {{- if $isValid }}
+    {{- if eq $sliceLen 2 }}
+      {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
     {{- end }}
 
-  {{- else if eq $__len 3 }}
-    {{- $__key := include "base.string" (index . 0) }}
-    {{- $__define := index . 2 }}
-    {{- $__val := include $__define (index . 1) }}
-
-    {{- if or (contains "map" $__define) (contains "object" $__define) }}
-      {{- if (fromYaml $__val) }}
-        {{- nindent 0 "" -}}{{ $__key }}:
-        {{- $__val | nindent 2 }}
-      {{- end }}
-    {{- else if or (contains "slice" $__define) (contains "array" $__define) (contains "list" $__define) (contains "tuple" $__define) }}
-      {{- if (fromYaml $__val) }}
-        {{- nindent 0 "" -}}{{ $__key }}:
-        {{- $__val | nindent 0 }}
-      {{- end }}
-    {{- else }}
-      {{- if (fromYaml $__val) }}
-        {{- nindent 0 "" -}}{{ $__key }}: {{ $__val }}
-      {{- end }}
+    {{- if eq $sliceLen 3 }}
+      {{- $isMap := or (contains "map" $define) (contains "object" $define) }}
+      {{- $isSlice := or (contains "slice" $define) (contains "array" $define) (contains "list" $define) (contains "tuple" $define) }}
+      {{- nindent 0 "" -}}{{ $key }}:
+        {{- if $isMap }}
+          {{- $val | nindent 2 }}
+        {{- else if $isSlice }}
+          {{- $val | nindent 0 }}
+        {{- else }}
+          {{ $val }}
+        {{- end }}
     {{- end }}
 
-  {{- else if eq $__len 4 }}
-    {{- $__key := include "base.string" (index . 0) }}
-    {{- $__define := index . 2 }}
-    {{- $__val := include $__define (index . 1) }}
-    {{- $__allow := index . 3 }}
-
-    {{- if mustHas $__val $__allow }}
-      {{- nindent 0 "" -}}{{ $__key }}: {{ $__val }}
+    {{- if eq $sliceLen 4 }}
+      {{- $allow := index . 3 }}
+      {{- if mustHas $val $allow }}
+        {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
+      {{- end }}
     {{- end }}
-
-  {{- else }}
-    {{- fail "slice or list index out of range" }}
   {{- end }}
 {{- end }}

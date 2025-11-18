@@ -7,15 +7,14 @@
 {{- define "base.Quantity" -}}
   {{- include "base.invalid" . }}
 
-  {{- $__const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" . | fromYaml }}
 
-  {{- if mustRegexMatch $__const.regexQuantity (toString .) }}
+  {{- if mustRegexMatch $const.regexQuantity (toString .) }}
     {{- . }}
   {{- else }}
     {{- include "base.fail" . }}
   {{- end }}
 {{- end }}
-
 
 {{- /*
   使用正则表达式检查 Time 是否合法
@@ -26,19 +25,19 @@
 {{- define "base.Time" -}}
   {{- include "base.invalid" . }}
 
-  {{- $__typesNum := list "float64" "int" "int64" }}
-  {{- $__typesStr := list "string" }}
+  {{- $typesNum := list "float64" "int" "int64" }}
+  {{- $typesStr := list "string" }}
 
-  {{- $__type := kindOf . }}
+  {{- $type := kindOf . }}
 
-  {{- if mustHas $__type $__typesNum }}
+  {{- if mustHas $type $typesNum }}
     {{- duration (int .) }}
-  {{- else if mustHas $__type $__typesStr }}
-    {{- $__const := include "base.env" . | fromYaml }}
+  {{- else if mustHas $type $typesStr }}
+    {{- $const := include "base.env" . | fromYaml }}
 
-    {{- if regexMatch $__const.regexCheckInt . }}
+    {{- if regexMatch $const.regexCheckInt . }}
       {{- duration (atoi .) }}
-    {{- else if regexMatch $__const.regexTime . }}
+    {{- else if regexMatch $const.regexTime . }}
       {{- . }}
     {{- else }}
       {{- include "base.fail" . }}
@@ -47,7 +46,6 @@
     {{- include "base.faild" . }}
   {{- end }}
 {{- end }}
-
 
 {{- /*
   使用正则表达式检查 FieldsV1 是否合法
@@ -59,15 +57,14 @@
   {{- include "base.invalid" . }}
   {{- include "base.string" . }}
 
-  {{- $__const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" . | fromYaml }}
 
-  {{- if mustRegexMatch $__const.regexFieldsV1 . }}
+  {{- if mustRegexMatch $const.regexFieldsV1 . }}
     {{- . }}
   {{- else }}
     {{- include "base.faild" . }}
   {{- end }}
 {{- end }}
-
 
 {{- /*
   检查 RollingUpdate 中的值是否合法
@@ -77,17 +74,17 @@
 {{- define "base.RollingUpdate" -}}
   {{- include "base.invalid" . }}
 
-  {{- $__typesNum := list "float64" "int" "int64" }}
-  {{- $__typesStr := list "string" }}
+  {{- $typesNum := list "float64" "int" "int64" }}
+  {{- $typesStr := list "string" }}
 
-  {{- $__type := kindOf . }}
+  {{- $type := kindOf . }}
 
-  {{- if mustHas $__type $__typesNum }}
+  {{- if mustHas $type $typesNum }}
     {{- int . }}
-  {{- else if mustHas $__type $__typesStr }}
-    {{- $__const := include "base.env" . | fromYaml }}
+  {{- else if mustHas $type $typesStr }}
+    {{- $const := include "base.env" . | fromYaml }}
 
-    {{- if mustRegexMatch $__const.regexRollingUpdate . }}
+    {{- if mustRegexMatch $const.regexRollingUpdate . }}
       {{- . }}
     {{- else }}
       {{- include "base.faild" . }}

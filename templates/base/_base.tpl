@@ -9,47 +9,47 @@
 {{- end }}
 
 {{- define "base.name" -}}
-  {{- $__name := "" }}
+  {{- $name := "" }}
 
   {{- if kindIs "string" . }}
-    {{- $__name = . }}
+    {{- $name = . }}
   {{- else if kindIs "map" . }}
-    {{- /* 优先从 Context 获取名称 */}}
+    {{- /* 优先从 Context 获取名称 */ -}}
     {{- if .Context }}
       {{- $ctxName := coalesce .Context.fullname .Context.name }}
       {{- if $ctxName }}
-        {{- $__clean := include "base.name" $ctxName }}
-        {{- $__name = coalesce $__name $__clean }}
+        {{- $clean := include "base.name" $ctxName }}
+        {{- $name = coalesce $name $clean }}
       {{- end }}
     {{- end }}
 
-    {{- /* 从 Values 获取名称（次于 Context） */}}
+    {{- /* 从 Values 获取名称（次于 Context） */ -}}
     {{- if .Values }}
       {{- $valName := coalesce .Values.fullname .Values.name }}
       {{- if $valName }}
-        {{- $__clean := include "base.name" $valName }}
-        {{- $__name = coalesce $__name $__clean }}
+        {{- $clean := include "base.name" $valName }}
+        {{- $name = coalesce $name $clean }}
       {{- end }}
 
-      {{- /* 从全局 Values 获取名称（次于 Values） */}}
+      {{- /* 从全局 Values 获取名称（次于 Values） */ -}}
       {{- if .Values.global }}
         {{- $gloName := coalesce .Values.global.fullname .Values.global.name }}
         {{- if $gloName }}
-          {{- $__clean := include "base.name" $gloName }}
-          {{- $__name = coalesce $__name $__clean }}
+          {{- $clean := include "base.name" $gloName }}
+          {{- $name = coalesce $name $clean }}
         {{- end }}
       {{- end }}
     {{- end }}
 
-    {{- /* 从 Chart 名称 fallback（次于 Values.global） */}}
-    {{- if not $__name }}
+    {{- /* 从 Chart 名称 fallback（次于 Values.global） */ -}}
+    {{- if not $name }}
       {{- if .Chart }}
-        {{- $__name = .Chart.Name | default "" }}
+        {{- $name = .Chart.Name | default "" }}
       {{- end }}
     {{- end }}
 
-    {{- /* 最终 fallback：从 map 值中取第一个字符串（确保安全） */}}
-    {{- if empty $__name }}
+    {{- /* 最终 fallback：从 map 值中取第一个字符串（确保安全） */ -}}
+    {{- if empty $name }}
       {{- $values := values . | sortAlpha }}
       {{- if empty $values }}
         {{- include "base.faild" "empty map provided with no valid name sources" }}
@@ -58,20 +58,95 @@
       {{- if not (kindIs "string" $firstVal) }}
         {{- include "base.faild" (printf "no valid string name found, fallback value is %T (not string)" $firstVal) }}
       {{- end }}
-      {{- $__name = $firstVal }}
+      {{- $name = $firstVal }}
     {{- end }}
   {{- else }}
     {{- include "base.faild" . }}
   {{- end }}
 
-  {{- /* 标准化名称格式：字符串处理 + 小写 + 去空格 + 清除结尾所有横线 */}}
-  {{- $__name = include "base.string" $__name | lower | nospace | trimSuffix "-" }}
+  {{- /* 标准化名称格式：字符串处理 + 小写 + 去空格 + 清除结尾所有横线 */ -}}
+  {{- $name = include "base.string" $name | lower | nospace | trimSuffix "-" }}
 
-  {{- /* 验证名称是否符合 RFC1035 标准 */}}
-  {{- $__const := include "base.env" . | fromYaml }}
-  {{- if regexMatch $__const.regexRFC1035 $__name }}
-    {{- $__name }}
+  {{- /* 验证名称是否符合 RFC1035 标准 */ -}}
+  {{- $const := include "base.env" . | fromYaml }}
+  {{- if regexMatch $const.regexRFC1035 $name }}
+    {{- $name }}
   {{- else }}
     {{- include "base.faild" . }}
+  {{- end }}
+{{- end }}
+
+{{/*
+  功能：通过 range 遍历数据源，高效处理各类值（利用 mustMerge 递归合并 map）
+  参数：list 格式，依次为：上下文(.)、目标键名
+  返回：
+    - 基本类型：原始值
+    - slice：合并、去重、递归处理嵌套元素后的 YAML
+    - map：通过 mustMerge 递归合并后的 YAML
+*/}}
+{{- define "base.getValWithKey" -}}
+  {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
+    {{- fail "Must be a slice and requires 2 parameters. format: '[.(any), key(string)]'" }}
+  {{- end }}
+
+  {{- $root := index . 0 }}
+  {{- $key := index . 1 }}
+
+  {{- /* 初始化数据源（确保为dict，避免nil） */ -}}
+  {{- $ctx := $root.Context | default dict }}
+  {{- $values := $root.Values | default dict }}
+  {{- $global := $values.global | default dict }}
+
+  {{- /* 取值 */ -}}
+  {{- $ctxVal := get $ctx $key | default "" }}
+  {{- $valVal := get $values $key | default "" }}
+  {{- $globalVal := get $global $key | default "" }}
+
+  {{- /* 定义数据源 按优先级: .Context > .Values > .Values.global */ -}}
+  {{- $sources := list $ctxVal $valVal $globalVal }}
+
+  {{- $result := "" }}
+  {{- $slices := list }}
+  {{- $maps := list }}
+  {{- $basicTypes := list "string" "float64" "int" "int64" "bool" }}
+
+  {{- range $sources }}
+    {{- if and . (not $result) }}
+      {{- $valType := kindOf . }}
+      {{- if has $valType $basicTypes }}
+        {{- $result = . }}
+      {{- else if kindIs "slice" . }}
+        {{- $slices = append $slices . }}
+      {{- else if kindIs "map" . }}
+        {{- $maps = append $maps . }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- if $result }}
+    {{- $result }}
+  {{- else if gt (len $slices) 0 }}
+    {{- $merged := list }}
+    {{- range $slices }}
+      {{- $merged = append $merged . }}
+    {{- end }}
+
+    {{- $clean := list }}
+    {{- range $merged }}
+      {{- if or (kindIs "slice" .) (kindIs "map" .) }}
+        {{- $clean = append $clean (include "base.getValWithKey" (list $root $key) | fromYaml) }}
+      {{- else }}
+        {{- $clean = append $clean . }}
+      {{- end }}
+    {{- end }}
+
+    {{- toYaml (uniq (mustCompact $clean)) }}
+  {{- else if gt (len $maps) 0 }}
+    {{- $clean := dict }}
+    {{- range $maps }}
+      {{- $clean = mustMerge $clean . }}
+    {{- end }}
+
+    {{- toYaml $clean }}
   {{- end }}
 {{- end }}

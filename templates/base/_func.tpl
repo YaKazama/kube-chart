@@ -16,22 +16,22 @@
 
   {{- include "base.invalid" .m }}
 
-  {{- $__const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" . | fromYaml }}
 
-  {{- $__keys := mustRegexSplit $__const.regexSplitStr .k -1 }}
-  {{- $__keysLen := len $__keys }}
-  {{- $__first := mustFirst $__keys }}
+  {{- $keys := mustRegexSplit $const.regexSplitStr .k -1 }}
+  {{- $keysLen := len $keys }}
+  {{- $first := mustFirst $keys }}
 
-  {{- if hasKey .m $__first }}
-    {{- $__val := get .m $__first }}
+  {{- if hasKey .m $first }}
+    {{- $val := get .m $first }}
 
-    {{- if eq $__keysLen 1 }}
-      {{- toYaml $__val }}
+    {{- if eq $keysLen 1 }}
+      {{- toYaml $val }}
     {{- else }}
-      {{- include "base.map.dig" (dict "k" (join "." (mustRest $__keys)) "m" $__val "default" .default) }}
+      {{- include "base.map.dig" (dict "k" (join "." (mustRest $keys)) "m" $val "default" .default) }}
     {{- end }}
   {{- else }}
-    {{- coalesce .default (quote $__const.emptyStr) }}
+    {{- coalesce .default (quote $const.emptyStr) }}
   {{- end }}
 {{- end }}
 
@@ -56,32 +56,32 @@
   {{- end }}
 
   {{- /* 提取参数并校验类型 */ -}}
-  {{- $__key := index . 0 }}
-  {{- $__overwrite := index . 1 }}
-  {{- $__maps := mustSlice . 2 }}
+  {{- $key := index . 0 }}
+  {{- $overwrite := index . 1 }}
+  {{- $maps := mustSlice . 2 }}
 
   {{- /* 校验 overwrite 必须是布尔值 */ -}}
-  {{- if not (kindIs "bool" $__overwrite) }}
+  {{- if not (kindIs "bool" $overwrite) }}
     {{- fail "The 'overwrite' parameter must be a boolean (true/false)." }}
   {{- end }}
 
   {{- /* 初始化结果Map */ -}}
-  {{- $__rslt := dict }}
+  {{- $rslt := dict }}
 
   {{- /* 根据覆盖策略选择合并方式 */ -}}
-  {{- range $__maps }}
-    {{- if hasKey . $__key }}
-      {{- $__newEntry := dict (get . $__key) . }} {{/* 用当前map的key值作为新键 */}}
-      {{- if $__overwrite }}
-        {{- $__rslt = mustMergeOverwrite $__rslt $__newEntry }} {{/* 覆盖模式：右到左合并 */}}
+  {{- range $maps }}
+    {{- if hasKey . $key }}
+      {{- $newEntry := dict (get . $key) . }} {{/* 用当前map的key值作为新键 */}}
+      {{- if $overwrite }}
+        {{- $rslt = mustMergeOverwrite $rslt $newEntry }} {{/* 覆盖模式：右到左合并 */}}
       {{- else }}
-        {{- $__rslt = mustMerge $__rslt $__newEntry }} {{/* 非覆盖模式：左到右合并 */}}
+        {{- $rslt = mustMerge $rslt $newEntry }} {{/* 非覆盖模式：左到右合并 */}}
       {{- end }}
     {{- end }}
   {{- end }}
 
   {{- /* 输出合并结果（YAML格式） */ -}}
-  {{- toYaml $__rslt }}
+  {{- toYaml $rslt }}
 {{- end }}
 
 
@@ -101,30 +101,30 @@
     {{- fail "Must be a slice or list." }}
   {{- end }}
 
-  {{- $__len := len . }}
+  {{- $len := len . }}
 
-  {{- if eq $__len 1 }}
+  {{- if eq $len 1 }}
     {{- include "base.int" (index . 0) }}
-  {{- else if eq $__len 2 }}
-    {{- $__num := (index . 0) }}
-    {{- $__min := (index . 1) }}
+  {{- else if eq $len 2 }}
+    {{- $num := (index . 0) }}
+    {{- $min := (index . 1) }}
 
-    {{- include "base.empty" $__min }}
+    {{- include "base.empty" $min }}
 
-    {{- if ge $__num $__min }}
-      {{- include "base.int" $__num }}
+    {{- if ge $num $min }}
+      {{- include "base.int" $num }}
     {{- else }}
       {{- include "base.faild" . }}
     {{- end }}
-  {{- else if eq $__len 3 }}
-    {{- $__num := (index . 0) }}
-    {{- $__min := (index . 1) }}
-    {{- $__max := (index . 2) }}
+  {{- else if eq $len 3 }}
+    {{- $num := (index . 0) }}
+    {{- $min := (index . 1) }}
+    {{- $max := (index . 2) }}
 
-    {{- include "base.empty" $__min }}
+    {{- include "base.empty" $min }}
 
-    {{- if and (ge $__num $__min) (le $__num $__max) }}
-      {{- include "base.int" $__num }}
+    {{- if and (ge $num $min) (le $num $max) }}
+      {{- include "base.int" $num }}
     {{- else }}
       {{- include "base.faild" . }}
     {{- end }}
@@ -139,7 +139,7 @@
 
   return: int
 */ -}}
-{{- define "base.port.range" -}}
+{{- define "base.port" -}}
   {{- if and (ge (int .) 1) (le (int .) 65535) }}
     {{- int . }}
   {{- else }}
@@ -155,9 +155,9 @@
 {{- define "base.ip" -}}
   {{- include "base.invalid" . }}
 
-  {{- $__const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" . | fromYaml }}
 
-  {{- if mustRegexMatch $__const.regexIP (toString .) }}
+  {{- if mustRegexMatch $const.regexIP (toString .) }}
     {{- . }}
   {{- else }}
     {{- include "base.faild" . }}
@@ -211,59 +211,59 @@
     {{- fail "Must be a map(dict)." }}
   {{- end }}
 
-  {{- $__const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" . | fromYaml }}
 
-  {{- $__val := list }}
-  {{- $__clean := list }}
+  {{- $val := list }}
+  {{- $clean := list }}
 
-  {{- $__regexSplit := coalesce .r $__const.regexSplitStr }}
-  {{- $__regexCheck := coalesce .c $__const.emptyStr }}
-  {{- $__define := coalesce .define $__const.emptyStr }}
-  {{- $__sep := coalesce .sep $__const.emptyStr }}
-  {{- $__empty := coalesce .empty false }}
+  {{- $regexSplit := coalesce .r $const.regexSplitStr }}
+  {{- $regexCheck := coalesce .c $const.emptyStr }}
+  {{- $define := coalesce .define $const.emptyStr }}
+  {{- $sep := coalesce .sep $const.emptyStr }}
+  {{- $empty := coalesce .empty false }}
 
-  {{- $__data := .s }}
+  {{- $data := .s }}
   {{- if kindIs "string" .s }}
-    {{- $__data = list .s }}
+    {{- $data = list .s }}
   {{- end }}
 
-  {{- range $__data }}
+  {{- range $data }}
     {{- if kindIs "slice" . }}
-      {{- $__clean = concat $__clean (include "base.slice.cleanup" (dict "s" . "r" $__regexSplit "c" $__regexCheck "define" $__define "sep" $__sep "empty" $__empty) | fromYaml) }}
+      {{- $clean = concat $clean (include "base.slice.cleanup" (dict "s" . "r" $regexSplit "c" $regexCheck "define" $define "sep" $sep "empty" $empty) | fromYaml) }}
     {{- else if kindIs "map" . }}
-      {{- $__clean = mustAppend $__clean . }}
+      {{- $clean = mustAppend $clean . }}
     {{- else if kindIs "string" . }}
-      {{- $__clean = concat $__clean (mustRegexSplit $__regexSplit . -1) }}
+      {{- $clean = concat $clean (mustRegexSplit $regexSplit . -1) }}
     {{- else if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) }}
-      {{- $__clean = mustAppend $__clean . }}
+      {{- $clean = mustAppend $clean . }}
     {{- else }}
       {{- include "base.faild" . }}
     {{- end }}
   {{- end }}
 
-  {{- range $__clean }}
-    {{- if $__regexCheck }}
+  {{- range $clean }}
+    {{- if $regexCheck }}
       {{- /* mustRegexMatch 有问题时会向模板引擎返回错误 */ -}}
-      {{- $_ := mustRegexMatch $__regexCheck (toString .) }}
+      {{- $_ := mustRegexMatch $regexCheck (toString .) }}
     {{- end }}
 
-    {{- if $__define }}
-      {{- $__val = mustAppend $__val (include $__define . | fromYaml) }}
+    {{- if $define }}
+      {{- $val = mustAppend $val (include $define . | fromYaml) }}
     {{- else }}
-      {{- $__val = mustAppend $__val . }}
+      {{- $val = mustAppend $val . }}
     {{- end }}
   {{- end }}
 
-  {{- $__val = mustUniq $__val }}
-  {{- if not $__empty }}
-    {{- $__val = mustCompact $__val }}
+  {{- $val = mustUniq $val }}
+  {{- if not $empty }}
+    {{- $val = mustCompact $val }}
   {{- end }}
 
-  {{- if $__val }}
-    {{- if $__sep }}
-      {{- join $__sep $__val }}
+  {{- if $val }}
+    {{- if $sep }}
+      {{- join $sep $val }}
     {{- else }}
-      {{- toYaml $__val | indent 0 }}
+      {{- toYaml $val | indent 0 }}
     {{- end }}
   {{- end }}
 {{- end }}
@@ -277,17 +277,17 @@
 {{- define "base.fileMode" -}}
   {{- include "base.invalid" . }}
 
-  {{- $__typesNum := list "float64" "int" "int64" }}
-  {{- $__typesStr := list "string" }}
+  {{- $typesNum := list "float64" "int" "int64" }}
+  {{- $typesStr := list "string" }}
 
-  {{- $__type := kindOf . }}
+  {{- $type := kindOf . }}
 
-  {{- if mustHas $__type $__typesNum }}
+  {{- if mustHas $type $typesNum }}
     {{- include "base.int.range" (list . 0 511) }}
-  {{- else if mustHas $__type $__typesStr }}
-    {{- $__const := include "base.env" . | fromYaml }}
+  {{- else if mustHas $type $typesStr }}
+    {{- $const := include "base.env" . | fromYaml }}
 
-    {{- if mustRegexMatch $__const.regexFileMode . }}
+    {{- if mustRegexMatch $const.regexFileMode . }}
       {{- int . }}
     {{- else }}
       {{- include "base.faild" . }}
