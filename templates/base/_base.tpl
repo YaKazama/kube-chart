@@ -103,9 +103,23 @@
     {{- end }}
   {{- end }}
 
+  {{- /* 如果上述数据源中都没有找到值，尝试直接从根对象中取值 */ -}}
+  {{- if not $result }}
+    {{- if hasKey $root $key }}
+      {{- $directVal := get $root $key }}
+      {{- $valType := kindOf $directVal }}
+      {{- if has $valType $basicTypes }}
+        {{- $result = $directVal }}
+      {{- else if kindIs "slice" $directVal }}
+        {{- $slices = append $slices $directVal }}
+      {{- else if kindIs "map" $directVal }}
+        {{- $maps = append $maps $directVal }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
   {{- if $result }}
     {{- $result }}
-
   {{- else if gt (len $slices) 0 }}
     {{- $clean := list }}
     {{- range $slices }}
@@ -118,7 +132,7 @@
       {{- end }}
     {{- end }}
 
-    {{- if ge (len $maps) 0 }}
+    {{- if gt (len $maps) 0 }}
       {{- $clean := dict }}
       {{- range $maps }}
         {{- $clean = mustMerge $clean . }}
@@ -127,8 +141,6 @@
     {{- else }}
       {{- toYaml (uniq (mustCompact $clean)) }}
     {{- end }}
-
-
   {{- else if gt (len $maps) 0 }}
     {{- $clean := dict }}
     {{- range $maps }}
