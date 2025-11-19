@@ -49,7 +49,7 @@ curl -XPUT https://helm-repository.example.com/upload/index.yaml --data-binary @
 rm -rf <example>-${VERSION}.tgz index.yaml
 ```
 
-## 需知
+## 约束
 
 - 尽早报错退出。
 - 应用前需要对值进行类型判断。
@@ -62,3 +62,4 @@ rm -rf <example>-${VERSION}.tgz index.yaml
   - 从组件自身命名空间（一般会映射到 `.Context`）取值：由模板决定。
   - 从 `.Values` 取值：跳出组件自身命名空间的定义，但也不在 `.Values.global` 中定义。
   - 从 `.Values.global` 取值：有限的定义，一般是 **跨组件、跨模板甚至跨子 chart 共享的通用配置**。
+- 针对 `values.yaml` 中的变量定义，确保“变量类型唯一”（本质是类型的一致性和可预测性）。保持类型稳定能避免模板渲染错误、逻辑异常，提高配置的可维护性。这是 Helm 配置管理中减少隐蔽问题的关键实践之一。
