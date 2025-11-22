@@ -3,8 +3,7 @@
 
   variables:
   - m: Map
-  - k: 以分隔符分隔的键字符串
-    - 分隔符: "."、":"
+  - k: 以分隔符分隔的键字符串 默认使用 base.env 定义下的 regexSplitStr
   - default: 默认值，默认返回空符字串
 
   return: toYaml 转换后的 YAML 字符串或默认值
@@ -26,7 +25,7 @@
     {{- $val := get .m $first }}
 
     {{- if eq $keysLen 1 }}
-      {{- toYaml $val }}
+      {{- toYamlPretty $val }}
     {{- else }}
       {{- include "base.map.dig" (dict "k" (join "." (mustRest $keys)) "m" $val "default" .default) }}
     {{- end }}
@@ -81,7 +80,7 @@
   {{- end }}
 
   {{- /* 输出合并结果（YAML格式） */ -}}
-  {{- toYaml $rslt }}
+  {{- toYamlPretty $rslt }}
 {{- end }}
 
 
@@ -263,7 +262,7 @@
     {{- if $sep }}
       {{- join $sep $val }}
     {{- else }}
-      {{- toYaml $val | indent 0 }}
+      {{- toYamlPretty $val }}
     {{- end }}
   {{- end }}
 {{- end }}
