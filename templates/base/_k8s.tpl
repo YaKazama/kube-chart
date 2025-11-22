@@ -1,4 +1,32 @@
 {{- /*
+  从 .Chart 中获取 Name 和 Version 组成完整的 chart 名称或以 "chart-" 为前缀的随机名称
+*/ -}}
+{{- define "base.chart" -}}
+  {{- if and .Chart .Chart.Name .Chart.Version }}
+    {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+  {{- else }}
+    {{- printf "chart-%s" (randAlpha 8 | lower) }}
+  {{- end }}
+{{- end }}
+
+{{- /*
+  helm labels
+*/ -}}
+{{- define "base.helmLabels" -}}
+  {{- nindent 0 "" -}}helm.sh/chart: {{ include "base.chart" . }}
+  {{- if and .Chart .Chart.AppVersion }}
+    {{- nindent 0 "" -}}app.kubernetes.io/version: {{ .Chart.AppVersion }}
+  {{- else }}
+    {{- nindent 0 "" -}}app.kubernetes.io/version: {{ printf "ver-%s" (randNumeric 8) }}
+  {{- end }}
+  {{- if and .Release .Release.Service }}
+    {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- else }}
+    {{- nindent 0 "" -}}app.kubernetes.io/managed-by: Helm4
+  {{- end }}
+{{- end }}
+
+{{- /*
   使用正则表达式检查 Quantity 是否合法
   参考：https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
 
@@ -92,4 +120,46 @@
   {{- else }}
     {{- include "base.faild" . }}
   {{- end }}
+{{- end }}
+
+
+{{- /*
+  取 fullnane 和 name 的值
+  优先级: fullname > name > name-<8 位随机字符> ( .Context > .Values > .Values.global > 上下文自身 )
+  参数: 上下文
+
+  return: string
+*/ -}}
+{{- define "base.name" -}}
+  {{- $fullnameVal := include "base.getValue" (list . "fullname") }}
+  {{- $nameVal := include "base.getValue" (list . "name") }}
+  {{- $name := coalesce $fullnameVal $nameVal (printf "name-helm4-%s" (randAlpha 8)) | lower | nospace | trimSuffix "-" }}
+
+  {{- /*  */ -}}
+  {{- $const := include "base.env" . | fromYaml }}
+  {{- if not (regexMatch $const.regexRFC1035 $name) }}
+    {{- fail (printf "name '%s' invalid (must match RFC1035: %s)" $name $const.regexRFC1035) }}
+  {{- end }}
+
+  {{- $name }}
+{{- end }}
+
+{{- /*
+  取 namespace 的值
+  优先级: .Context > .Values > .Values.global > 上下文自身 > "default"
+  参数: 上下文
+
+  return: string
+*/ -}}
+{{- define "base.namespace" -}}
+  {{- $namespaceVal := include "base.getValue" (list . "namespace") }}
+  {{- $namespace := coalesce $namespaceVal "default" | lower | nospace | trimSuffix "-" }}
+
+  {{- /*  */ -}}
+  {{- $const := include "base.env" . | fromYaml }}
+  {{- if not (regexMatch $const.regexRFC1123 $namespace) }}
+    {{- fail (printf "namespace '%s' invalid (must match RFC1123: %s)" $namespace $const.regexRFC1123) }}
+  {{- end }}
+
+  {{- $namespace }}
 {{- end }}

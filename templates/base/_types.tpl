@@ -8,7 +8,7 @@
   {{- include "base.invalid" . }}
 
   {{- if kindIs "map" . }} {{- /* Map 为空也合法 */ -}}
-    {{- toYaml . }}
+    {{- toYamlPretty . }}
   {{- else }}
     {{- include "base.faild" . }}
   {{- end }}
@@ -25,6 +25,10 @@
 
   {{- if kindIs "bool" . }}
     {{- . }}
+  {{- else if kindIs "string" . }}
+    {{- if or (eq . "true") (eq . "false") }}
+      {{- . }}
+    {{- end }}
   {{- else }}
     {{- include "base.faild" . }}
   {{- end }}
@@ -113,9 +117,9 @@
   {{- include "base.invalid" . }}
 
   {{- if kindIs "slice" . }}
-    {{- toYaml . }}
+    {{- toYamlPretty . }}
   {{- else }}
-    {{- include "base.fail" . }}
+    {{- include "base.faild" . }}
   {{- end }}
 {{- end }}
 
