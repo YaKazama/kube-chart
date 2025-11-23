@@ -207,7 +207,7 @@
 */ -}}
 {{- define "base.slice.cleanup" -}}
   {{- if not (kindIs "map" .) }}
-    {{- fail "Must be a map(dict)." }}
+    {{- fail (printf "Must be a map(dict). Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
   {{- end }}
 
   {{- $const := include "base.env" . | fromYaml }}
@@ -228,11 +228,20 @@
 
   {{- range $data }}
     {{- if kindIs "slice" . }}
-      {{- $clean = concat $clean (include "base.slice.cleanup" (dict "s" . "r" $regexSplit "c" $regexCheck "define" $define "sep" $sep "empty" $empty) | fromYaml) }}
+      {{- $clean = concat $clean (include "base.slice.cleanup" (dict "s" . "r" $regexSplit "c" $regexCheck "define" $define "sep" $sep "empty" $empty) | fromYamlArray) }}
     {{- else if kindIs "map" . }}
       {{- $clean = mustAppend $clean . }}
     {{- else if kindIs "string" . }}
-      {{- $clean = concat $clean (mustRegexSplit $regexSplit . -1) }}
+      {{- $val := mustRegexSplit $regexSplit . -1 }}
+      {{- $valTmp := list }}
+      {{- range $val }}
+        {{- if regexMatch $const.regexCheckInt . }}
+          {{- $valTmp = append $valTmp (atoi .) }}   {{- /* 纯数字的字符串，使用 int 转换成数字 */ -}}
+        {{- else }}
+          {{- $valTmp = append $valTmp . }}
+        {{- end }}
+      {{- end }}
+      {{- $clean = concat $clean $valTmp }}
     {{- else if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) }}
       {{- $clean = mustAppend $clean . }}
     {{- else }}
