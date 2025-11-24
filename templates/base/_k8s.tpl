@@ -128,14 +128,23 @@
   优先级: fullname > name > name-<8 位随机字符> ( .Context > .Values > .Values.global > 上下文自身 )
   参数: 上下文
 
+  注：如果传入的是一个字符串，也可以用来单纯只做 RFC1035 校验
+
   return: string
 */ -}}
 {{- define "base.name" -}}
-  {{- $fullnameVal := include "base.getValue" (list . "fullname") }}
-  {{- $nameVal := include "base.getValue" (list . "name") }}
-  {{- $name := coalesce $fullnameVal $nameVal (printf "name-helm4-%s" (randAlpha 8)) | lower | nospace | trimSuffix "-" }}
+  {{- $name := "" }}
+  {{- if kindIs "map" . }}
+    {{- $fullnameVal := include "base.getValue" (list . "fullname") }}
+    {{- $nameVal := include "base.getValue" (list . "name") }}
+    {{- $name = coalesce $fullnameVal $nameVal (printf "name-helm4-%s" (randAlpha 8)) | lower | nospace | trimSuffix "-" }}
+  {{- else if kindIs "string" . }}
+    {{- $name = . }}
+  {{- else }}
+    {{- fail (printf "Type not support! Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
+  {{- end }}
 
-  {{- /*  */ -}}
+  {{- /* 正则校验 */ -}}
   {{- $const := include "base.env" . | fromYaml }}
   {{- if not (regexMatch $const.regexRFC1035 $name) }}
     {{- fail (printf "name '%s' invalid (must match RFC1035: %s)" $name $const.regexRFC1035) }}
