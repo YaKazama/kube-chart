@@ -2,17 +2,28 @@
   从 .Chart 中获取 Name 和 Version 组成完整的 chart 名称或以 "chart-" 为前缀的随机名称
 */ -}}
 {{- define "base.chart" -}}
-  {{- coalesce (printf "%s-%s" $.Chart.Name $.Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-") (printf "helm4-chart-%s" (randAlpha 8 | lower)) }}
+  {{- if and .Chart .Chart.Name .Chart.Version }}
+    {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+  {{- else }}
+    {{- printf "chart-%s" (randAlpha 8 | lower) }}
+  {{- end }}
 {{- end }}
 
 {{- /*
   helm labels
 */ -}}
 {{- define "base.helmLabels" -}}
-  {{- nindent 0 "" -}}helm.sh/chart: {{ include "base.chart" $ }}
-  {{- nindent 0 "" -}}app.kubernetes.io/version: {{ $.Chart.AppVersion }}
-  {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ $.Release.Service }}
-  {{- nindent 0 "" -}}app.kubernetes.io/managed-by: Helm4
+  {{- nindent 0 "" -}}helm.sh/chart: {{ include "base.chart" . }}
+  {{- if and .Chart .Chart.AppVersion }}
+    {{- nindent 0 "" -}}app.kubernetes.io/version: {{ .Chart.AppVersion }}
+  {{- else }}
+    {{- nindent 0 "" -}}app.kubernetes.io/version: {{ printf "ver-%s" (randNumeric 8) }}
+  {{- end }}
+  {{- if and .Release .Release.Service }}
+    {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- else }}
+    {{- nindent 0 "" -}}app.kubernetes.io/managed-by: Helm4
+  {{- end }}
 {{- end }}
 
 {{- /*
