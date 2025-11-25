@@ -296,7 +296,7 @@
     {{- $const := include "base.env" . | fromYaml }}
 
     {{- if mustRegexMatch $const.regexFileMode . }}
-      {{- int . }}
+      {{- . }}
     {{- else }}
       {{- include "base.faild" . }}
     {{- end }}
