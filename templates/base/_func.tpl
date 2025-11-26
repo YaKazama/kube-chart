@@ -232,13 +232,13 @@
     {{- else if kindIs "map" . }}
       {{- $clean = mustAppend $clean . }}
     {{- else if kindIs "string" . }}
-      {{- $val := mustRegexSplit $regexSplit . -1 }}
+      {{- $_val := mustRegexSplit $regexSplit . -1 }}
       {{- $valTmp := list }}
-      {{- range $val }}
+      {{- range $_val }}
         {{- if regexMatch $const.regexCheckInt . }}
           {{- $valTmp = append $valTmp (atoi .) }}   {{- /* 纯数字的字符串，使用 int 转换成数字 */ -}}
         {{- else }}
-          {{- $valTmp = append $valTmp . }}
+          {{- $valTmp = append $valTmp (. | trim) }}
         {{- end }}
       {{- end }}
       {{- $clean = concat $clean $valTmp }}

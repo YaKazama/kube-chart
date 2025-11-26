@@ -6,7 +6,7 @@
 # 默认空字符
 emptyStr: ""
 # 检查字符串是否为 float64 / int / int64 类型
-regexCheckInt: "^[+-]?\\d+(\\.\\d+)*$"
+regexCheckInt: "^[+-]?\\d+(\\.\\d+)?$"
 # 清洗全数字的 string
 regexReplaceZero: "^([+-]?)0+(\\d*)$"
 # 检查八进制和十六进制字符串
@@ -17,8 +17,8 @@ regexSplitStr: "\\s*[,\\:\\.\\|\\/\\*\\^@#\\s]+\\s*"
 # 用于处理一些需要保留特殊字符的情况
 regexSplit: "\\s+"
 
-regexRFC1035: "^([a-z]{1,63}|[a-z][a-z0-9-]{0,61}[a-z0-9])$"
-regexRFC1123: "^([a-z0-9]{1,63}|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$"
+regexRFC1035: "^([a-z]{1,63}|[a-z][a-z0-9-]{0,61}[a-z0-9]?)$"
+regexRFC1123: "^([a-z0-9]{1,63}|[a-z0-9][a-z0-9-]{0,61}[a-z0-9]?)$"
 regexQuantity: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
 regexResources: "^([+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?\\s*){2,4}$"
 regexTime: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
