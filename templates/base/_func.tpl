@@ -236,7 +236,7 @@
       {{- $valTmp := list }}
       {{- range $_val }}
         {{- if regexMatch $const.regexCheckInt . }}
-          {{- $valTmp = append $valTmp (atoi .) }}   {{- /* 纯数字的字符串，使用 int 转换成数字 */ -}}
+          {{- $valTmp = append $valTmp (. | trim | atoi) }}   {{- /* 纯数字的字符串，使用 int 转换成数字 */ -}}
         {{- else }}
           {{- $valTmp = append $valTmp (. | trim) }}
         {{- end }}
@@ -252,7 +252,9 @@
   {{- range $clean }}
     {{- if $regexCheck }}
       {{- /* mustRegexMatch 有问题时会向模板引擎返回错误 */ -}}
-      {{- $_ := mustRegexMatch $regexCheck (toString .) }}
+      {{- if not (mustRegexMatch $regexCheck (toString .)) }}
+        {{- include "base.faild" . }}
+      {{- end }}
     {{- end }}
 
     {{- if $define }}
