@@ -11,6 +11,7 @@
 
 {{- /*
   helm labels
+  more: https://helm.sh/docs/chart_best_practices/labels/#standard-labels
 */ -}}
 {{- define "base.helmLabels" -}}
   {{- nindent 0 "" -}}helm.sh/chart: {{ include "base.chart" . }}
