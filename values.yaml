@@ -1,0 +1,408 @@
+global:
+  annotations:
+    ccc: global-annotations
+  labels:
+    globalLabels: global-labels
+  helmLabels: false
+
+annotations:
+  ccc: values-annotations
+labels:
+  valuesLabel: values-labels
+helmLabels: false
+# fullname: value-Name
+# selector:
+#   matchExpressions:
+#     - environment3 == production4
+terminationGracePeriodSeconds: 99
+
+zz:
+- a
+- b
+
+deployment:
+  annotations:
+    aaa: ssss
+    bbb: 123
+  # 专用变量定义。输出只支显示
+  #   helm.sh/chart
+  #   app.kubernetes.io/version
+  #   app.kubernetes.io/managed-by
+  #   helm.sh/chart
+  helmLabels: true
+  labels:
+    ctxLabels: ctx-labels
+  name: ctx-name
+  fullname: ctx-fullname
+  namespace: ctx-namespace
+  selector:
+    matchExpressions:
+      # 基于等值 / 不等值
+      - environment = production
+      - environment1 == production1
+      - tier != frontend
+      # 基于集合
+      - environment2 in (production2, qa2, xxx)
+      - tier2 notin (frontend2, backend2)
+      - partition
+      - "!partition1"
+      # 原生
+      - key: key
+        operator: In  # In/NotIn/Exists/DoesNotExist
+        values:
+        - value1
+        - value2
+      - key: key2
+        operator: Exists  # In/NotIn/Exists/DoesNotExist
+  minReadySeconds: 11
+  progressDeadlineSeconds: 33
+  # <Recreate> | <RollingUpdate> [maxSurge(25%)][maxUnavailable(25%)]
+  # strategy: Recreate
+  strategy: RollingUpdate 1
+  activeDeadlineSeconds: 10
+  automountServiceAccountToken: true
+  dnsPolicy: ClusterFirstWithHostNet
+  hostNetwork: true
+  hostPID: true
+  shareProcessNamespace: false
+  hostUsers: true
+  hostname: aaa-hostname
+  hostnameOverride: aa
+  terminationGracePeriodSeconds: 10
+  subdomain: sub-domain
+  serviceAccountName: svc-acc-name
+  schedulerName: xxx
+  restartPolicy: Always
+  priorityClassName: system-node-critical
+  priority: 111
+  preemptionPolicy: preemptionPolicy
+  nodeSelector:
+    beta.kubernetes.io/arch: amd64
+  nodeName: vm-208
+  hostAliases:
+    - 1.1.1.1 1.example.com 1-1.example.com
+    - 2.2.2.2 2.example.com
+  imagePullSecrets:
+    - image-pull-secret-1
+    - image-pull-secret-2
+  nodeAffinity:
+    preferred:
+      - weight: 1
+        matchExpressions:
+          - c != d
+        matchFields:
+          - aa in (xx1, xx2, 123333)
+    required:
+      - matchExpressions:
+          - a = b
+      - matchFields:
+          - key: fields
+            operator: NotIn
+            values:
+            - value1
+            - value2
+  podAffinity:
+    preferred:
+      - weight: 11
+        topologyKey: topologyKey-preferred
+        namespaceSelector:
+          matchExpressions:
+            - "!partition1"
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        labelSelector:
+          matchExpressions:
+            - "!partition2"
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        matchLabelKeys: []
+        namespaces:
+          - aaa bbb
+          - c
+    required:
+      - topologyKey: topologyKey-required
+        namespaceSelector:
+          matchExpressions:
+            - "!partition1"
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        labelSelector:
+          matchExpressions:
+            - "partition2"
+            - ssss != aaa
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        matchLabelKeys: []
+        namespaces:
+          - aaa bbb
+          - c
+  podAntiAffinity:
+    preferred:
+      - weight: 22
+        topologyKey: topologyKey-preferred
+        namespaceSelector:
+          matchExpressions:
+            - partition1
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        labelSelector:
+          matchExpressions:
+            - aaa = cxxx
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        matchLabelKeys:
+        - labels1 labels2
+    required:
+      - topologyKey: topologyKey-required
+        namespaceSelector:
+          matchExpressions:
+            - "!partition1"
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        labelSelector:
+          matchExpressions:
+            - "partition2"
+            - ssss != aaa
+          matchLabels:
+            matchLabels-pod-affinity: zzz
+        matchLabelKeys: []
+        namespaces:
+          - aaa bbb
+          - c
+  # 通常它是一个返回 true / false 的 api
+  readinessGates:
+    - www.example.com/feature-1
+    - www.example.com/feature-2
+  resources:
+    limits: 50m 512Mi 2Mi 40Mi
+    requests:
+      cpu: 0.5
+      memory: 1Gi
+  schedulingGates:
+    - "aaaaa"
+    - bbbb
+  os: linux
+  # 原生 map 格式
+  securityContext:
+    appArmorProfile:
+      localhostProfile: string
+      type: string
+    fsGroup: "0"  # 显示指定 0 时需要加引号
+    fsGroupChangePolicy: string
+    runAsGroup: "0"
+    runAsNonRoot: true
+    runAsUser: 1
+    seLinuxChangePolicy: string
+    seLinuxOptions:
+      level: string
+      role: string
+      type: string
+      user: string
+    seccompProfile:
+      localhostProfile: string
+      type: string
+    supplementalGroups:
+      - 0
+      - 1
+    supplementalGroupsPolicy: string
+    sysctls:
+      - name: string
+        value: string
+      - name: string
+        value: string
+    windowsOptions:
+      gmsaCredentialSpec: string
+      gmsaCredentialSpecName: string
+      hostProcess: true
+      runAsUserName: string
+  tolerations:
+    - effect: NoExecute
+      key: string
+      operator: Equal
+      tolerationSeconds: "0"  # 显示指定 0 时需要加引号
+      value: string
+  topologySpreadConstraints:
+    - labelSelector:
+        matchExpressions:
+          - "!partition1"
+        matchLabels:
+          matchLabels11: xxx
+      matchLabelKeys:
+        - string array
+      maxSkew: "0"  # 显示指定 0 时需要加引号
+      minDomains: 11
+      nodeAffinityPolicy: string
+      nodeTaintsPolicy: string
+      topologyKey: string
+      whenUnsatisfiable: ScheduleAnyway
+  volumes:
+    - cm:vol-cm: aaa items (key path)
+    - emptyDir:vol-a:
+    - emptyDir:vol-b: Memory 500Mi
+    - fc:vol-fc1: targetWWNs (wwn1, wwn2) 0 ext4 true
+    - fc:vol-fc2: wwids (wid1, wid2) ext4 true
+    - hostPath:vol-ccc: config/xxx/ Directory
+    - image:vol-ssss: x.x.xom/path/aa:v2 Never
+    - iscsi:vol-eee: targetPortal iqn 1 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secretRef
+    - nfs:vol-nfs: x.xom config/xx true
+    - pvc:vol-ggg: "claimName true"
+    - secret:vol-secret: secretName true 0755 items(key path 0650, key1 path1)
+  # volumes:
+  #   - configMap:vol-aaa: "name [optional] [defaultMode] [items (key path [mode], key path [mode])]"
+  #   - secret:vol-hhh: "secretName [optional] [defaultMode] [items (key path [mode], key path [mode])]"
+  #   - pvc:vol-ggg: "claimName [readOnly]"
+  #   - emptyDir:vol-bbb: "[medium] [sizeLimit]"
+  #   - hostPath:vol-ccc: "path [type]"
+  #   - nfs:vol-fff: "server path [readOnly]"
+  #   - image:vol-ddd: "reference [pullPolicy]"
+  #   - fc:vol-fc1: "targetWWNs (wwn1, wwn2) lun fsType [readOnly]"
+  #   - fc:vol-fc2: "wwids (wid1, wid2) fsType [readOnly]"
+  #   - iscsi:vol-eee: "targetPortal iqn lun fsType [readOnly] [iscsiInterface] [initiatorName] [chap (chapAuthDiscovery, chapAuthSession)] [portals (ip, ip)] [secretRef]"
+  containers:
+    - name: c-1
+      args:
+      - -c
+      - sleep 3600; echo "done"
+      command:
+      - /bin/bash
+      imagePullPolicy: IfNotPresent
+      # restart <in|notin> (codeNumber, ...)
+      restartPolicyRules:
+        - restart in (1, 2)
+        - restart notin (22,3, 6)
+      restartPolicy: Always
+      stdin: true
+      stdinOnce: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      tty: true
+      workingDir: /root
+      # name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]
+      volumeMounts:
+        - vol-name /mnt/vol-name config/xx true
+        - vol-name1 /mnt/vol-name1 config/xx1 false
+      # name devicePath
+      volumeDevices:
+        - name devicePath
+      # [cpu] [memory] [hugepages-size hugepages-max]
+      # 原生 map
+      resources:
+        limits: 1 1Gi
+        requests:
+          cpu: 0.5
+          memory: 1Gi
+      # resourceName [restartPolicy]
+      resizePolicy:
+        - cpu
+        - memory RestartContainer
+      # [hostIP:][hostPort:]containerPort[/protocol][#name]
+      ports:
+        - 8080
+        - 8001:8081
+        - 8002:8082/udp
+        - 8002:8082#name-ports1
+        - 1.1.1.2:8003:8083
+        - 192.168.1.1:9090:8080/tcp#api
+        - 8989/udp#xxx
+      # - name: xxx
+      #   value: xxx
+      # - name: xxx
+      #   valueFrom: configMap name key [optional]
+      #   valueFrom: field fieldPath [apiVersion]
+      #   valueFrom: file volumeName path key [optional]
+      #   valueFrom: resource resource [containerName] [divisor]
+      #   valueFrom: secret name key [optional]
+      env:
+        - name: env-name
+          value: env-value
+        - name: env-name2
+          valueFrom: configMap cm-name cm-key false
+        - name: env-name3
+          valueFrom: field path/to/field v1beta1
+        - name: env-name4
+          valueFrom: file vol-name config/xx key-conf.d false
+        - name: env-name5
+          valueFrom: resource limits.memory containerName 0.5
+        - name: env-name6
+          valueFrom: secret sec-name sec-key
+      # sourceType sourceName [prefix] [optional]
+      envFrom:
+        - configMap cm_name CM_ true
+        - secret sec_name SEC_ true
+      # [registry]/[namespace]/[repository]:[tag]@[digest]
+      image: image-aaa:latest
+      # imageRef:
+      #   # 这一般是一个域名（可以带上端口号，如 example.com:443 ）默认值 docker.io
+      #   registry:
+      #   # 格式 a/b/c 或 a 默认值 library
+      #   namespace:
+      #   # 【必填】镜像名
+      #   repository: xx
+      #   # 镜像标签 默认值 latest
+      #   tag:
+      #   # 镜像摘要
+      #   digest:
+      lifecycle:
+        postStart:
+          exec:
+            - xxx
+            - xxx
+          httpGet: http 1.1.1.1 7777 /api/health header (xxx aa/bb, yyy ccc/dd)
+          sleep: 30
+          tcpSocket: 1.1.1.1 8888
+        preStop:
+          exec:
+            - xxx
+            - xxx
+          httpGet: http 2.2.2.2 /api/health header (xxx aa/bb, yyy ccc/dd)
+          sleep: 30
+          tcpSocket: 2.2.2.2 8888
+        stopSignal: SIGKILL
+      # # 三种 probe 共用相同的配置 livenessProbe readinessProbe startupProbe
+      livenessProbe:
+        exec:
+          - xxx
+          - xxx
+        httpGet: http 2.2.2.2 7777 /api/health header (xxx aa/bb, yyy ccc/dd)
+        sleep: 30
+        tcpSocket: 2.2.2.2 8888
+        grpc: svc-name 9999
+        failureThreshold: 14
+        initialDelaySeconds: 13
+        periodSeconds: 12
+        successThreshold: 11
+        terminationGracePeriodSeconds: 111
+        timeoutSeconds: 11
+      # # 原生 map 格式
+      securityContext:
+        allowPrivilegeEscalation: true
+        appArmorProfile:
+          localhostProfile: string
+          type: string
+        capabilities:
+          add:
+            - aa
+          drop:
+            - bb
+        privileged: true
+        procMount: Unmasked
+        readOnlyRootFilesystem: true
+        runAsGroup: "0"
+        runAsNonRoot: true
+        runAsUser: "0"
+        seLinuxOptions:
+          level: string
+          role: string
+          type: string
+          user: string
+        seccompProfile:
+          localhostProfile: string
+          type: string
+        windowsOptions:
+          gmsaCredentialSpec: string
+          gmsaCredentialSpecName: string
+          hostProcess: true
+          runAsUserName: string
+  initContainers:
+    - name: c-1
+      image: init:latest
