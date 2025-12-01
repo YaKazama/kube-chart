@@ -98,4 +98,12 @@
       {{- include "base.field" (list "secret" $secret "base.map") }}
     {{- end }}
   {{- end }}
+
+  {{- /* local map */ -}}
+  {{- else if eq $volumeType "local" }}
+    {{- $local := include "definitions.LocalVolumeSource" $originalValue | fromYaml }}
+    {{- if $local }}
+      {{- include "base.field" (list "local" $local "base.map") }}
+    {{- end }}
+  {{- end }}
 {{- end }}
