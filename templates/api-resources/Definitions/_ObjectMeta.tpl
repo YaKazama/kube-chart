@@ -2,7 +2,7 @@
   {{- $_ := set . "_pkind" (get . "_kind") }}
 
   {{- /* annotations */ -}}
-  {{- if not (eq ._pkind "PodTemplateSpec") }}
+  {{- if not (or (eq ._pkind "PodTemplateSpec") (eq ._pkind "StatefulSetSpec")) }}
     {{- $anno := include "base.getValue" (list . "annotations") | fromYaml }}
     {{- if $anno }}
       {{- include "base.field" (list "annotations" $anno "base.map") }}
@@ -10,18 +10,20 @@
   {{- end }}
 
   {{- /* labels */ -}}
-  {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
-  {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
-  {{- if $isHelmLabels }}
-    {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
-  {{- end }}
-  {{- /* 默认增加 name */ -}}
-  {{- $name := include "base.name" . }}
-  {{- if $name }}
-    {{- $labels = mustMerge $labels (include "base.field" (list "name" $name) | fromYaml) }}
-  {{- end }}
-  {{- if $labels }}
-    {{- include "base.field" (list "labels" $labels "base.map") }}
+  {{- if not (eq ._pkind "StatefulSetSpec") }}
+    {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
+    {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
+    {{- if $isHelmLabels }}
+      {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
+    {{- end }}
+    {{- /* 默认增加 name */ -}}
+    {{- $name := include "base.name" . }}
+    {{- if $name }}
+      {{- $labels = mustMerge $labels (include "base.field" (list "name" $name) | fromYaml) }}
+    {{- end }}
+    {{- if $labels }}
+      {{- include "base.field" (list "labels" $labels "base.map") }}
+    {{- end }}
   {{- end }}
 
   {{- /* name */ -}}

@@ -97,7 +97,6 @@
     {{- if $secret }}
       {{- include "base.field" (list "secret" $secret "base.map") }}
     {{- end }}
-  {{- end }}
 
   {{- /* local map */ -}}
   {{- else if eq $volumeType "local" }}

@@ -26,7 +26,7 @@
   {{- end }}
 
   {{- /* rollingUpdate */ -}}
-  {{- if eq $type "RollingUpdate" }}
+  {{- if or (eq $type "RollingUpdate") (empty $type) }}
     {{- $rollingUpdateVal := dict }}
     {{- $_ := set $rollingUpdateVal "maxSurge" "25%" }}
     {{- $_ := set $rollingUpdateVal "maxUnavailable" "25%" }}

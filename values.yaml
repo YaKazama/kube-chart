@@ -15,6 +15,7 @@ helmLabels: false
 #   matchExpressions:
 #     - environment3 == production4
 terminationGracePeriodSeconds: 99
+replicas: 33
 
 zz:
 - a
@@ -58,7 +59,7 @@ deployment:
   progressDeadlineSeconds: 33
   # <Recreate> | <RollingUpdate> [maxSurge(25%)][maxUnavailable(25%)]
   # strategy: Recreate
-  strategy: RollingUpdate 1
+  strategy: RollingUpdate 1 1
   activeDeadlineSeconds: 10
   automountServiceAccountToken: true
   dnsPolicy: ClusterFirstWithHostNet
@@ -247,6 +248,7 @@ deployment:
     - nfs:vol-nfs: x.xom config/xx true
     - pvc:vol-ggg: "claimName true"
     - secret:vol-secret: secretName true 0755 items(key path 0650, key1 path1)
+    - local:vol-local: config/aaa
   # volumes:
   #   - configMap:vol-aaa: "name [optional] [defaultMode] [items (key path [mode], key path [mode])]"
   #   - secret:vol-hhh: "secretName [optional] [defaultMode] [items (key path [mode], key path [mode])]"
@@ -406,3 +408,36 @@ deployment:
   initContainers:
     - name: c-1
       image: init:latest
+
+statefulset:
+  minReadySeconds: 10
+  ordinals: 11
+  persistentVolumeClaimRetentionPolicy: delete retain
+  podManagementPolicy: OrderedReady
+  replicas: 0
+  revisionHistoryLimit: 22
+  serviceName: xxx
+  # OnDelete|RollingUpdate [maxUnavailable(1)] [partition(0)]
+  updateStrategy: 10% 0
+  # <storageClassName> <name> [namespace] accessMode|accessModes (accessModes, ...) <requests> [limits] [volumeName] [volumeMode]
+  # 原生格式（有限字段支持）
+  volumeClaimTemplates:
+    - sc-name claim-name default11 accessMode (ReadWriteOnce) 10Gi 20Gi pvc-aaa-bbb-ccc Filesystem
+    - name: string
+      namespace: string
+      accessModes:
+        - ReadWriteOnce
+      # requests limits
+      resources:
+        requests:
+          storage: 10Gi
+        limits:
+          storage: 20Gi
+      storageClassName: string
+      volumeMode: string
+      volumeName: string
+  hostAliases:
+    - 1.1.1.1 xxx.com
+  containers:
+    - name: sts-c1
+      image: xxx

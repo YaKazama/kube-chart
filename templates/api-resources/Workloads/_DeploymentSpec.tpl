@@ -2,7 +2,7 @@
   {{- $_ := set . "_pkind" (get . "_kind") }}
   {{- $_ := set . "_kind" "DeploymentSpec" }}
 
-  {{- /* minReadySeconds */ -}}
+  {{- /* minReadySeconds int */ -}}
   {{- $minReadySeconds := include "base.getValue" (list . "minReadySeconds") }}
   {{- if $minReadySeconds }}
     {{- include "base.field" (list "minReadySeconds" $minReadySeconds "base.int") }}
