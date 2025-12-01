@@ -1,5 +1,5 @@
 {{- define "configStorage.Volume" -}}
-  {{- $typesAllows := list "cm" "configMap" "secret" "pvc" "persistentVolumeClaim" "emptyDir" "hostPath" "nfs" "image" "fc" "iscsi" }}
+  {{- $typesAllows := list "cm" "configMap" "secret" "pvc" "persistentVolumeClaim" "emptyDir" "hostPath" "nfs" "image" "fc" "iscsi" "local" }}
 
   {{- /* 检查传入是否为一个键值对 */ -}}
   {{- $keys := keys . }}
