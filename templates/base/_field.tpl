@@ -45,6 +45,7 @@
     {{- end }}
 
     {{- if eq $sliceLen 4 }}
+      {{- /* 不在列表中的，会直接丢弃 */ -}}
       {{- $allow := index . 3 }}
       {{- if mustHas $val $allow }}
         {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
