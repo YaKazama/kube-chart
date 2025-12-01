@@ -441,3 +441,5 @@ statefulset:
   containers:
     - name: sts-c1
       image: xxx
+
+daemonset:

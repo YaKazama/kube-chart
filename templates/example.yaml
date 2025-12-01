@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.statefulset }}
-{{- include "workloads.StatefulSet" . }}
+{{- $_ := set . "Context" .Values.daemonset }}
+{{- include "workloads.DaemonSet" . }}
