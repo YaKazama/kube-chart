@@ -1,7 +1,7 @@
 {{- /*
   从传入的上下文中取指定 key 的值
   优先级: 上下文自身 > .Context > .Values > .Values.global
-  参数: list 上下文(any) 目标键名(string) 强制类型(string|float64|int|int64|bool)
+  参数: list 上下文(any) 目标键名(string) 强制类型(int|int64|float64|atoi|toString|toStrings|toDecimal)
 
   可以处理的数据类型包括：
   - 常规类型 string / float64 / int / int64 / bool
