@@ -23,11 +23,6 @@
   {{- if $isHelmLabels }}
     {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
   {{- end }}
-  {{- /* 默认增加 name */ -}}
-  {{- $name := include "base.name" . }}
-  {{- if $name }}
-    {{- $labels = mustMerge $labels (include "base.field" (list "name" $name) | fromYaml) }}
-  {{- end }}
   {{- if $labels }}
     {{- $_ := set $selectorVal "labels" $labels }}
   {{- end }}

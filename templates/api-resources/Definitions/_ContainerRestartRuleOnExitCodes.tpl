@@ -2,6 +2,11 @@
   {{- /* operator string */ -}}
   {{- $operator := include "base.getValue" (list . "operator") }}
   {{- if $operator }}
+    {{- if eq $operator "in" }}
+      {{- $operator = "In" }}
+    {{- else if eq $operator "notin" }}
+      {{- $operator = "NotIn" }}
+    {{- end }}
     {{- include "base.field" (list "operator" $operator) }}
   {{- end }}
 

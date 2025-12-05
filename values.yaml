@@ -443,3 +443,37 @@ statefulset:
       image: xxx
 
 daemonset:
+
+cronjob:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 1
+  schedule: "*/10 0 3 12 3"
+  startingDeadlineSeconds: 1
+  successfulJobsHistoryLimit: 22
+  suspend: true
+  timeZone: Asia/Shanghai
+  jobTemplate:
+    activeDeadlineSeconds: 11
+    ttlSecondsAfterFinished: "0"
+    # 格式 succeededCount succeededIndexes
+    # 原生 map
+    successPolicy:
+      - 2 1, 3-5, 7
+      - 1 1-3, 5, 7
+      - 3
+      - succeededCount: 1
+        succeededIndexes: 2, 3
+    # onExitCodes format: <action> [containerName] <in|notin> (values, ...)
+    # onPodConditions format: Ignore (DisruptionTarget True, IgnoreXXX)
+    podFailurePolicy:
+      - FailJob cn-name in (1, 2)
+      - Ignore (DisruptionTarget True, IgnoreXXX)
+    template:
+      activeDeadlineSeconds: 111
+      containers:
+        - name: xxxx
+          image: xxxxxx:v11
+          command:
+            - /bin/sh
+            - -c
+            - sleep 5

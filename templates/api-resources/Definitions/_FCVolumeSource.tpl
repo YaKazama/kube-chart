@@ -4,6 +4,7 @@
 
   {{- $match1 := regexFindAll $regex1 . -1 }}
   {{- $match2 := regexFindAll $regex2 . -1 }}
+
   {{- if $match1 }}
     {{- /* fsType string */ -}}
     {{- $fsType := regexReplaceAll $regex1 . "${3}" }}

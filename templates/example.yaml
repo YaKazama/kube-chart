@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.daemonset }}
-{{- include "workloads.DaemonSet" . }}
+{{- $_ := set . "Context" .Values.cronjob }}
+{{- include "workloads.CronJob" . }}
