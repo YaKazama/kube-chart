@@ -8,6 +8,7 @@
   {{- include "base.invalid" . }}
 
   {{- if kindIs "map" . }} {{- /* Map 为空也合法 */ -}}
+    {{- /* {{- toYamlPretty . | replace "'" "\"" }} 可将单引号强制换为双引号，对 CronJob 中的 schedule 有奇效 */ -}}
     {{- toYamlPretty . }}
   {{- else }}
     {{- include "base.faild" . }}
