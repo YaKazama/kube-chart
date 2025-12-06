@@ -24,7 +24,7 @@
       {{- $_ := set $limits "cpu" $cpu }}
       {{- if regexMatch "^\\d+$" $cpu }}
         {{- $_ := set $limits "cpu" ($cpu | int) }}
-      {{- else if regexMatch "^(?:0)?\\.\\d+$" $cpu }}
+      {{- else if regexMatch "^(?:\\d+)?\\.\\d+$" $cpu }}
         {{- $_ := set $limits "cpu" ($cpu | float64) }}
       {{- end }}
     {{- end }}
