@@ -1,6 +1,6 @@
 {{- define "workloads.CronJobSpec" -}}
   {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "StatefulSetSpec" }}
+  {{- $_ := set . "_kind" "CronJobSpec" }}
   {{- $__kind := get . "_kind" }}
 
   {{- /* concurrencyPolicy string */ -}}

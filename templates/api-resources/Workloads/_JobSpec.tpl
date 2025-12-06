@@ -1,6 +1,6 @@
 {{- define "workloads.JobSpec" -}}
   {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "PodSpec" }}
+  {{- $_ := set . "_kind" "JobSpec" }}
 
   {{- /* activeDeadlineSeconds int */ -}}
   {{- $activeDeadlineSeconds := include "base.getValue" (list . "activeDeadlineSeconds" "int") }}
