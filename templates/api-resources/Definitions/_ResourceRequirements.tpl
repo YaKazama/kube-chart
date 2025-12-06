@@ -6,12 +6,6 @@
   支持四段式 (cpu memory hugepages-size hugepages-max) 字符串，也可以使用 map
 */ -}}
 {{- define "definitions.ResourceRequirements" -}}
-  {{- /*
-    {{- if not (hasKey . "requests") }}
-    {{- fail (printf "resources.requests must be exists. Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
-    {{- end }}
-  */ -}}
-
   {{- $const := include "base.env" . | fromYaml }}
 
   {{- /* limits */ -}}
@@ -22,24 +16,29 @@
     {{- $len := len $val }}
 
     {{- if or (lt $len 1) (eq $len 3) }}
-      {{- fail (printf "resources.limits (string) invalid. Values: %s, type: %s (%s) %d" $limitsVal (typeOf $limitsVal) (kindOf $limitsVal)) }}
+      {{- fail (printf "ResourceRequirements: limits, v: %s, t: %s (%s), f: 'cpu [memory] [hugepages-size hugepages-max]'" $limitsVal (kindOf $limitsVal) (typeOf $limitsVal)) }}
     {{- end }}
 
-    {{- $cpu := index $val 0 }}
-    {{- if $cpu }}
+    {{- $cpu := index $val 0 | trim }}
+    {{- if and $cpu (ne $cpu "0") }}
       {{- $_ := set $limits "cpu" $cpu }}
+      {{- if regexMatch "^\\d+$" $cpu }}
+        {{- $_ := set $limits "cpu" ($cpu | int) }}
+      {{- else if regexMatch "^(?:0)?\\.\\d+$" $cpu }}
+        {{- $_ := set $limits "cpu" ($cpu | float64) }}
+      {{- end }}
     {{- end }}
 
-    {{- if eq $len 2 }}
-      {{- $memory := index $val 1 }}
+    {{- if or (eq $len 2) (ge $len 4) }}
+      {{- $memory := index $val 1 | trim }}
       {{- if $memory }}
         {{- $_ := set $limits "memory" $memory }}
       {{- end }}
     {{- end }}
 
     {{- if ge $len 4 }}
-      {{- $size := index $val 2 }}
-      {{- $max := index $val 3 }}
+      {{- $size := index $val 2 | trim }}
+      {{- $max := index $val 3 | trim }}
       {{- $_ := set $limits (printf "hugepages-%s" $size) $max }}
     {{- end }}
   {{- else }}
@@ -57,24 +56,29 @@
     {{- $len := len $val }}
 
     {{- if or (lt $len 1) (eq $len 3) }}
-      {{- fail (printf "resources.limits (string) invalid. Values: %s, type: %s (%s) %d" $limitsVal (typeOf $limitsVal) (kindOf $limitsVal)) }}
+      {{- fail (printf "ResourceRequirements: requests, v: %s, t: %s (%s), f: 'cpu [memory] [hugepages-size hugepages-max]'" $requestsVal (kindOf $requestsVal) (typeOf $requestsVal)) }}
     {{- end }}
 
-    {{- $cpu := index $val 0 }}
+    {{- $cpu := index $val 0 | trim }}
     {{- if $cpu }}
       {{- $_ := set $limits "cpu" $cpu }}
+      {{- if regexMatch "^\\d+$" $cpu }}
+        {{- $_ := set $limits "cpu" ($cpu | int) }}
+      {{- else if regexMatch "^(?:0)?\\.\\d+$" $cpu }}
+        {{- $_ := set $limits "cpu" ($cpu | float64) }}
+      {{- end }}
     {{- end }}
 
-    {{- if eq $len 2 }}
-      {{- $memory := index $val 1 }}
+    {{- if or (eq $len 2) (ge $len 4) }}
+      {{- $memory := index $val 1 | trim }}
       {{- if $memory }}
         {{- $_ := set $limits "memory" $memory }}
       {{- end }}
     {{- end }}
 
     {{- if ge $len 4 }}
-      {{- $size := index $val 2 }}
-      {{- $max := index $val 3 }}
+      {{- $size := index $val 2 | trim }}
+      {{- $max := index $val 3 | trim }}
       {{- $_ := set $requests (printf "hugepages-%s" $size) $max }}
     {{- end }}
   {{- else }}
