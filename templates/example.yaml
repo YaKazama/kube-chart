@@ -1,15 +1,5 @@
 {{- /*
-services:
-  - ports:
-      - 443
-  - ports:
-      - 8088
-{{- range .Values.deployment.services }}
----
-  {{- $_ := set . "Context" $.Values.deployment }}
-  {{- $_ := set . "Values" $.Values }}
-  {{- include "service.Service" . }}
-{{- end }}
+
 */ -}}
-{{- $_ := set . "Context" .Values.deployment }}
-{{- include "service.Service" . }}
+{{- $_ := set . "Context" .Values.ingress }}
+{{- include "service.Ingress" . }}

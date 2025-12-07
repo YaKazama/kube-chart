@@ -1,5 +1,5 @@
 {{- define "definitions.VolumeResourceRequirements" -}}
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* limits map */ -}}
   {{- $limitsVal := include "base.getValue" (list . "limits") }}

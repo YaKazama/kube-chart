@@ -6,7 +6,7 @@
   支持四段式 (cpu memory hugepages-size hugepages-max) 字符串，也可以使用 map
 */ -}}
 {{- define "definitions.ResourceRequirements" -}}
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* limits */ -}}
   {{- $limitsVal := include "base.getValue" (list . "limits") }}

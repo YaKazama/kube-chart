@@ -491,3 +491,29 @@ cronjob:
             - /bin/sh
             - -c
             - sleep 5
+
+ingress:
+  # resource name kind [apiGroup]
+  # service name port.name|port.number
+  # resource 和 service 是介定词，属于固定词缀
+  # defaultBackend: resource name-xxx core v1
+  ingressClassName: ingress-class-name
+  rules:
+    1.e.com:
+      # # path [pathType] resource name kind [apiGroup]
+      # # path [pathType] service name port.name|port.number
+      # # resource 和 service 是介定词，属于固定词缀
+      - /api/health1 service svc-name 8080
+      - /api/health2 Prefix service svc-name 9999
+      - /api/health3 resource name-xxx core v1
+    # - host: 1.e.com
+    #   # path [pathType] resource name kind [apiGroup]
+    #   # path [pathType] service name port.name|port.number
+    #   # resource 和 service 是介定词，属于固定词缀
+    #   paths:
+    #     - /api/health1 service svc-name 8080
+    #     - /api/health2 Prefix service svc-name 9999
+    #     - /api/health3 resource name-xxx core v1
+  # secretName hosts
+  tls:
+    - secret-name 1.e.com *.e.com

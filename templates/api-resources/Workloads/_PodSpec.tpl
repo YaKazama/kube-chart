@@ -2,7 +2,7 @@
   {{- $_ := set . "_pkind" (get . "_kind") }}
   {{- $_ := set . "_kind" "PodSpec" }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* activeDeadlineSeconds int */ -}}
   {{- $activeDeadlineSeconds := include "base.getValue" (list . "activeDeadlineSeconds") }}

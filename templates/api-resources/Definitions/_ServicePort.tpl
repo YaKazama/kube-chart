@@ -34,7 +34,7 @@
   {{- /* targetPort int or string */ -}}
   {{- $targetPort := include "base.getValue" (list . "targetPort") }}
   {{- if $targetPort }}
-    {{- $const := include "base.env" $targetPort | fromYaml }}
+    {{- $const := include "base.env" "" | fromYaml }}
     {{- if regexMatch $const.regexPort $targetPort }}
       {{- include "base.field" (list "targetPort" $targetPort "base.port") }}
     {{- else }}

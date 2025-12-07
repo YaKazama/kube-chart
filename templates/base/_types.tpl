@@ -55,7 +55,7 @@
     {{- /* 若确实需要原样返回，在定义时添加双引号，使用字符串即可 */ -}}
     {{- int . }}
   {{- else if mustHas $type $typesStr }}
-    {{- $const := include "base.env" . | fromYaml }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
     {{- if mustRegexMatch $const.regexCheckInt . }}
       {{- $val := atoi . }}
@@ -89,7 +89,7 @@
 {{- define "base.string" -}}
   {{- include "base.invalid" . }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- if kindIs "string" . }}
     {{- /* 字符串全为 0 。包括 UID="0000"（不能有 +/- 符号） */ -}}

@@ -15,7 +15,7 @@
 
   {{- include "base.invalid" .m }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- $keys := mustRegexSplit $const.regexSplitStr .k -1 }}
   {{- $keysLen := len $keys }}
@@ -154,7 +154,7 @@
 {{- define "base.ip" -}}
   {{- include "base.invalid" . }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- if mustRegexMatch $const.regexIP (toString .) }}
     {{- . }}
@@ -210,7 +210,7 @@
     {{- fail (printf "Must be a map(dict). Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
   {{- end }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- $val := list }}
   {{- $clean := list }}
@@ -295,7 +295,7 @@
   {{- if mustHas $type $typesNum }}
     {{- include "base.int.range" (list . 0 511) }}
   {{- else if mustHas $type $typesStr }}
-    {{- $const := include "base.env" . | fromYaml }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
     {{- if mustRegexMatch $const.regexFileMode . }}
       {{- . }}

@@ -31,7 +31,7 @@
 
   {{- /* schedule string */ -}}
   {{- $schedule := include "base.getValue" (list . "schedule") }}
-  {{- $const := include "base.env" $schedule | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
   {{- if regexMatch $const.regexCron $schedule }}
     {{- include "base.field" (list "schedule" $schedule "quote") }}
   {{- end }}

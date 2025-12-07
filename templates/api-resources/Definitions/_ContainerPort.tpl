@@ -15,7 +15,7 @@
     {{- fail (printf "volumeDevice: error. Values: %s, format: '[hostIP:][hostPort:]containerPort[/protocol][#name]'" .) }}
   {{- end }}
 
-  {{- $const := include "base.env" $root | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* containerPort int */ -}}
   {{- $containerPort := regexReplaceAll $regex $root "${4}" }}

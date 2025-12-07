@@ -36,7 +36,7 @@
 {{- define "base.Quantity" -}}
   {{- include "base.invalid" . }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- if mustRegexMatch $const.regexQuantity (toString .) }}
     {{- . }}
@@ -62,7 +62,7 @@
   {{- if mustHas $type $typesNum }}
     {{- duration (int .) }}
   {{- else if mustHas $type $typesStr }}
-    {{- $const := include "base.env" . | fromYaml }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
     {{- if regexMatch $const.regexCheckInt . }}
       {{- duration (atoi .) }}
@@ -86,7 +86,7 @@
   {{- include "base.invalid" . }}
   {{- include "base.string" . }}
 
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- if mustRegexMatch $const.regexFieldsV1 . }}
     {{- . }}
@@ -111,7 +111,7 @@
   {{- if mustHas $type $typesNum }}
     {{- int . }}
   {{- else if mustHas $type $typesStr }}
-    {{- $const := include "base.env" . | fromYaml }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
     {{- if mustRegexMatch $const.regexRollingUpdate . }}
       {{- . }}
@@ -146,7 +146,7 @@
   {{- end }}
 
   {{- /* 正则校验 */ -}}
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
   {{- if not (regexMatch $const.regexRFC1035 $name) }}
     {{- fail (printf "name '%s' invalid (must match RFC1035: %s)" $name $const.regexRFC1035) }}
   {{- end }}
@@ -166,7 +166,7 @@
   {{- $namespace := coalesce $namespaceVal "default" | lower | nospace | trimSuffix "-" }}
 
   {{- /*  */ -}}
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
   {{- if not (regexMatch $const.regexRFC1123 $namespace) }}
     {{- fail (printf "namespace '%s' invalid (must match RFC1123: %s)" $namespace $const.regexRFC1123) }}
   {{- end }}

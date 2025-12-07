@@ -25,7 +25,7 @@
   {{- $regexEquality := "^[A-Za-z0-9-]+\\s+([=]{1,2}|!=)\\s+[A-Za-z0-9-]+$" }}
   {{- $regexSet := "^[A-Za-z0-9-]+\\s+([iI][nN]|[nN][oO][tT][iI][nN])\\s+\\(([A-Za-z0-9-]+(\\s+|\\s*,\\s*)*)+\\)$" }}
   {{- $regexSetExists := "^!?[A-Za-z0-9-]+" }}
-  {{- $const := include "base.env" . | fromYaml }}
+  {{- $const := include "base.env" "" | fromYaml }}
   {{- $_labelSelectorRequirement := dict }}
 
   {{- $key := "" }}
