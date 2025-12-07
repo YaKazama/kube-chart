@@ -1,16 +1,16 @@
 {{- define "definitions.ObjectMeta" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
+  {{- $_pkind := get . "_kind" }}
 
   {{- /* annotations */ -}}
-  {{- if not (or (eq ._pkind "PodTemplateSpec") (eq ._pkind "JobTemplateSpec") (eq ._pkind "StatefulSetSpec")) }}
-    {{- $anno := include "base.getValue" (list . "annotations") | fromYaml }}
-    {{- if $anno }}
-      {{- include "base.field" (list "annotations" $anno "base.map") }}
+  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec") (eq $_pkind "StatefulSetSpec")) }}
+    {{- $annotations := include "base.getValue" (list . "annotations") | fromYaml }}
+    {{- if $annotations }}
+      {{- include "base.field" (list "annotations" $annotations "base.map") }}
     {{- end }}
   {{- end }}
 
   {{- /* labels */ -}}
-  {{- if not (eq ._pkind "StatefulSetSpec") }}
+  {{- if not (eq $_pkind "StatefulSetSpec") }}
     {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
     {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
     {{- if $isHelmLabels }}
@@ -22,7 +22,7 @@
   {{- end }}
 
   {{- /* name */ -}}
-  {{- if not (or (eq ._pkind "PodTemplateSpec") (eq ._pkind "JobTemplateSpec"))  }}
+  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec"))  }}
     {{- $name := include "base.name" . }}
     {{- if $name }}
       {{- include "base.field" (list "name" $name) }}
@@ -30,7 +30,7 @@
   {{- end }}
 
   {{- /* namespace */ -}}
-  {{- if not (or (eq ._pkind "PodTemplateSpec") (eq ._pkind "JobTemplateSpec")) }}
+  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec")) }}
     {{- $namespace := include "base.namespace" . }}
     {{- if $namespace }}
       {{- include "base.field" (list "namespace" $namespace) }}

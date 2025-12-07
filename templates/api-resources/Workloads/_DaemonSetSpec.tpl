@@ -17,7 +17,7 @@
 
   {{- /* selector map */ -}}
   {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-  {{- /* 将 labels helmLabels name 追加到 selector 中一并传入 参考 definitions.ObjectMeta 中的 labels */ -}}
+  {{- /* 将 labels helmLabels 追加到 selector 中一并传入 参考 definitions.ObjectMeta 中的 labels */ -}}
   {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
   {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
   {{- if $isHelmLabels }}
