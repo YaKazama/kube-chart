@@ -517,3 +517,12 @@ ingress:
   # secretName hosts
   tls:
     - secret-name 1.e.com *.e.com
+
+IngressClass:
+  controller: string
+  parameters:
+    apiGroup: string
+    kind: string
+    name: string
+    namespace: string
+    scope: string

@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.ingress }}
-{{- include "service.Ingress" . }}
+{{- $_ := set . "Context" .Values.IngressClass }}
+{{- include "service.IngressClass" . }}
