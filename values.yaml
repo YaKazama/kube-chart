@@ -570,3 +570,22 @@ Secret:
     # usage-bootstrap-signing: admin
   stringData:
     xxx: xxx
+
+StorageClass:
+  allowVolumeExpansion: true
+  allowedTopologies:
+    - topology.kubernetes.io/zone:
+        - us-central-1a
+        - us-central-1b
+    - topology.kubernetes.io/zone:
+        - us-central-1a
+        - us-central-1b
+  mountOptions:
+    - discard
+  parameters:
+    server: nfs-server.example.com
+    path: /share
+    readOnly: "false"
+  provisioner: example.com/external-nfs
+  reclaimPolicy: Retain
+  volumeBindingMode: Immediate

@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.Secret }}
-{{- include "configStorage.Secret" . }}
+{{- $_ := set . "Context" .Values.StorageClass }}
+{{- include "configStorage.StorageClass" . }}
