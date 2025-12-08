@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.PodTemplate }}
-{{- include "metadata.PodTemplate" . }}
+{{- $_ := set . "Context" .Values.daemonset }}
+{{- include "workloads.DaemonSet" . }}

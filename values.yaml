@@ -456,6 +456,8 @@ statefulset:
       image: xxx
 
 daemonset:
+  # type maxSurge maxUnavailable
+  updateStrategy: RollingUpdate 10% 11
 
 cronjob:
   concurrencyPolicy: Allow

@@ -36,4 +36,21 @@
   {{- if $template }}
     {{- include "base.field" (list "template" $template "base.map") }}
   {{- end }}
+
+  {{- /* updateStrategy map */ -}}
+  {{- $updateStrategyVal := include "base.getValue" (list . "updateStrategy") }}
+  {{- if $updateStrategyVal }}
+    {{- $regex := "^(OnDelete|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s*(\\d+\\%?))?$" }}
+    {{- $match := regexFindAll $regex $updateStrategyVal -1 }}
+    {{- if $match }}
+      {{- $type := regexReplaceAll $regex $updateStrategyVal "${1}" }}
+      {{- $maxSurge := regexReplaceAll $regex $updateStrategyVal "${2}" }}
+      {{- $maxUnavailable := regexReplaceAll $regex $updateStrategyVal "${3}" }}
+      {{- $val := dict "type" $type "rollingUpdate" (dict "maxSurge" $maxSurge "maxUnavailable" $maxUnavailable) }}
+      {{- $updateStrategy := include "definitions.DaemonSetUpdateStrategy" $val | fromYaml }}
+      {{- if $updateStrategy }}
+        {{- include "base.field" (list "updateStrategy" $updateStrategy "base.map") }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
 {{- end }}
