@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.StorageClass }}
-{{- include "configStorage.StorageClass" . }}
+{{- $_ := set . "Context" .Values.PodTemplate }}
+{{- include "metadata.PodTemplate" . }}

@@ -589,3 +589,12 @@ StorageClass:
   provisioner: example.com/external-nfs
   reclaimPolicy: Retain
   volumeBindingMode: Immediate
+
+PodTemplate:
+  name: hhhh
+  namespace: xxxx
+  template:
+    activeDeadlineSeconds: 11
+    containers:
+      - name: xxxx
+        image: xxxxxx:v11
