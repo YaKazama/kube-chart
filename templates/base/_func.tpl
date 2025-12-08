@@ -36,6 +36,26 @@
 
 
 {{- /*
+  对 map 的值进行 base64 编码后输出。主要用于 configMap 和 secret
+
+  return: base64 编码后的字符串
+*/ -}}
+{{- define "base.map.b64enc" -}}
+  {{- include "base.invalid" . }}
+
+  {{- if kindIs "map" . }} {{- /* Map 为空也合法 */ -}}
+    {{- $val := dict }}
+    {{- range $k, $v := . }}
+      {{- $val = mustMerge $val (dict $k ($v | toString | b64enc)) }}
+    {{- end }}
+    {{- toYamlPretty $val }}
+  {{- else }}
+    {{- include "base.faild" . }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
   按 Key 合并多个 Map，支持覆盖策略控制
   Key 键的值会作为新键存在，合并策略由 overwrite 决定：
   - 当 overwrite 为 false 时：从左到右合并，保留左侧键（不覆盖）
