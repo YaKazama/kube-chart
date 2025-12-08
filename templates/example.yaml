@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.IngressClass }}
-{{- include "service.IngressClass" . }}
+{{- $_ := set . "Context" .Values.Secret }}
+{{- include "configStorage.Secret" . }}

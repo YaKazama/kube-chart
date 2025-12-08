@@ -35,7 +35,6 @@ deployment:
     sessionAffinityConfig: 86400
     sessionAffinity: ClientIP
 
-
   annotations:
     aaa: ssss
     bbb: 123
@@ -526,3 +525,48 @@ IngressClass:
     name: string
     namespace: string
     scope: string
+
+ConfigMap:
+  immutable: true
+  binaryData:
+    key1: v1
+    key4: 123
+    app.properties: |
+      server.port=8080
+      database.url=jdbc:mysql://localhost:3306/mydb
+      environment=development
+  data:
+    key2: v2
+    key3: v2
+  helmLabels: false
+
+Secret:
+  immutable: true
+  type: Opaque
+  data:
+    # # kubernetes.io/service-account-token
+    # serviceAccount: string
+    # namespace: "default"
+    # # kubernetes.io/dockercfg kubernetes.io/dockerconfigjson
+    # server: registry.docker.com:5000
+    # username: admin
+    # password: admin
+    # email:
+    # # kubernetes.io/basic-auth
+    # username: admin
+    # password: admin
+    # # kubernetes.io/ssh-auth
+    # ssh-privatekey: 私钥
+    # # kubernetes.io/tls
+    # tls.crt: xxx
+    # tls.key: xxx
+    # # bootstrap.kubernetes.io/token
+    # token-id: a12345
+    # token-secret: a123123123123123123123sdgasgasgafasdfasdf
+    # description: "xxx"
+    # expiration: 2025-12-31T00:00:00Z
+    # auth-extra-groups: admin
+    # usage-bootstrap-authentication: admin
+    # usage-bootstrap-signing: admin
+  stringData:
+    xxx: xxx
