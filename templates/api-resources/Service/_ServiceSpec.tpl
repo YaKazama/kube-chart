@@ -8,19 +8,19 @@
   {{- /* clusterIP string */ -}}
   {{- $clusterIP := include "base.getValue" (list . "clusterIP") }}
   {{- if $clusterIP }}
-    {{- include "base.field" (list "clusterIP" $clusterIP) }}
+    {{- include "base.field" (list "clusterIP" $clusterIP "base.ip") }}
   {{- end }}
 
   {{- /* clusterIPs string array */ -}}
   {{- $clusterIPs := include "base.getValue" (list . "clusterIPs") | fromYamlArray }}
   {{- if $clusterIPs }}
-    {{- include "base.field" (list "clusterIPs" $clusterIPs "base.slice") }}
+    {{- include "base.field" (list "clusterIPs" $clusterIPs "base.slice.ips") }}
   {{- end }}
 
   {{- /* externalIPs string array */ -}}
   {{- $externalIPs := include "base.getValue" (list . "externalIPs") | fromYamlArray }}
   {{- if $externalIPs }}
-    {{- include "base.field" (list "externalIPs" $externalIPs "base.slice") }}
+    {{- include "base.field" (list "externalIPs" $externalIPs "base.slice.ips") }}
   {{- end }}
 
   {{- /* externalName string */ -}}
@@ -79,7 +79,7 @@
   {{- /* loadBalancerSourceRanges string array */ -}}
   {{- $loadBalancerSourceRanges := include "base.getValue" (list . "loadBalancerSourceRanges") | fromYamlArray }}
   {{- if $loadBalancerSourceRanges }}
-    {{- include "base.field" (list "loadBalancerSourceRanges" $loadBalancerSourceRanges "base.slice") }}
+    {{- include "base.field" (list "loadBalancerSourceRanges" $loadBalancerSourceRanges "base.slice.ips") }}
   {{- end }}
 
   {{- /* ports array */ -}}

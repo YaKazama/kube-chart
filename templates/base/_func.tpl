@@ -184,6 +184,21 @@
 {{- end }}
 
 
+{{- define "base.slice.ips" -}}
+  {{- include "base.invalid" . }}
+
+  {{- if kindIs "slice" . }}
+    {{- $val := list }}
+    {{- range . }}
+      {{- $val = append $val (include "base.ip" .) }}
+    {{- end }}
+    {{- toYamlPretty ($val | uniq) }}
+  {{- else }}
+    {{- include "base.faild" . }}
+  {{- end }}
+{{- end }}
+
+
 {{- /*
   string 允许显示空字符串 ""
   注: "空" 定义取决于以下类型：
