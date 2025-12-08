@@ -600,3 +600,13 @@ PodTemplate:
     containers:
       - name: xxxx
         image: xxxxxx:v11
+
+Binding:
+  target:
+    apiVersion: string
+    fieldPath: string
+    kind: string
+    name: string
+    namespace: string
+    resourceVersion: string
+    uid: string
