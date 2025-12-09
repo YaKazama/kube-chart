@@ -641,3 +641,13 @@ ClusterRole:
     - apiGroups: [""]
       resources: ["secrets"]
       verbs: ["get", "list", "watch"]
+
+ClusterRoleBinding:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cert-manager-controller-issuers
+  subjects:
+    - name: cert-manager
+      namespace: cert-manager
+      kind: ServiceAccount

@@ -46,7 +46,7 @@
           {{- $val | nindent 2 }}
         {{- else if $isSlice }}
           {{- nindent 0 "" -}}{{ $key }}:
-          {{- $val | nindent 0 }}
+          {{- $val | nindent 2 }}
         {{- else }}
           {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
         {{- end }}
