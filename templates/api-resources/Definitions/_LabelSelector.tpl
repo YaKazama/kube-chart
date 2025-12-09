@@ -12,7 +12,7 @@
 
   {{- /* matchLabels 与 labels 保持一致 此处不支持独立定义 */ -}}
   {{- $matchLabels := dict }}
-  {{- if or (eq ._pkind "PodAffinityTerm") (eq ._pkind "TopologySpreadConstraint") }}
+  {{- if or (eq ._pkind "PodAffinityTerm") (eq ._pkind "TopologySpreadConstraint") (eq ._pkind "AggregationRule") }}
     {{- $matchLabels := include "base.getValue" (list . "matchLabels") | fromYaml }}
     {{- if $matchLabels }}
       {{- include "base.field" (list "matchLabels" $matchLabels "base.map") }}

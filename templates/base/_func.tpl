@@ -314,6 +314,17 @@
 {{- end }}
 
 
+{{- define "base.slice.quote" -}}
+  {{- include "base.invalid" . }}
+
+  {{- if kindIs "slice" . }}
+    {{- toYamlPretty . | replace "'" "\"" }}
+  {{- else }}
+    {{- include "base.faild" . }}
+  {{- end }}
+{{- end }}
+
+
 {{- /*
   检查 fileMode 是否合法。支持字符串 0000 - 0777 及数字 0 - 511
 

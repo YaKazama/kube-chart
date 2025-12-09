@@ -610,3 +610,34 @@ Binding:
     namespace: string
     resourceVersion: string
     uid: string
+
+ClusterRole:
+  # aggregationRule:
+  #   clusterRoleSelectors:
+  #     - matchExpressions:
+  #         # 基于等值 / 不等值
+  #         - environment = production
+  #         - environment1 == production1
+  #         - tier != frontend
+  #         # 基于集合
+  #         - environment2 in (production2, qa2, xxx)
+  #         - tier2 notin (frontend2, backend2)
+  #         - partition
+  #         - "!partition1"
+  #         # 原生
+  #         - key: key
+  #           operator: In  # In/NotIn/Exists/DoesNotExist
+  #           values:
+  #           - value1
+  #           - value2
+  #         - key: key2
+  #           operator: Exists  # In/NotIn/Exists/DoesNotExist
+  #       matchLabels:
+  #         xxx: a1231221
+  rules:
+    - apiGroups: ["*"]
+      resources: ["certificates"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["get", "list", "watch"]
