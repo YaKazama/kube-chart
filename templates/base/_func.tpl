@@ -352,3 +352,35 @@
     {{- include "base.faild" . }}
   {{- end }}
 {{- end }}
+
+
+{{- /*
+  校验是否为绝对路径。
+
+  - 路径开始的 '../' 会移除
+  - 路径中的 '../' 会使用 clean 清洗
+*/ -}}
+{{- define "base.absPath" -}}
+  {{- $path := include "base.string" . | trimPrefix "../" | clean }}
+  {{- if isAbs $path }}
+    {{- $path }}
+  {{- else }}
+    {{- fail (printf "base.absPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  校验是否为相对路径。
+
+  - 路径开始的 '../' 会移除
+  - 路径中的 '../' 会使用 clean 清洗
+*/ -}}
+{{- define "base.relPath" -}}
+  {{- $path := include "base.string" . | trimPrefix "../" | clean }}
+  {{- if not (isAbs $path) }}
+    {{- $path }}
+  {{- else }}
+    {{- fail (printf "base.relPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
+  {{- end }}
+{{- end }}
