@@ -361,7 +361,7 @@
   - 路径中的 '../' 会使用 clean 清洗
 */ -}}
 {{- define "base.absPath" -}}
-  {{- $path := regexReplaceAll "^(..\\/)*" (include "base.string" . | clean) "" }}
+  {{- $path := regexReplaceAll "^(\\.\\.\\/)*" (include "base.string" . | clean) "" }}
   {{- if isAbs $path }}
     {{- $path }}
   {{- else }}
@@ -377,7 +377,7 @@
   - 路径中的 '../' 会使用 clean 清洗
 */ -}}
 {{- define "base.relPath" -}}
-  {{- $path := regexReplaceAll "^(..\\/)*" (include "base.string" . | clean) "" }}
+  {{- $path := regexReplaceAll "^(\\.\\.\\/)*" (include "base.string" . | clean) "" }}
   {{- if not (isAbs $path) }}
     {{- $path }}
   {{- else }}
