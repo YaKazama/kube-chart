@@ -5,8 +5,6 @@
     {{- include "base.field" (list "name" $name "base.name") }}
   {{- end }}
 
-  {{- $originalValue := "" }}
-
   {{- $volumeType := include "base.getValue" (list . "volumeType") }}
   {{- $volumeData := include "base.getValue" (list . "volume") }}
   {{- /* configMap map */ -}}
