@@ -31,33 +31,27 @@
   {{- if $isQuote }}
     {{- $val = $val | quote }}
   {{- end }}
-  {{- $isValid := fromYaml $val }}
 
-  {{- if $isValid }}
-    {{- if eq $sliceLen 2 }}
-      {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
-    {{- end }}
+  {{- if eq $sliceLen 2 }}
+    {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
+  {{- end }}
 
-    {{- if eq $sliceLen 3 }}
-      {{- $isMap := or (contains "map" $define) (contains "object" $define) }}
-      {{- $isSlice := or (contains "slice" $define) (contains "array" $define) (contains "list" $define) (contains "tuple" $define) }}
-        {{- if $isMap }}
-          {{- nindent 0 "" -}}{{ $key }}:
-          {{- $val | nindent 2 }}
-        {{- else if $isSlice }}
-          {{- nindent 0 "" -}}{{ $key }}:
-          {{- $val | nindent 2 }}
-        {{- else }}
-          {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
-        {{- end }}
-    {{- end }}
-
-    {{- if eq $sliceLen 4 }}
-      {{- /* 不在列表中的，会直接丢弃 */ -}}
-      {{- $allow := index . 3 }}
-      {{- if mustHas $val $allow }}
+  {{- if eq $sliceLen 3 }}
+    {{- $isMap := or (contains "map" $define) (contains "object" $define) }}
+    {{- $isSlice := or (contains "slice" $define) (contains "array" $define) (contains "list" $define) (contains "tuple" $define) }}
+      {{- if or $isMap $isSlice }}
+        {{- nindent 0 "" -}}{{ $key }}:
+        {{- $val | nindent 2 }}
+      {{- else }}
         {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
       {{- end }}
+  {{- end }}
+
+  {{- if eq $sliceLen 4 }}
+    {{- /* 不在列表中的，会直接丢弃 */ -}}
+    {{- $allow := index . 3 }}
+    {{- if mustHas $val $allow }}
+      {{- nindent 0 "" -}}{{ $key }}: {{ $val }}
     {{- end }}
   {{- end }}
 {{- end }}
