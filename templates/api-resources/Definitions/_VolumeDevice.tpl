@@ -8,7 +8,7 @@
 
   {{- /* devicePath string */ -}}
   {{- $devicePath := regexReplaceAll $regex . "${2}" }}
-  {{- include "base.field" (list "devicePath" $devicePath) }}
+  {{- include "base.field" (list "devicePath" $devicePath "base.absPath") }}
 
   {{- /* name string */ -}}
   {{- $name := regexReplaceAll $regex . "${1}" }}

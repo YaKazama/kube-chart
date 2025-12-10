@@ -25,7 +25,7 @@
   {{- /* path string */ -}}
   {{- $path := include "base.getValue" (list . "path") }}
   {{- if $path }}
-    {{- include "base.field" (list "path" $path) }}
+    {{- include "base.field" (list "path" $path "base.absPath") }}
   {{- end }}
 
   {{- /* pathType string */ -}}

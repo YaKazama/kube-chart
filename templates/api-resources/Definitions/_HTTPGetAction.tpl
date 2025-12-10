@@ -39,7 +39,7 @@
   {{- if empty $path }}
     {{- fail "HTTPGetAction: path must be exists." }}
   {{- end }}
-  {{- include "base.field" (list "path" $path) }}
+  {{- include "base.field" (list "path" $path "base.absPath") }}
 
   {{- /* port string */ -}}
   {{- $port := regexReplaceAll $regex . "${3}" }}

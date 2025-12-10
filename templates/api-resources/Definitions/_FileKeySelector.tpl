@@ -18,7 +18,7 @@
 
   {{- /* path string */ -}}
   {{- $path := regexReplaceAll $regex . "${2}" }}
-  {{- include "base.field" (list "path" $path) }}
+  {{- include "base.field" (list "path" $path "base.relPath") }}
 
   {{- /* volumeName string */ -}}
   {{- $volumeName := regexReplaceAll $regex . "${1}" }}

@@ -8,7 +8,7 @@
 
   {{- /* mountPath string */ -}}
   {{- $mountPath := regexReplaceAll $regex . "${2}" }}
-  {{- include "base.field" (list "mountPath" $mountPath) }}
+  {{- include "base.field" (list "mountPath" $mountPath "base.absPath") }}
 
   {{- /* name string */ -}}
   {{- $name := regexReplaceAll $regex . "${1}" }}
@@ -40,7 +40,7 @@
   {{- $subPath := regexReplaceAll $regex . "${3}" }}
   {{- $subPathExpr := regexReplaceAll $regex . "${4}" }}
   {{- if $subPath }}
-    {{- include "base.field" (list "subPath" $subPath) }}
+    {{- include "base.field" (list "subPath" $subPath "base.relPath") }}
   {{- else }}
     {{- include "base.field" (list "subPathExpr" $subPathExpr) }}
   {{- end }}

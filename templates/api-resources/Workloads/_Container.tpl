@@ -198,7 +198,7 @@
   {{- /* terminationMessagePath string */ -}}
   {{- $terminationMessagePath := include "base.getValue" (list . "terminationMessagePath") }}
   {{- if $terminationMessagePath }}
-    {{- include "base.field" (list "terminationMessagePath" $terminationMessagePath) }}
+    {{- include "base.field" (list "terminationMessagePath" $terminationMessagePath "base.absPath") }}
   {{- end }}
 
   {{- /* terminationMessagePolicy string */ -}}

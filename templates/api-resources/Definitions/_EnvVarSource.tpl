@@ -1,12 +1,4 @@
 {{- define "definitions.EnvVarSource" -}}
-  {{- /*
-    正则:
-      configMap name key [optional]
-      field fieldPath apiVersion
-      file volumeName path key [optional]
-      resourceField resource [containerName] [divisor]
-      secret name key [optional]
-  */ -}}
   {{- $regex := "^(configMap|field|file|resource|secret)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?$" }}
 
   {{- $match := regexFindAll $regex . -1 }}
