@@ -2,7 +2,7 @@
   {{- $_pkind := get . "_kind" }}
 
   {{- /* annotations */ -}}
-  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec") (eq $_pkind "StatefulSetSpec")) }}
+  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec") (eq $_pkind "StatefulSetSpec") (eq $_pkind "Namespace")) }}
     {{- $annotations := include "base.getValue" (list . "annotations") | fromYaml }}
     {{- if $annotations }}
       {{- include "base.field" (list "annotations" $annotations "base.map") }}
@@ -30,7 +30,7 @@
   {{- end }}
 
   {{- /* namespace */ -}}
-  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec")) }}
+  {{- if not (or (eq $_pkind "PodTemplateSpec") (eq $_pkind "JobTemplateSpec") (eq $_pkind "Namespace")) }}
     {{- $namespace := include "base.namespace" . }}
     {{- if $namespace }}
       {{- include "base.field" (list "namespace" $namespace) }}

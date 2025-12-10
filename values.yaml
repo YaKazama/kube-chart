@@ -651,3 +651,7 @@ ClusterRoleBinding:
     - name: cert-manager
       namespace: cert-manager
       kind: ServiceAccount
+
+Namespace:
+  name: xxx
+  namespace: yyy
