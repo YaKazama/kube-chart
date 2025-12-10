@@ -1,22 +1,19 @@
 {{- define "definitions.NFSVolumeSource" -}}
-  {{- $regex := "^(\\S+)\\s+(\\S+)\\s*(true|false)?$" }}
-
-  {{- $match := regexFindAll $regex . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "nfs: error. Values: %s, format: 'server path [readOnly]'" .) }}
+  {{- /* path string */ -}}
+  {{- $path := include "base.getValue" (list . "path") }}
+  {{- if $path }}
+    {{- include "base.field" (list "path" $path "base.absPath") }}
   {{- end }}
 
-  {{- /* path string */ -}}
-  {{- $path := regexReplaceAll $regex . "${2}" | trim }}
-  {{- include "base.field" (list "path" $path) }}
-
   {{- /* readOnly bool */ -}}
-  {{- $readOnly := regexReplaceAll $regex . "${3}" | trim }}
+  {{- $readOnly := include "base.getValue" (list . "readOnly") }}
   {{- if $readOnly }}
     {{- include "base.field" (list "readOnly" $readOnly "base.bool") }}
   {{- end }}
 
   {{- /* server string */ -}}
-  {{- $server := regexReplaceAll $regex . "${1}" | trim }}
-  {{- include "base.field" (list "server" $server) }}
+  {{- $server := include "base.getValue" (list . "server") }}
+  {{- if $server }}
+    {{- include "base.field" (list "server" $server) }}
+  {{- end }}
 {{- end }}

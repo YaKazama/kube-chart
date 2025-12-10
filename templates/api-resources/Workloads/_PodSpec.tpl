@@ -92,7 +92,8 @@
   {{- $imagePullSecretsVal := include "base.getValue" (list . "imagePullSecrets") | fromYamlArray }}
   {{- $imagePullSecrets := list }}
   {{- range $imagePullSecretsVal }}
-    {{- $imagePullSecrets = append $imagePullSecrets (include "definitions.LocalObjectReference" . | fromYaml) }}
+    {{- $val := dict "name" . }}
+    {{- $imagePullSecrets = append $imagePullSecrets (include "definitions.LocalObjectReference" $val | fromYaml) }}
   {{- end }}
   {{- if $imagePullSecrets }}
     {{- include "base.field" (list "imagePullSecrets" $imagePullSecrets "base.slice") }}
@@ -252,8 +253,13 @@
   {{- /* volumes array */ -}}
   {{- $volumesVal := include "base.getValue" (list . "volumes") | fromYamlArray }}
   {{- $volumes := list }}
+  {{- $regex := "^(cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi|local)(?:\\s+(.*?))(?:\\s+(.*?))?$" }}
   {{- range $volumesVal }}
-    {{- $volumes = append $volumes (include "configStorage.Volume" . | fromYaml) }}
+    {{- if not (regexMatch $regex .) }}
+      {{- fail (printf "workloads.PodSpec: volume invalid. Values: '%s'." .) }}
+    {{- end }}
+    {{- $val := dict "volumeType" (regexReplaceAll $regex . "${1}") "name" (regexReplaceAll $regex . "${2}") "volume" (regexReplaceAll $regex . "${3}") }}
+    {{- $volumes = append $volumes (include "configStorage.Volume" $val | fromYaml) }}
   {{- end }}
   {{- $volumes = $volumes | mustUniq | mustCompact }}
   {{- if $volumes }}

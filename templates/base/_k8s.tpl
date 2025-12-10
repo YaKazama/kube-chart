@@ -41,7 +41,7 @@
   {{- if mustRegexMatch $const.regexQuantity (toString .) }}
     {{- . }}
   {{- else }}
-    {{- include "base.fail" . }}
+    {{- include "base.faild" . }}
   {{- end }}
 {{- end }}
 
@@ -69,7 +69,7 @@
     {{- else if regexMatch $const.regexTime . }}
       {{- . }}
     {{- else }}
-      {{- include "base.fail" . }}
+      {{- include "base.faild" . }}
     {{- end }}
   {{- else }}
     {{- include "base.faild" . }}

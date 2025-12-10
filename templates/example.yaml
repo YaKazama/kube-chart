@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.Namespace }}
-{{- include "cluster.Namespace" . }}
+{{- $_ := set . "Context" .Values.deployment }}
+{{- include "workloads.Deployment" . }}

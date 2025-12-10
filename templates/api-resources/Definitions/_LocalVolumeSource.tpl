@@ -1,12 +1,14 @@
 {{- define "definitions.LocalVolumeSource" -}}
-  {{- $regex := "^(\\S+)$" }}
-
-  {{- $match := regexFindAll $regex . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "local: error. Values: %s, format: 'path'" .) }}
+  {{- /* path string */ -}}
+  {{- $path := include "base.getValue" (list . "path") }}
+  {{- if $path }}
+    {{- include "base.field" (list "path" $path "base.absPath") }}
   {{- end }}
 
-  {{- /* path string */ -}}
-  {{- $path := regexReplaceAll $regex . "${1}" | trim }}
-  {{- include "base.field" (list "path" $path) }}
+  {{- /* fsType string */ -}}
+  {{- $fsType := include "base.getValue" (list . "fsType") }}
+  {{- $fsTypeAllows := list "ext4" "xfs" "ntfs" }}
+  {{- if $fsType }}
+    {{- include "base.field" (list "fsType" $fsType "base.string" $fsTypeAllows) }}
+  {{- end }}
 {{- end }}

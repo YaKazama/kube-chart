@@ -18,9 +18,7 @@ terminationGracePeriodSeconds: 99
 replicas: 33
 helmPortsRange: 30000-32767
 
-zz:
-- a
-- b
+zz: ../../../api/../health
 
 deployment:
   # service 应该是个 map
@@ -250,29 +248,29 @@ deployment:
       topologyKey: string
       whenUnsatisfiable: ScheduleAnyway
   volumes:
-    - cm:vol-cm: aaa items (key path)
-    - emptyDir:vol-a:
-    - emptyDir:vol-b: Memory 500Mi
-    - fc:vol-fc1: targetWWNs (wwn1, wwn2) 0 ext4 true
-    - fc:vol-fc2: wwids (wid1, wid2) ext4 true
-    - hostPath:vol-ccc: config/xxx/ Directory
-    - image:vol-ssss: x.x.xom/path/aa:v2 Never
-    - iscsi:vol-eee: targetPortal iqn 1 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secretRef
-    - nfs:vol-nfs: x.xom config/xx true
-    - pvc:vol-ggg: "claimName true"
-    - secret:vol-secret: secretName true 0755 items(key path 0650, key1 path1)
-    - local:vol-local: config/aaa
-  # volumes:
-  #   - configMap:vol-aaa: "name [optional] [defaultMode] [items (key path [mode], key path [mode])]"
-  #   - secret:vol-hhh: "secretName [optional] [defaultMode] [items (key path [mode], key path [mode])]"
-  #   - pvc:vol-ggg: "claimName [readOnly]"
-  #   - emptyDir:vol-bbb: "[medium] [sizeLimit]"
-  #   - hostPath:vol-ccc: "path [type]"
-  #   - nfs:vol-fff: "server path [readOnly]"
-  #   - image:vol-ddd: "reference [pullPolicy]"
-  #   - fc:vol-fc1: "targetWWNs (wwn1, wwn2) lun fsType [readOnly]"
-  #   - fc:vol-fc2: "wwids (wid1, wid2) fsType [readOnly]"
-  #   - iscsi:vol-eee: "targetPortal iqn lun fsType [readOnly] [iscsiInterface] [initiatorName] [chap (chapAuthDiscovery, chapAuthSession)] [portals (ip, ip)] [secretRef]"
+    # volumeType volumeName name [optional] [defaultMode] [items (key path [mode], key path [mode])]
+    - cm vol-cm aaa true items (key path, key1 path1)
+    # volumeType volumeName [medium] [sizeLimit]
+    - emptyDir vol-a
+    - emptyDir vol-b 500Mi
+    # volumeType volumeName targetWWNs (wwn1, wwn2) lun fsType [readOnly]
+    # volumeType volumeName wwids (wid1, wid2) fsType [readOnly]
+    - fc vol-fc1 targetWWNs (wwn1, wwn2) 0 ext4 true
+    - fc vol-fc2 wwids (wid1, wid2) ext4 true
+    # volumeType volumeName reference [pullPolicy]
+    - image vol-ssss x.x.xom/path/aa:v2 Never
+    # volumeType volumeName path [type]
+    - hostPath vol-ccc /config/xxx/ Directory
+    # volumeType volumeName targetPortal iqn lun fsType [readOnly] [iscsiInterface] [initiatorName] [chap (chapAuthDiscovery, chapAuthSession)] [portals (ip, ip)] [secretRef]
+    - iscsi vol-eee targetPortal iqn 0 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secretRef
+    # volumeType volumeName server path [readOnly]
+    - nfs vol-nfs x.xom /config/xx true
+    # volumeType volumeName claimName [readOnly]
+    - pvc vol-ggg claimName true
+    # volumeType volumeName secretName [optional] [defaultMode] [items (key path [mode], key path [mode])]
+    - secret vol-hhh secretName true 0755 items(key path 0650, key1 path1)
+    # volumeType volumeName
+    - local vol-local /config/aaa
   containers:
     - name: c-1
       args:

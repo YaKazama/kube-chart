@@ -1,8 +1,7 @@
-{{- /*
-  数据格式：
-    - secret-name
-*/ -}}
 {{- define "definitions.LocalObjectReference" -}}
   {{- /* name string */ -}}
-  {{- include "base.field" (list "name" .) }}
+  {{- $name := include "base.getValue" (list . "name") }}
+  {{- if $name }}
+    {{- include "base.field" (list "name" $name) }}
+  {{- end }}
 {{- end }}

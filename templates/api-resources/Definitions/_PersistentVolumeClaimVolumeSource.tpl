@@ -1,17 +1,10 @@
 {{- define "definitions.PersistentVolumeClaimVolumeSource" -}}
-  {{- $regex := "^(\\S+)\\s*(true|false)?$" }}
-
-  {{- $match := regexFindAll $regex . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "pvc: error. Values: %s, format: 'claimName [readOnly]'" .) }}
-  {{- end }}
-
   {{- /* claimName string */ -}}
-  {{- $claimName := regexReplaceAll $regex . "${1}" | trim }}
+  {{- $claimName := include "base.getValue" (list . "claimName") }}
   {{- include "base.field" (list "claimName" $claimName) }}
 
   {{- /* readOnly bool */ -}}
-  {{- $readOnly := regexReplaceAll $regex . "${2}" | trim }}
+  {{- $readOnly := include "base.getValue" (list . "readOnly") }}
   {{- if $readOnly }}
     {{- include "base.field" (list "readOnly" $readOnly "base.bool") }}
   {{- end }}
