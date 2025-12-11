@@ -1,5 +1,6 @@
 {{- define "definitions.LabelSelector" -}}
   {{- $_ := set . "_pkind" (get . "_kind") }}
+
   {{- /* matchExpressions */ -}}
   {{- $matchExpressionsVal := include "base.getValue" (list . "matchExpressions") | fromYamlArray }}
   {{- $matchExpressions := list }}
@@ -12,7 +13,7 @@
 
   {{- /* matchLabels 与 labels 保持一致 此处不支持独立定义 */ -}}
   {{- $matchLabels := dict }}
-  {{- if or (eq ._pkind "PodAffinityTerm") (eq ._pkind "TopologySpreadConstraint") (eq ._pkind "AggregationRule") }}
+  {{- if or (eq ._pkind "PodAffinityTerm") (eq ._pkind "TopologySpreadConstraint") (eq ._pkind "AggregationRule") (eq ._pkind "NetworkPolicySpec") }}
     {{- $matchLabels := include "base.getValue" (list . "matchLabels") | fromYaml }}
     {{- if $matchLabels }}
       {{- include "base.field" (list "matchLabels" $matchLabels "base.map") }}

@@ -766,3 +766,54 @@ ServiceAccount:
       namespace: string
       resourceVersion: string
       uid: string
+
+NetworkPolicy:
+  egress:
+    - ports:
+        - endPort: 12345
+          port: 34456
+          protocol: tcp
+      to:
+        - endPort: 12345
+          port: port-aaa
+          protocol: tcp
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 192.168.1.0/24
+            except:
+              - 192.168.2.0/24
+          namespaceSelector:
+            matchExpressions:
+              - key: a
+                operator: In
+                values:
+                  - xxx1
+                  - xxx2
+            matchLabels:
+              x: yyy
+          podSelector:
+            matchExpressions:
+              - key: a
+                operator: In
+                values:
+                  - xxx1
+                  - xxx2
+            matchLabels:
+              x: yyy
+      ports:
+        - endPort: 12345
+          port: port-aaa
+          protocol: tcp
+  podSelector:
+    matchExpressions:
+      - key: a
+        operator: In
+        values:
+          - xxx1
+          - xxx2
+    matchLabels:
+      x: yyy
+  policyTypes:
+    - Ingress
+    - Egress
