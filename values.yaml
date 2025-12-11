@@ -734,3 +734,12 @@ PersistentVolume:
               values:
                 - zzz1
                 - zzz2
+
+Role:
+  rules:
+    - apiGroups: ["coordination.k8s.io"]
+      resources: ["leases"]
+      verbs: ["create"]
+    - apiGroups: ["*"]
+      resources: ["leases"]
+      verbs: ["create"]
