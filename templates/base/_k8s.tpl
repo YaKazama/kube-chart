@@ -162,13 +162,18 @@
   return: string
 */ -}}
 {{- define "base.namespace" -}}
-  {{- $namespaceVal := include "base.getValue" (list . "namespace") }}
-  {{- $namespace := coalesce $namespaceVal "default" | lower | nospace | trimSuffix "-" }}
+  {{- $namespace := "default" }}
+  {{- if kindIs "string" . }}
+    {{- $namespace = . }}
+  {{- else if kindIs "map" . }}
+    {{- $namespaceVal := include "base.getValue" (list . "namespace") }}
+    {{- $namespace = coalesce $namespaceVal "default" | lower | nospace | trimSuffix "-" }}
+  {{- end }}
 
   {{- /*  */ -}}
   {{- $const := include "base.env" "" | fromYaml }}
   {{- if not (regexMatch $const.regexRFC1123 $namespace) }}
-    {{- fail (printf "namespace '%s' invalid (must match RFC1123: %s)" $namespace $const.regexRFC1123) }}
+    {{- fail (printf "namespace '%s'(%s) invalid (must match RFC1123: %s)" $namespace (kindOf $namespace) $const.regexRFC1123) }}
   {{- end }}
 
   {{- $namespace }}

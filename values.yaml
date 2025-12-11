@@ -653,3 +653,84 @@ ClusterRoleBinding:
 Namespace:
   name: xxx
   namespace: yyy
+
+PersistentVolume:
+  claimRef:
+    apiVersion: string
+    fieldPath: string
+    kind: string
+    name: string
+    namespace: string
+    resourceVersion: string
+    uid: string
+  csi:
+    controllerExpandSecretRef:
+      name: string
+      namespace: ns-aaa
+    controllerPublishSecretRef:
+      name: string
+      namespace: string
+    driver: string
+    fsType: ext4
+    nodeExpandSecretRef:
+      name: string
+      namespace: string
+    nodePublishSecretRef:
+      name: string
+      namespace: string
+    nodeStageSecretRef:
+      name: string
+      namespace: string
+    readOnly: true
+    volumeAttributes:
+      x: xxx
+    volumeHandle: string
+  fc:
+    fsType: ext4
+    lun: 0
+    readOnly: true
+    targetWWNs:
+      - wwn1
+    wwids:
+      - wwids1
+  hostPath:
+    path: /config/aaa
+    type: DirectoryOrCreate
+  iscsi:
+    chapAuthDiscovery: true
+    chapAuthSession: true
+    fsType: ext4
+    initiatorName: string
+    iqn: string
+    iscsiInterface: string
+    lun: 0
+    portals:
+      - xx1
+      - xx2
+    readOnly: true
+    secretRef:
+      name: string
+      namespace: string
+    targetPortal: 1.1.1.1:11111
+  local:
+    fsType: ext4
+    path: /aaa
+  nfs:
+    path: /volume/nfs/data
+    readOnly: true
+    server: x.x.x.com
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: a
+              operator: In
+              values:
+                - xxx1
+                - xxx2
+        - matchFields:
+            - key: b
+              operator: DoesNotExist
+              values:
+                - zzz1
+                - zzz2

@@ -1,4 +1,4 @@
-{{- define "definitions.ISCSIVolumeSource" -}}
+{{- define "definitions.ISCSIPersistentVolumeSource" -}}
   {{- /* chapAuthDiscovery bool */ -}}
   {{- $chapAuthDiscovery := include "base.getValue" (list . "chapAuthDiscovery") }}
   {{- if $chapAuthDiscovery }}
@@ -55,9 +55,8 @@
   {{- end }}
 
   {{- /* secretRef map */ -}}
-  {{- $secretRefVal := include "base.getValue" (list . "secretRef") }}
-  {{- $val := dict "name" $secretRefVal }}
-  {{- $secretRef := include "definitions.LocalObjectReference" $val | fromYaml }}
+  {{- $secretRefVal := include "base.getValue" (list . "secretRef") | fromYaml }}
+  {{- $secretRef := include "definitions.SecretReference" $secretRefVal | fromYaml }}
   {{- if $secretRef }}
     {{- include "base.field" (list "secretRef" $secretRef "base.map") }}
   {{- end }}

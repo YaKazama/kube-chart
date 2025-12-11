@@ -20,6 +20,6 @@
   {{- /* namespace string */ -}}
   {{- $namespace := include "base.getValue" (list . "namespace") }}
   {{- if $namespace }}
-    {{- include "base.field" (list "namespace" $namespace) }}
+    {{- include "base.field" (list "namespace" $namespace "base.namespace") }}
   {{- end }}
 {{- end }}

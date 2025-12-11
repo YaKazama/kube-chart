@@ -18,8 +18,8 @@
   {{- end }}
 
   {{- /* namespace string */ -}}
-  {{- $namespace := include "base.namespace" . }}
+  {{- $namespace := include "base.getValue" (list . "namespace") }}
   {{- if $namespace }}
-    {{- include "basef.field" (list "namespace" $namespace) }}
+    {{- include "basef.field" (list "namespace" $namespace "base.namespace") }}
   {{- end }}
 {{- end }}
