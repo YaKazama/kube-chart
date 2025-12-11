@@ -95,6 +95,7 @@
     {{- $val := dict "name" . }}
     {{- $imagePullSecrets = append $imagePullSecrets (include "definitions.LocalObjectReference" $val | fromYaml) }}
   {{- end }}
+  {{- $imagePullSecrets = $imagePullSecrets | mustUniq | mustCompact }}
   {{- if $imagePullSecrets }}
     {{- include "base.field" (list "imagePullSecrets" $imagePullSecrets "base.slice") }}
   {{- end }}

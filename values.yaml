@@ -753,3 +753,16 @@ RoleBinding:
     - kind: ServiceAccount
       name: cert-manager-cainjector
       namespace: cert-manager
+
+ServiceAccount:
+  automountServiceAccountToken: true
+  imagePullSecrets:
+    - xxx
+  secrets:
+    - apiVersion: string
+      fieldPath: string
+      kind: string
+      name: string
+      namespace: string
+      resourceVersion: string
+      uid: string

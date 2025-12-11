@@ -1,5 +1,5 @@
 {{- /*
 
 */ -}}
-{{- $_ := set . "Context" .Values.RoleBinding }}
-{{- include "cluster.RoleBinding" . }}
+{{- $_ := set . "Context" .Values.ServiceAccount }}
+{{- include "cluster.ServiceAccount" . }}
