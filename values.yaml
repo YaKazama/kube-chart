@@ -743,3 +743,13 @@ Role:
     - apiGroups: ["*"]
       resources: ["leases"]
       verbs: ["create"]
+
+RoleBinding:
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: cert-manager-cainjector:leaderelection
+  subjects:
+    - kind: ServiceAccount
+      name: cert-manager-cainjector
+      namespace: cert-manager
