@@ -50,7 +50,7 @@
     {{- end }}
     {{- toYamlPretty $val }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.map.b64enc" "iValue" . "iLine" 53) }}
   {{- end }}
 {{- end }}
 
@@ -133,7 +133,7 @@
     {{- if ge $num $min }}
       {{- include "base.int" $num }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 136) }}
     {{- end }}
   {{- else if eq $len 3 }}
     {{- $num := (index . 0) }}
@@ -145,10 +145,10 @@
     {{- if and (ge $num $min) (le $num $max) }}
       {{- include "base.int" $num }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 148) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 151) }}
   {{- end }}
 {{- end }}
 
@@ -162,7 +162,7 @@
   {{- if and (ge (int .) 1) (le (int .) 65535) }}
     {{- int . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.port" "iValue" . "iLine" 165) }}
   {{- end }}
 {{- end }}
 
@@ -179,7 +179,7 @@
   {{- if mustRegexMatch $const.regexIP (toString .) }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.ip" "iValue" . "iLine" 182) }}
   {{- end }}
 {{- end }}
 
@@ -194,7 +194,7 @@
     {{- end }}
     {{- toYamlPretty ($val | uniq) }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 197) }}
   {{- end }}
 {{- end }}
 
@@ -280,7 +280,7 @@
     {{- else if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) }}
       {{- $clean = mustAppend $clean . }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" . "iLine" 283) }}
     {{- end }}
   {{- end }}
 
@@ -288,7 +288,7 @@
     {{- if $regexCheck }}
       {{- /* mustRegexMatch 有问题时会向模板引擎返回错误 */ -}}
       {{- if not (mustRegexMatch $regexCheck (toString .)) }}
-        {{- include "base.faild" . }}
+        {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" . "iLine" 291) }}
       {{- end }}
     {{- end }}
 
@@ -320,7 +320,7 @@
   {{- if kindIs "slice" . }}
     {{- toYamlPretty . | replace "'" "\"" }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.slice.quote" "iValue" . "iLine" 323) }}
   {{- end }}
 {{- end }}
 
@@ -346,10 +346,10 @@
     {{- if mustRegexMatch $const.regexFileMode . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" . "iLine" 349) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" . "iLine" 352) }}
   {{- end }}
 {{- end }}
 

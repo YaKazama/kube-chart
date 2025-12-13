@@ -11,7 +11,7 @@
     {{- /* {{- toYamlPretty . | replace "'" "\"" }} 可将单引号强制换为双引号，对 CronJob 中的 schedule 有奇效 */ -}}
     {{- toYamlPretty . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.map" "iValue" . "iLine" 14) }}
   {{- end }}
 {{- end }}
 
@@ -31,7 +31,7 @@
       {{- . }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.bool" "iValue" . "iLine" 34) }}
   {{- end }}
 {{- end }}
 
@@ -65,10 +65,10 @@
         {{- $val }}
       {{- end }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 68) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 71) }}
   {{- end }}
 {{- end }}
 
@@ -104,7 +104,7 @@
       {{- . | trim }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.string" "iValue" . "iLine" 107) }}
   {{- end }}
 {{- end }}
 
@@ -120,7 +120,7 @@
   {{- if kindIs "slice" . }}
     {{- toYamlPretty . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.slice" "iValue" . "iLine" 123) }}
   {{- end }}
 {{- end }}
 
@@ -134,7 +134,7 @@
   {{- if kindIs "float64" . }}
     {{- int . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.ftoi" "iValue" . "iLine" 137) }}
   {{- end }}
 {{- end }}
 
@@ -148,6 +148,6 @@
   {{- if kindIs "bool" . }}
     {{- toString . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.btoa" "iValue" . "iLine" 151) }}
   {{- end }}
 {{- end }}

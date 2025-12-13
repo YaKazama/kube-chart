@@ -1,8 +1,10 @@
 {{- /*
   打印失败信息，包括传入的值、类型
+
+  数据格式: dict/map, 包括 iName(string) iValue(string) iLine(int)
 */ -}}
 {{- define "base.faild" }}
-  {{- fail (printf "Type not support! Values: '%v', Type: %s (%s)" . (typeOf .) (kindOf .)) }}
+  {{- fail (printf "%s: Type not support! Values: '%v', Type: %s (%s), Line: %d" .iName .iValue (typeOf .iValue) (kindOf .iValue) .iLine) }}
 {{- end }}
 
 {{- /*
@@ -10,7 +12,7 @@
 */ -}}
 {{- define "base.invalid" -}}
   {{- if kindIs "invalid" . }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.invalid" "iValue" . "iLine" 13) }}
   {{- end }}
 {{- end }}
 
@@ -19,6 +21,6 @@
 */ -}}
 {{- define "base.empty" -}}
   {{- if empty . }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.empty" "iValue" . "iLine" 22) }}
   {{- end }}
 {{- end }}

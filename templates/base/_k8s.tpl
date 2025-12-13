@@ -41,7 +41,7 @@
   {{- if mustRegexMatch $const.regexQuantity (toString .) }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.Quantity" "iValue" . "iLine" 44) }}
   {{- end }}
 {{- end }}
 
@@ -69,10 +69,10 @@
     {{- else if regexMatch $const.regexTime . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 72) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 75) }}
   {{- end }}
 {{- end }}
 
@@ -91,7 +91,7 @@
   {{- if mustRegexMatch $const.regexFieldsV1 . }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.FieldsV1" "iValue" . "iLine" 94) }}
   {{- end }}
 {{- end }}
 
@@ -116,10 +116,10 @@
     {{- if mustRegexMatch $const.regexRollingUpdate . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" . }}
+      {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 119) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" . }}
+    {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 122) }}
   {{- end }}
 {{- end }}
 
