@@ -83,23 +83,23 @@
   {{- end }}
 
   {{- /* ports array */ -}}
-  {{- $regex := "^(?:(3(?:[01]\\d{3}|2[0-6]\\d{2}|27[0-5]\\d|276[0-7]))\\:)?(0|[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])(?:\\:(0|[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5]|[\\w-]+))?(?:\\/(tcp|TCP|udp|UDP|sctp|SCTP))?(?:@([\\w\\.-\\/]+))?(?:#([\\w-]+))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
   {{- $portsVal := include "base.getValue" (list . "ports") | fromYamlArray }}
   {{- $ports := list }}
   {{- range $portsVal }}
     {{- $_ports := toString . }}
-    {{- $match := regexFindAll $regex $_ports -1 }}
+    {{- $match := regexFindAll $const.regexServiceSpecPorts $_ports -1 }}
     {{- if not $match }}
       {{- fail (printf "ServiceSpec: ports error. Values: %s, format: '[nodePort:]port[:targetPort][/protocol][@appProtocol][#name]'" $_ports) }}
     {{- end }}
 
     {{- $val := dict }}
-    {{- $_ := set $val "nodePort" (regexReplaceAll $regex $_ports "${1}") }}
-    {{- $_ := set $val "port" (regexReplaceAll $regex $_ports "${2}") }}
-    {{- $_ := set $val "targetPort" (regexReplaceAll $regex $_ports "${3}") }}
-    {{- $_ := set $val "protocol" (regexReplaceAll $regex $_ports "${4}") }}
-    {{- $_ := set $val "appProtocol" (regexReplaceAll $regex $_ports "${5}") }}
-    {{- $_ := set $val "name" (regexReplaceAll $regex $_ports "${6}") }}
+    {{- $_ := set $val "nodePort" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${1}") }}
+    {{- $_ := set $val "port" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${2}") }}
+    {{- $_ := set $val "targetPort" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${3}") }}
+    {{- $_ := set $val "protocol" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${4}") }}
+    {{- $_ := set $val "appProtocol" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${5}") }}
+    {{- $_ := set $val "name" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${6}") }}
 
     {{- $ports = append $ports (include "definitions.ServicePort" $val | fromYaml) }}
   {{- end }}

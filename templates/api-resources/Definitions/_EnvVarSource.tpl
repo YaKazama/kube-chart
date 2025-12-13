@@ -1,9 +1,9 @@
 {{- define "definitions.EnvVarSource" -}}
-  {{- $regex := "^(configMap|field|file|resource|secret)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexEnvVarSource . -1 }}
   {{- if not $match }}
-    {{- fail (printf "env.valueFrom: error, must start with 'configMap|field|file|resource|secret'. Values: %s" .) }}
+    {{- fail (printf "definitions.EnvVarSource: env.valueFrom: error, must start with 'configMap|field|file|resource|secret'. Values: %s" .) }}
   {{- end }}
 
   {{- /* configMapKeyRef map */ -}}

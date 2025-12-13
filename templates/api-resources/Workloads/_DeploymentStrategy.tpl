@@ -9,10 +9,9 @@
     - RollingUpdate 50% 50%
 */ -}}
 {{- define "workloads.DeploymentStrategy" -}}
-  {{- $regexStrategy := "^Recreate|RollingUpdate(\\s+\\d+(\\%)?){0,2}$" }}
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- if not (mustRegexMatch $regexStrategy .) }}
+  {{- if not (mustRegexMatch $const.regexStrategy .) }}
     {{- fail "DeploymentStrategy: strategy must string. Format: <Recreate|RollingUpdate> [maxSurge(25%)][maxUnavailable(25%)]" }}
   {{- end }}
 

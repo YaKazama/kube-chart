@@ -1,16 +1,16 @@
 {{- define "definitions.VolumeDevice" -}}
-  {{- $regex := "^(\\S+)\\s+(\\S+)$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexVolumeDevice . -1 }}
   {{- if not $match }}
     {{- fail (printf "volumeDevice: error. Values: %s, format: 'name devicePath'" .) }}
   {{- end }}
 
   {{- /* devicePath string */ -}}
-  {{- $devicePath := regexReplaceAll $regex . "${2}" }}
+  {{- $devicePath := regexReplaceAll $const.regexVolumeDevice . "${2}" }}
   {{- include "base.field" (list "devicePath" $devicePath "base.absPath") }}
 
   {{- /* name string */ -}}
-  {{- $name := regexReplaceAll $regex . "${1}" }}
+  {{- $name := regexReplaceAll $const.regexVolumeDevice . "${1}" }}
   {{- include "base.field" (list "name" $name) }}
 {{- end }}

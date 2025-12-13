@@ -1,26 +1,26 @@
 {{- define "definitions.HTTPGetAction" -}}
-  {{- $regex := "^(?:(HTTP|http|HTTPS|https)\\s+)?(?:(\\S+)\\s+)?(?:(\\d+)\\s+)?(\\S+)(?:\\s+(header|headers)\\s+\\((.*?)\\))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexHTTPGetAction . -1 }}
   {{- if not $match }}
     {{- fail (printf "HTTPGetAction: error, Values: %s, format: '[sheme] [host] [port] path <header|headers> (name value, ...)'" .) }}
   {{- end }}
 
   {{- /* host string */ -}}
-  {{- $host := regexReplaceAll $regex . "${2}" }}
+  {{- $host := regexReplaceAll $const.regexHTTPGetAction . "${2}" }}
   {{- if $host }}
     {{- include "base.field" (list "host" $host) }}
   {{- end }}
 
   {{- /* httpHeaders array */ -}}
-  {{- $httpHeadersKeywords := regexReplaceAll $regex . "${5}" }}
+  {{- $httpHeadersKeywords := regexReplaceAll $const.regexHTTPGetAction . "${5}" }}
   {{- if or (eq $httpHeadersKeywords "header") (eq $httpHeadersKeywords "headers") }}
-    {{- $httpHeadersVal := regexReplaceAll $regex . "${6}" }}
+    {{- $httpHeadersVal := regexReplaceAll $const.regexHTTPGetAction . "${6}" }}
     {{- $httpHeaders := list }}
-    {{- $_headers := regexSplit ",\\s*" $httpHeadersVal -1 }}
+    {{- $_headers := regexSplit $const.regexSplitComma $httpHeadersVal -1 }}
     {{- range $_headers }}
       {{- $val := dict }}
-      {{- $_val := regexSplit " " (. | trim) -1 }}
+      {{- $_val := regexSplit $const.regexSplit (. | trim) -1 }}
       {{- if ne (len $_val) 2 }}
         {{- fail (printf "HTTPGetAction: headers invalid. Values: '%s', format: 'name value'" .) }}
       {{- end }}
@@ -35,20 +35,20 @@
   {{- end }}
 
   {{- /* path string */ -}}
-  {{- $path := regexReplaceAll $regex . "${4}" }}
+  {{- $path := regexReplaceAll $const.regexHTTPGetAction . "${4}" }}
   {{- if empty $path }}
     {{- fail "HTTPGetAction: path must be exists." }}
   {{- end }}
   {{- include "base.field" (list "path" $path "base.absPath") }}
 
   {{- /* port string */ -}}
-  {{- $port := regexReplaceAll $regex . "${3}" }}
+  {{- $port := regexReplaceAll $const.regexHTTPGetAction . "${3}" }}
   {{- if $port }}
     {{- include "base.field" (list "port" $port "base.port") }}
   {{- end }}
 
   {{- /* scheme string */ -}}
-  {{- $scheme := regexReplaceAll $regex . "${1}" | upper }}
+  {{- $scheme := regexReplaceAll $const.regexHTTPGetAction . "${1}" | upper }}
   {{- if $scheme }}
     {{- include "base.field" (list "scheme" $scheme) }}
   {{- end }}

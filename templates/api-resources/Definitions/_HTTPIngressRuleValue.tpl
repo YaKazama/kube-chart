@@ -1,16 +1,17 @@
 {{- define "definitions.HTTPIngressRuleValue" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* paths array */ -}}
-  {{- $regex := "^(\\S+)(?:\\s+(Exact|Prefix|ImplementationSpecific))?(?:\\s+(resource|service)(?:\\s+(.*?)))$" }}
   {{- $pathsVal := include "base.getValue" (list . "paths") | fromYamlArray }}
   {{- $paths := list }}
   {{- range $pathsVal }}
     {{- $val := dict }}
 
-    {{- $match := regexFindAll $regex . -1 }}
+    {{- $match := regexFindAll $const.regexHTTPIngressRuleValue . -1 }}
     {{- if $match }}
-      {{- $_ := set $val "path" (regexReplaceAll $regex . "${1}") }}
-      {{- $_ := set $val "pathType" (regexReplaceAll $regex . "${2}") }}
-      {{- $_ := set $val "backend" (regexReplaceAll $regex . "${3} ${4}") }}
+      {{- $_ := set $val "path" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${1}") }}
+      {{- $_ := set $val "pathType" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${2}") }}
+      {{- $_ := set $val "backend" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${3} ${4}") }}
     {{- else }}
       {{- fail (printf "HTTPIngressRuleValue: paths error. Values: %s, format: 'path [pathType] resource name kind [apiGroup]' or 'path [pathType] service name port.name|port.number'" .) }}
     {{- end }}

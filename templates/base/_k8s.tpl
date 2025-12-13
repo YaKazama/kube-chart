@@ -113,7 +113,7 @@
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- if mustRegexMatch $const.regexRollingUpdate . }}
+    {{- if mustRegexMatch $const.regexPercent . }}
       {{- . }}
     {{- else }}
       {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 119) }}

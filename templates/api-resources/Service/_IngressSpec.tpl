@@ -1,15 +1,15 @@
 {{- define "service.IngressSpec" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* defaultBackend map */ -}}
   {{- $_rules := include "base.getValue" (list . "rules") | fromYamlArray }}
   {{- if not $_rules }}
-    {{- $regex1 := "^resource(?:\\s+(\\S+))(?:\\s+(\\S+))(?:\\s+(\\S+))?$" }}
-    {{- $regex2 := "^service(?:\\s+(\\S+))(?:\\s+([\\w-]+|0|[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5]))$" }}
     {{- $defaultBackendVal := include "base.getValue" (list . "defaultBackend") }}
     {{- $defaultBackend := dict }}
     {{- $_defaultBackend := dict }}
 
-    {{- $match1 := regexFindAll $regex1 $defaultBackendVal -1 }}
-    {{- $match2 := regexFindAll $regex2 $defaultBackendVal -1 }}
+    {{- $match1 := regexFindAll $const.regexIngressSpecResource $defaultBackendVal -1 }}
+    {{- $match2 := regexFindAll $const.regexIngressSpecService $defaultBackendVal -1 }}
     {{- if $match1 }}
       {{- $_ := set $_defaultBackend "resource" $defaultBackendVal }}
     {{- else if $match2 }}
@@ -42,16 +42,15 @@
   {{- /* tls array */ -}}
   {{- $tlsVal := include "base.getValue" (list . "tls") | fromYamlArray }}
   {{- $tls := list }}
-  {{- $regex := "^([a-z0-9-]+)(?:\\s+((?:\\*\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)+))(?:\\s+((?:\\*\\.)?[a-z0-9-]+(?:\\.[a-z0-9-]+)+))*$" }}
   {{- range $tlsVal }}
     {{- $val := dict }}
 
-    {{- $match := regexFindAll $regex . -1 }}
+    {{- $match := regexFindAll $const.regexIngressSpecTLS . -1 }}
     {{- if not $match }}
       {{- fail (printf "IngressSpec: tls error. secretName and hosts must be exists. Values: %s, format: 'secretName hosts hostsN'" .) }}
     {{- end }}
 
-    {{- $_val := regexSplit "\\s+" . -1 }}
+    {{- $_val := regexSplit $const.regexSplit . -1 }}
     {{- $_ := set $val "secretName" (first $_val) }}
     {{- $_ := set $val "hosts" (include "base.slice" (slice $_val 1) | fromYamlArray) }}
 

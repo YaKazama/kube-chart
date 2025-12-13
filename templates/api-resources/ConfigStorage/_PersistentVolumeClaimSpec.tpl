@@ -1,14 +1,14 @@
 {{- define "configStorage.PersistentVolumeClaimSpec" -}}
   {{- if kindIs "string" . }}
-    {{- $regex := "^(\\S+)\\s+(\\S+)(?:\\s+(\\S+))?\\s+(accessModes?)\\s*\\(\\s*([^)]+?)\\s*\\)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(Filesystem|filesystem|Block|block))?$" }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- $match := regexFindAll $regex . -1 }}
+    {{- $match := regexFindAll $const.regexPersistentVolumeClaim . -1 }}
     {{- if not $match }}
       {{- fail (printf "PersistentVolumeClaimSpec: error. Values: %s, format: '<storageClassName> <name> [namespace] accessMode|accessModes (accessModes, ...) <requests> [limits] [volumeName] [volumeMode]'" .) }}
     {{- end }}
 
     {{- /* accessModes string array */ -}}
-    {{- $accessModes := regexReplaceAll $regex . "${5}" }}
+    {{- $accessModes := regexReplaceAll $const.regexPersistentVolumeClaim . "${5}" }}
     {{- if $accessModes }}
       {{- include "base.field" (list "accessModes" (dict "s" $accessModes "r" ",\\s*") "base.slice.cleanup") }}
     {{- end }}
@@ -18,8 +18,8 @@
     {{- /* dataSourceRef map */ -}}
 
     {{- /* resources map */ -}}
-    {{- $_requests := regexReplaceAll $regex . "${6}" }}
-    {{- $_limits := regexReplaceAll $regex . "${7}" }}
+    {{- $_requests := regexReplaceAll $const.regexPersistentVolumeClaim . "${6}" }}
+    {{- $_limits := regexReplaceAll $const.regexPersistentVolumeClaim . "${7}" }}
     {{- if or $_requests $_limits }}
       {{- $val := dict }}
       {{- $_ := set $val "requests" $_requests }}
@@ -33,7 +33,7 @@
     {{- /* selector map */ -}}
 
     {{- /* storageClassName string */ -}}
-    {{- $storageClassName := regexReplaceAll $regex . "${1}" }}
+    {{- $storageClassName := regexReplaceAll $const.regexPersistentVolumeClaim . "${1}" }}
     {{- if $storageClassName }}
       {{- include "base.field" (list "storageClassName" $storageClassName) }}
     {{- end }}
@@ -41,13 +41,13 @@
     {{- /* volumeAttributesClassName string */ -}}
 
     {{- /* volumeMode string */ -}}
-    {{- $volumeMode := regexReplaceAll $regex . "${8}" }}
+    {{- $volumeMode := regexReplaceAll $const.regexPersistentVolumeClaim . "${8}" }}
     {{- if $volumeMode }}
       {{- include "base.field" (list "volumeMode" $volumeMode) }}
     {{- end }}
 
     {{- /* volumeName string */ -}}
-    {{- $volumeName := regexReplaceAll $regex . "${9}" }}
+    {{- $volumeName := regexReplaceAll $const.regexPersistentVolumeClaim . "${9}" }}
     {{- if $volumeName }}
       {{- include "base.field" (list "volumeName" $volumeName) }}
     {{- end }}

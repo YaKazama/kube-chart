@@ -254,12 +254,14 @@
   {{- /* volumes array */ -}}
   {{- $volumesVal := include "base.getValue" (list . "volumes") | fromYamlArray }}
   {{- $volumes := list }}
-  {{- $regex := "^(cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi|local)(?:\\s+(.*?))(?:\\s+(.*?))?$" }}
   {{- range $volumesVal }}
-    {{- if not (regexMatch $regex .) }}
+    {{- if not (regexMatch $const.regexVolumes .) }}
       {{- fail (printf "workloads.PodSpec: volume invalid. Values: '%s'." .) }}
     {{- end }}
-    {{- $val := dict "volumeType" (regexReplaceAll $regex . "${1}") "name" (regexReplaceAll $regex . "${2}") "volume" (regexReplaceAll $regex . "${3}") }}
+    {{- $volumeType := regexReplaceAll $const.regexVolumes . "${1}" }}
+    {{- $name := regexReplaceAll $const.regexVolumes . "${2}" }}
+    {{- $volumeData := regexReplaceAll $const.regexVolumes . "${3}" }}
+    {{- $val := dict "volumeType" $volumeType "name" $name "volumeData" $volumeData }}
     {{- $volumes = append $volumes (include "configStorage.Volume" $val | fromYaml) }}
   {{- end }}
   {{- $volumes = $volumes | mustUniq | mustCompact }}

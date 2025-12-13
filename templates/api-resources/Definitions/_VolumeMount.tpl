@@ -1,29 +1,29 @@
 {{- define "definitions.VolumeMount" -}}
-  {{- $regex := "^(\\S+)\\s+(\\S+)\\s*(\\S+)?\\s*(\\S+)?\\s*(true|false)?\\s*(Disabled|IfPossible|Enabled)?\\s*(Bidirectional|HostToContainer|None)?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexVolumeMount . -1 }}
   {{- if not $match }}
     {{- fail (printf "configMap: error. Values: %s, format: 'name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]'" .) }}
   {{- end }}
 
   {{- /* mountPath string */ -}}
-  {{- $mountPath := regexReplaceAll $regex . "${2}" }}
+  {{- $mountPath := regexReplaceAll $const.regexVolumeMount . "${2}" }}
   {{- include "base.field" (list "mountPath" $mountPath "base.absPath") }}
 
   {{- /* name string */ -}}
-  {{- $name := regexReplaceAll $regex . "${1}" }}
+  {{- $name := regexReplaceAll $const.regexVolumeMount . "${1}" }}
   {{- include "base.field" (list "name" $name) }}
 
   {{- /* readOnly bool */ -}}
-  {{- $readOnly := regexReplaceAll $regex . "${5}" }}
+  {{- $readOnly := regexReplaceAll $const.regexVolumeMount . "${5}" }}
   {{- if $readOnly }}
     {{- include "base.field" (list "readOnly" $readOnly "base.bool") }}
   {{- end }}
 
   {{- /* recursiveReadOnly string */ -}}
   {{- /* mountPropagation string */ -}}
-  {{- $recursiveReadOnly := regexReplaceAll $regex . "${6}" }}
-  {{- $mountPropagation := regexReplaceAll $regex . "${7}" }}
+  {{- $recursiveReadOnly := regexReplaceAll $const.regexVolumeMount . "${6}" }}
+  {{- $mountPropagation := regexReplaceAll $const.regexVolumeMount . "${7}" }}
   {{- if $readOnly }}
     {{- if $recursiveReadOnly }}
       {{- include "base.field" (list "recursiveReadOnly" $recursiveReadOnly) }}
@@ -37,8 +37,8 @@
 
   {{- /* subPath string */ -}}
   {{- /* subPathExpr string */ -}}
-  {{- $subPath := regexReplaceAll $regex . "${3}" }}
-  {{- $subPathExpr := regexReplaceAll $regex . "${4}" }}
+  {{- $subPath := regexReplaceAll $const.regexVolumeMount . "${3}" }}
+  {{- $subPathExpr := regexReplaceAll $const.regexVolumeMount . "${4}" }}
   {{- if $subPath }}
     {{- include "base.field" (list "subPath" $subPath "base.relPath") }}
   {{- else }}

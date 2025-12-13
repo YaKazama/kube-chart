@@ -1,14 +1,14 @@
 {{- define "definitions.HTTPIngressPath" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* backend map */ -}}
-  {{- $regex1 := "^resource(?:\\s+(\\S+))(?:\\s+(\\S+))(?:\\s+(\\S+))?$" }}
-  {{- $regex2 := "^service(?:\\s+(\\S+))(?:\\s+([\\w-]+|0|[1-9]\\d{0,3}|[1-5]\\d{4}|6[0-4]\\d{3}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5]))$" }}
   {{- $backendVal := include "base.getValue" (list . "backend") }}
   {{- if $backendVal }}
     {{- $backend := dict }}
     {{- $_backend := dict }}
 
-    {{- $match1 := regexFindAll $regex1 $backendVal -1 }}
-    {{- $match2 := regexFindAll $regex2 $backendVal -1 }}
+    {{- $match1 := regexFindAll $const.regexHTTPIngressPathResource $backendVal -1 }}
+    {{- $match2 := regexFindAll $const.regexHTTPIngressPathService $backendVal -1 }}
     {{- if $match1 }}
       {{- $_ := set $_backend "resource" $backendVal }}
     {{- else if $match2 }}

@@ -1,21 +1,21 @@
 {{- define "definitions.StatefulSetUpdateStrategy" -}}
-  {{- $regex := "^(OnDelete|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s*(\\d+))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexStatefulSetUpdateStrategy . -1 }}
   {{- if not $match }}
     {{- fail (printf "StatefulSetUpdateStrategy: error. Values: %s, format: '[OnDelete|RollingUpdate] [maxUnavailable] [partition]'" .) }}
   {{- end }}
 
   {{- /* type string */ -}}
-  {{- $type := regexReplaceAll $regex . "${1}" }}
+  {{- $type := regexReplaceAll $const.regexStatefulSetUpdateStrategy . "${1}" }}
   {{- if $type }}
     {{- include "base.field" (list "type" $type) }}
   {{- end }}
 
   {{- /* rollingUpdate map */ -}}
   {{- if or (eq $type "RollingUpdate") (empty $type) }}
-    {{- $_maxUnavailable := regexReplaceAll $regex . "${2}" }}
-    {{- $_partition := regexReplaceAll $regex . "${3}" }}
+    {{- $_maxUnavailable := regexReplaceAll $const.regexStatefulSetUpdateStrategy . "${2}" }}
+    {{- $_partition := regexReplaceAll $const.regexStatefulSetUpdateStrategy . "${3}" }}
     {{- $rollingUpdateVal := dict }}
     {{- if $_maxUnavailable }}
       {{- $_ := set $rollingUpdateVal "maxUnavailable" $_maxUnavailable }}

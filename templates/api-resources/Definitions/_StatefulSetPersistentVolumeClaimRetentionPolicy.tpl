@@ -1,19 +1,19 @@
 {{- define "definitions.StatefulSetPersistentVolumeClaimRetentionPolicy" -}}
-  {{- $regex := "^(Retain|retain|Delete|delete)?(?:\\s+(Retain|retain|Delete|delete))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexStatefulSetPersistentVolumeClaimRetentionPolicy . -1 }}
   {{- if not $match }}
     {{- fail (printf "StatefulSetPersistentVolumeClaimRetentionPolicy: error. Values: %s, format: '[whenDeleted] [whenScaled]'" .) }}
   {{- end }}
 
   {{- /* whenDeleted string */ -}}
-  {{- $whenDeleted := regexReplaceAll $regex . "${1}" | title }}
+  {{- $whenDeleted := regexReplaceAll $const.regexStatefulSetPersistentVolumeClaimRetentionPolicy . "${1}" | title }}
   {{- if $whenDeleted }}
     {{- include "base.field" (list "whenDeleted" $whenDeleted) }}
   {{- end }}
 
   {{- /* whenScaled string */ -}}
-  {{- $whenScaled := regexReplaceAll $regex . "${2}" | title }}
+  {{- $whenScaled := regexReplaceAll $const.regexStatefulSetPersistentVolumeClaimRetentionPolicy . "${2}" | title }}
   {{- if $whenScaled }}
     {{- include "base.field" (list "whenScaled" $whenScaled) }}
   {{- end }}

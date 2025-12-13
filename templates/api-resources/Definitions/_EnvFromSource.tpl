@@ -4,15 +4,15 @@
       configMap sourceName prefix true
       secret sourceName prefix true
   */ -}}
-  {{- $regex := "^(configMap|secret)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(true|false))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexEnvFromSource . -1 }}
   {{- if not $match }}
     {{- fail (printf "envFrom: error, must start with 'configMap|secret'. Values: %s, format: '<configMap|secret> sourceName [prefix] [optional]'" .) }}
   {{- end }}
 
   {{- /* prefix string */ -}}
-  {{- $prefix := regexReplaceAll $regex . "${3}" }}
+  {{- $prefix := regexReplaceAll $const.regexEnvFromSource . "${3}" }}
   {{- if $prefix }}
     {{- include "base.field" (list "prefix" $prefix) }}
   {{- end }}

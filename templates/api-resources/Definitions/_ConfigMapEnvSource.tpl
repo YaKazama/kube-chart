@@ -1,17 +1,17 @@
 {{- define "definitions.ConfigMapEnvSource" -}}
-  {{- $regex := "^configMap\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(true|false))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexConfigMap . -1 }}
   {{- if not $match }}
-    {{- fail (printf "ConfigMapEnvSource: error, Values: %s, format: 'sourceName [prefix] [optional]'" .) }}
+    {{- fail (printf "definitions.ConfigMapEnvSource: error, Values: %s, format: 'sourceName [prefix] [optional]'" .) }}
   {{- end }}
 
   {{- /* name string */ -}}
-  {{- $name := regexReplaceAll $regex . "${1}" }}
+  {{- $name := regexReplaceAll $const.regexConfigMap . "${1}" }}
   {{- include "base.field" (list "name" $name) }}
 
   {{- /* optional bool */ -}}
-  {{- $optional := regexReplaceAll $regex . "${3}" }}
+  {{- $optional := regexReplaceAll $const.regexConfigMap . "${3}" }}
   {{- if $optional }}
     {{- include "base.field" (list "optional" $optional "base.bool") }}
   {{- end }}

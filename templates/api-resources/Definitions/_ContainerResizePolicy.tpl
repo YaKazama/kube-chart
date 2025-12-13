@@ -1,17 +1,17 @@
 {{- define "definitions.ContainerResizePolicy" -}}
-  {{- $regex := "^(cpu|memory)\\s*(NotRequired|RestartContainer)?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexContainerResizePolicy . -1 }}
   {{- if not $match }}
-    {{- fail (printf "volumeDevice: error. Values: %s, format: 'resourceName [restartPolicy]'" .) }}
+    {{- fail (printf "definitions.ContainerResizePolicy: error. Values: %s, format: 'resourceName [restartPolicy]'" .) }}
   {{- end }}
 
   {{- /* resourceName string */ -}}
-  {{- $resourceName := regexReplaceAll $regex . "${1}" }}
+  {{- $resourceName := regexReplaceAll $const.regexContainerResizePolicy . "${1}" }}
   {{- include "base.field" (list "resourceName" $resourceName) }}
 
   {{- /* resourcePolicy string */ -}}
-  {{- $resourcePolicy := regexReplaceAll $regex . "${2}" }}
+  {{- $resourcePolicy := regexReplaceAll $const.regexContainerResizePolicy . "${2}" }}
   {{- if $resourcePolicy }}
     {{- include "base.field" (list "resourcePolicy" $resourcePolicy) }}
   {{- end }}

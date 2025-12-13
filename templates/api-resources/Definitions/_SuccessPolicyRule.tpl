@@ -7,21 +7,21 @@
     {{- end }}
 
   {{- else if kindIs "string" . }}
-    {{- $regex := "^(\\d+)?(?:\\s*((?:\\d+(?:-\\d+)?)(?:,\\s*\\d+(?:-\\d+)?)*))?$" }}
+    {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- $match := regexFindAll $regex . -1 }}
+    {{- $match := regexFindAll $const.regexSuccessPolicyRule . -1 }}
     {{- if not $match }}
       {{- fail (printf "SuccessPolicyRule: error. Values: %s, format: '[succeededCount] [succeededIndexes]'" .) }}
     {{- end }}
 
     {{- /* succeededCount int */ -}}
-    {{- $succeededCount := regexReplaceAll $regex . "${1}" }}
+    {{- $succeededCount := regexReplaceAll $const.regexSuccessPolicyRule . "${1}" }}
     {{- if $succeededCount }}
       {{- include "base.field" (list "succeededCount" $succeededCount "base.int") }}
     {{- end }}
 
     {{- /* succeededIndexes string */ -}}
-    {{- $succeededIndexes := regexReplaceAll $regex . "${2}" | nospace }}
+    {{- $succeededIndexes := regexReplaceAll $const.regexSuccessPolicyRule . "${2}" | nospace }}
     {{- if $succeededIndexes }}
       {{- include "base.field" (list "succeededIndexes" $succeededIndexes) }}
     {{- end }}

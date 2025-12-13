@@ -1,19 +1,19 @@
 {{- define "definitions.PodFailurePolicyOnExitCodesRequirement" -}}
-  {{- $regex := "^(FailJob|FailIndex|Ignore|Count)(?:\\s+(\\S+))?(?:\\s+(in|notin))(?:\\s+\\((.*?)\\))$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexPodFailurePolicyOnExitCodesRequirement . -1 }}
   {{- if not $match }}
     {{- fail (printf "PodFailurePolicyOnExitCodesRequirement: error. Values: %s, format: '<action> [containerName] <in|notin> (values, ...)'" .) }}
   {{- end }}
 
   {{- /* contaerinName string */ -}}
-  {{- $contaerinName := regexReplaceAll $regex . "${2}" }}
+  {{- $contaerinName := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${2}" }}
   {{- if $contaerinName }}
     {{- include "base.field" (list "contaerinName" $contaerinName) }}
   {{- end }}
 
   {{- /* operator string */ -}}
-  {{- $operator := regexReplaceAll $regex . "${3}" }}
+  {{- $operator := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${3}" }}
   {{- if $operator }}
     {{- if eq $operator "in" }}
       {{- $operator = "In" }}
@@ -24,9 +24,8 @@
   {{- end }}
 
   {{- /* values int array */ -}}
-  {{- $values := regexReplaceAll $regex . "${4}" }}
-  {{- $regexValues := "^\\d+(,\\s*\\d+)*$" }}
-  {{- if not (regexMatch $regexValues $values) }}
+  {{- $values := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${4}" }}
+  {{- if not (regexMatch $const.regexPodFailurePolicyOnExitCodesRequirementValues $values) }}
     {{- fail (printf "PodFailurePolicyOnExitCodesRequirement: values invalid. Values: '%s'" $values) }}
   {{- end }}
   {{- $checkValues := regexSplit ",\\s*" $values -1 }}

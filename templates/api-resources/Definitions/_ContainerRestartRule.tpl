@@ -1,18 +1,18 @@
 {{- define "definitions.ContainerRestartRule" -}}
-  {{- $regex := "^([r|R]estart)\\s+(in|notin)\\s+\\((.*?)\\)$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexContainerRestartRule . -1 }}
   {{- if not $match }}
-    {{- fail (printf "configMap: error. Values: %s, format: 'restart <in|notin> (codeNumber, ...)'" .) }}
+    {{- fail (printf "definitions.ContainerRestartRule: error. Values: %s, format: 'restart <in|notin> (codeNumber, ...)'" .) }}
   {{- end }}
 
   {{- /* action string */ -}}
-  {{- $action := regexReplaceAll $regex . "${1}" | trim | title }}
+  {{- $action := regexReplaceAll $const.regexContainerRestartRule . "${1}" | trim | title }}
   {{- include "base.field" (list "action" $action) }}
 
   {{- /* exitCodes map */ -}}
-  {{- $operator := regexReplaceAll $regex . "${2}" | trim }}
-  {{- $values := regexReplaceAll $regex . "${3}" | trim }}
+  {{- $operator := regexReplaceAll $const.regexContainerRestartRule . "${2}" | trim }}
+  {{- $values := regexReplaceAll $const.regexContainerRestartRule . "${3}" | trim }}
 
   {{- if eq $operator "in" }}
     {{- $operator = "In" }}

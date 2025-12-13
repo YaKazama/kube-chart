@@ -16,15 +16,15 @@
   {{- if $_spec }}
     {{- /* 此处因为 $_spec 是个字符串，故需要将 name 和 namespace 单独处理 */ -}}
     {{- if eq ._pkind "StatefulSetSpec" }}
-      {{- $regex := "^(\\S+)\\s+(\\S+)(?:\\s+(\\S+))?\\s+(accessModes?)\\s*\\(\\s*([^)]+?)\\s*\\)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(Filesystem|filesystem|Block|block))?$" }}
+      {{- $const := include "base.env" "" | fromYaml }}
 
-      {{- $match := regexFindAll $regex $_spec -1 }}
+      {{- $match := regexFindAll $const.regexPersistentVolumeClaim $_spec -1 }}
       {{- if not $match }}
         {{- fail (printf "PersistentVolumeClaim: error. Values: %s, format: 'name [namespace] with|With (mode, ...) [storageClassName] requests [limits] [volumeName] [volumeMode]'" $_spec) }}
       {{- end }}
 
-      {{- $_ := set . "name" (regexReplaceAll $regex $_spec "${2}") }}
-      {{- $_ := set . "namespace" (regexReplaceAll $regex $_spec "${3}") }}
+      {{- $_ := set . "name" (regexReplaceAll $const.regexPersistentVolumeClaim $_spec "${2}") }}
+      {{- $_ := set . "namespace" (regexReplaceAll $const.regexPersistentVolumeClaim $_spec "${3}") }}
     {{- end }}
     {{- $metadata := include "definitions.ObjectMeta" . | fromYaml }}
     {{- if $metadata }}

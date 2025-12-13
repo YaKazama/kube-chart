@@ -1,5 +1,5 @@
 {{- define "definitions.ContainerPort" -}}
-  {{- $regex := "^((?:((?:\\d{1,3}\\.){3}\\d{1,3}):)?(?:(\\d{1,5}):)?)?(\\d{1,5})(?:/(TCP|tcp|UDP|udp|SCTP|sctp))?(?:#(\\S+))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* 此处与其他模板定义处理方式不同 */ -}}
   {{- /* 当只有一个值是，一般来说它是 containerPort */ -}}
@@ -10,39 +10,39 @@
     {{- $root = include "base.int" . }}
   {{- end }}
 
-  {{- $match := regexFindAll $regex $root -1 }}
+  {{- $match := regexFindAll $const.regexContainerPort $root -1 }}
   {{- if not $match }}
-    {{- fail (printf "volumeDevice: error. Values: %s, format: '[hostIP:][hostPort:]containerPort[/protocol][#name]'" .) }}
+    {{- fail (printf "definitions.ContainerPort: invalid. Values: %s, format: '[hostIP:][hostPort:]containerPort[/protocol][#name]'" .) }}
   {{- end }}
 
   {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* containerPort int */ -}}
-  {{- $containerPort := regexReplaceAll $regex $root "${4}" }}
+  {{- $containerPort := regexReplaceAll $const.regexContainerPort $root "${4}" }}
   {{- if $containerPort }}
     {{- include "base.field" (list "containerPort" $containerPort "base.port") }}
   {{- end }}
 
   {{- /* hostIP string */ -}}
-  {{- $hostIP := regexReplaceAll $regex $root "${2}" }}
+  {{- $hostIP := regexReplaceAll $const.regexContainerPort $root "${2}" }}
   {{- if $hostIP }}
     {{- include "base.field" (list "hostIP" $hostIP) }}
   {{- end }}
 
   {{- /* hostPort int */ -}}
-  {{- $hostPort := regexReplaceAll $regex $root "${3}" }}
+  {{- $hostPort := regexReplaceAll $const.regexContainerPort $root "${3}" }}
   {{- if $hostPort }}
     {{- include "base.field" (list "hostPort" $hostPort "base.port") }}
   {{- end }}
 
   {{- /* name string */ -}}
-  {{- $name := regexReplaceAll $regex $root "${6}" }}
+  {{- $name := regexReplaceAll $const.regexContainerPort $root "${6}" }}
   {{- if and $name (include "base.name" $name) }}
     {{- include "base.field" (list "name" $name) }}
   {{- end }}
 
   {{- /* protocol */ -}}
-  {{- $protocol := regexReplaceAll $regex $root "${5}" | upper }}
+  {{- $protocol := regexReplaceAll $const.regexContainerPort $root "${5}" | upper }}
   {{- $protocolAllows := list "TCP" "UDP" "SCTP" }}
   {{- if $protocol }}
     {{- include "base.field" (list "protocol" $protocol "base.string" $protocolAllows) }}

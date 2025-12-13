@@ -22,18 +22,15 @@
       operator: Exists # Exists/DoesNotExist
 */ -}}
 {{- define "definitions.LabelSelectorRequirement" -}}
-  {{- $regexEquality := "^[A-Za-z0-9-]+\\s+([=]{1,2}|!=)\\s+[A-Za-z0-9-]+$" }}
-  {{- $regexSet := "^[A-Za-z0-9-]+\\s+([iI][nN]|[nN][oO][tT][iI][nN])\\s+\\(([A-Za-z0-9-]+(\\s+|\\s*,\\s*)*)+\\)$" }}
-  {{- $regexSetExists := "^!?[A-Za-z0-9-]+" }}
   {{- $const := include "base.env" "" | fromYaml }}
-  {{- $_labelSelectorRequirement := dict }}
 
+  {{- $_labelSelectorRequirement := dict }}
   {{- $key := "" }}
   {{- $operator := "" }}
   {{- $values := list }}
 
   {{- if kindIs "string" . }}
-    {{- if regexMatch $regexEquality . }}
+    {{- if regexMatch $const.regexEquality . }}
       {{- $split := mustRegexSplit $const.regexSplit . -1 }} {{- /* 使用空格拆分 */ -}}
       {{- $key = index $split 0 }}
       {{- if or (eq (index $split 1) "=") (eq (index $split 1) "==") }}
@@ -43,8 +40,8 @@
       {{- end }}
       {{- $values = include "base.slice.cleanup" (dict "s" (mustSlice $split 2)) | fromYamlArray }}
       {{- $_labelSelectorRequirement = dict "key" $key "operator" $operator "values" $values }}
-    {{- else if regexMatch $regexSet . }}
-      {{- $val := mustRegexReplaceAll "(.*)\\((.*),*(.*)*\\)" . "${1} ${2} ${3}" }} {{- /* 移除逗号和括号 */ -}}
+    {{- else if regexMatch $const.regexSet . }}
+      {{- $val := mustRegexReplaceAll "(.*)\\((.*),*(.*)*\\)" . "${1} ${2} ${3}" }} {{- /* 移除逗号和括号, 比较特殊 不放到 base.env */ -}}
       {{- $split := mustRegexSplit $const.regexSplit $val -1 }} {{- /* 使用空格拆分 */ -}}
       {{- $key = index $split 0 }}
       {{- if eq (index $split 1 | lower) "in" }}
@@ -54,7 +51,7 @@
       {{- end }}
       {{- $values = include "base.slice.cleanup" (dict "s" (mustSlice $split 2 (len $split))) | fromYamlArray }}
       {{- $_labelSelectorRequirement = dict "key" $key "operator" $operator "values" $values }}
-    {{- else if regexMatch $regexSetExists . }}
+    {{- else if regexMatch $const.regexSetExists . }}
       {{- $key = trimPrefix "!" . }}
       {{- if hasPrefix "!" . }}
         {{- $operator = "DoesNotExist" }}

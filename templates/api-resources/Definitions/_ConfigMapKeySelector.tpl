@@ -1,21 +1,21 @@
 {{- define "definitions.ConfigMapKeySelector" -}}
-  {{- $regex := "^configMap\\s+(\\S+)\\s+(\\S+)(?:\\s+(true|false))?$" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $regex . -1 }}
+  {{- $match := regexFindAll $const.regexConfigMap . -1 }}
   {{- if not $match }}
-    {{- fail (printf "ConfigMapKeySelector: error, Values: %s, format: 'name key [optional]'" .) }}
+    {{- fail (printf "definitions.ConfigMapKeySelector: error, Values: %s, format: 'name key [optional]'" .) }}
   {{- end }}
 
   {{- /* key string */ -}}
-  {{- $key := regexReplaceAll $regex . "${2}" }}
+  {{- $key := regexReplaceAll $const.regexConfigMap . "${2}" }}
   {{- include "base.field" (list "key" $key) }}
 
   {{- /* name string */ -}}
-  {{- $name := regexReplaceAll $regex . "${1}" }}
+  {{- $name := regexReplaceAll $const.regexConfigMap . "${1}" }}
   {{- include "base.field" (list "name" $name) }}
 
   {{- /* optional bool */ -}}
-  {{- $optional := regexReplaceAll $regex . "${3}" }}
+  {{- $optional := regexReplaceAll $const.regexConfigMap . "${3}" }}
   {{- if $optional }}
     {{- include "base.field" (list "optional" $optional "base.bool") }}
   {{- end }}
