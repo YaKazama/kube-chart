@@ -1,5 +1,9 @@
 {{- /*
 
+zzz: {{ include "base.getValue" (list .Values "zz") }}
+
+{{- $_ := set . "Context" .Values.Deployment }}
+{{- include "workloads.Deployment" . }}
 */ -}}
-{{- $_ := set . "Context" .Values.NetworkPolicy }}
-{{- include "cluster.NetworkPolicy" . }}
+{{- $_ := set . "Context" .Values.Kustomization }}
+{{- include "kustomize.Kustomization" . }}

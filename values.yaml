@@ -1,34 +1,36 @@
-global:
-  annotations:
-    ccc: global-annotations
-  labels:
-    globalLabels: global-labels
-  helmLabels: false
+# global:
+#   annotations:
+#     anno-global: global-annotations
+#     anno-value: global-annotations-11
+#   labels:
+#     globalLabels: global-labels
+#   helmLabels: false
 
-annotations:
-  ccc: values-annotations
-labels:
-  valuesLabel: values-labels
-helmLabels: false
-# fullname: value-Name
-# selector:
-#   matchExpressions:
-#     - environment3 == production4
-terminationGracePeriodSeconds: 99
+# annotations:
+#   anno-value: values-annotations
+# labels:
+#   valuesLabel: values-labels
+# helmLabels: false
+# # fullname: value-Name
+# # selector:
+# #   matchExpressions:
+# #     - environment3 == production4
+# terminationGracePeriodSeconds: 99
 replicas: 33
-helmPortsRange: 30000-32767
+# helmPortsRange: 30000-32767
 
-zz: ../../../api/../health
+zz: 1.11
 
-deployment:
+Deployment:
   # service 应该是个 map
   # 如果需要创建多个 service 应该定义多个
   service:
+    name: svc-deploy-111
     type: ClusterIP
     # [hostIP:][hostPort:]containerPort[/protocol][#name]
     # [nodePort:]port[:targetPort][/protocol][@appProtocol][#name]
     ports:
-      - 80:8080/tcp@http#svc-port-name-1
+      - 80:8080/tcp#svc-port-name-1
       - 443
     sessionAffinityConfig: 86400
     sessionAffinity: ClientIP
@@ -42,30 +44,32 @@ deployment:
   #   app.kubernetes.io/managed-by
   #   helm.sh/chart
   helmLabels: false
-  labels:
-    ctxLabels: ctx-labels
   name: ctx-name
   fullname: ctx-fullname
   namespace: ctx-namespace
-  selector:
-    matchExpressions:
-      # 基于等值 / 不等值
-      - environment = production
-      - environment1 == production1
-      - tier != frontend
-      # 基于集合
-      - environment2 in (production2, qa2, xxx)
-      - tier2 notin (frontend2, backend2)
-      - partition
-      - "!partition1"
-      # 原生
-      - key: key
-        operator: In  # In/NotIn/Exists/DoesNotExist
-        values:
-        - value1
-        - value2
-      - key: key2
-        operator: Exists  # In/NotIn/Exists/DoesNotExist
+  labels:
+    ctxLabels: ctx-labels
+  # selector:
+  #   matchExpressions:
+  #     # 基于等值 / 不等值
+  #     - environment = production
+  #     - environment1 == production1
+  #     - tier != frontend
+  #     # 基于集合
+  #     - environment2 in (production2, qa2, xxx)
+  #     - tier2 notin (frontend2, backend2)
+  #     - partition
+  #     - "!partition1"
+  #     # 原生
+  #     - key: key
+  #       operator: In  # In/NotIn/Exists/DoesNotExist
+  #       values:
+  #       - value1
+  #       - value2
+  #     - key: key2
+  #       operator: Exists  # In/NotIn/Exists/DoesNotExist
+  #   matchLabels:
+  #     xxx: deploy-1
   minReadySeconds: 11
   progressDeadlineSeconds: 33
   # <Recreate> | <RollingUpdate> [maxSurge(25%)][maxUnavailable(25%)]
@@ -77,7 +81,7 @@ deployment:
   hostNetwork: true
   hostPID: true
   shareProcessNamespace: false
-  hostUsers: true
+  hostUsers: false
   hostname: aaa-hostname
   hostnameOverride: aa
   terminationGracePeriodSeconds: 10
@@ -97,90 +101,90 @@ deployment:
   imagePullSecrets:
     - image-pull-secret-1
     - image-pull-secret-2
-  nodeAffinity:
-    preferred:
-      - weight: 1
-        matchExpressions:
-          - c != d
-        matchFields:
-          - aa in (xx1, xx2, 123333)
-    required:
-      - matchExpressions:
-          - a = b
-      - matchFields:
-          - key: fields
-            operator: NotIn
-            values:
-            - value1
-            - value2
-  podAffinity:
-    preferred:
-      - weight: 11
-        topologyKey: topologyKey-preferred
-        namespaceSelector:
-          matchExpressions:
-            - "!partition1"
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        labelSelector:
-          matchExpressions:
-            - "!partition2"
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        matchLabelKeys: []
-        namespaces:
-          - aaa bbb
-          - c
-    required:
-      - topologyKey: topologyKey-required
-        namespaceSelector:
-          matchExpressions:
-            - "!partition1"
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        labelSelector:
-          matchExpressions:
-            - "partition2"
-            - ssss != aaa
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        matchLabelKeys: []
-        namespaces:
-          - aaa bbb
-          - c
-  podAntiAffinity:
-    preferred:
-      - weight: 22
-        topologyKey: topologyKey-preferred
-        namespaceSelector:
-          matchExpressions:
-            - partition1
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        labelSelector:
-          matchExpressions:
-            - aaa = cxxx
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        matchLabelKeys:
-        - labels1 labels2
-    required:
-      - topologyKey: topologyKey-required
-        namespaceSelector:
-          matchExpressions:
-            - "!partition1"
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        labelSelector:
-          matchExpressions:
-            - "partition2"
-            - ssss != aaa
-          matchLabels:
-            matchLabels-pod-affinity: zzz
-        matchLabelKeys: []
-        namespaces:
-          - aaa bbb
-          - c
+  # nodeAffinity:
+  #   preferred:
+  #     - weight: 1
+  #       matchExpressions:
+  #         - c != d
+  #       matchFields:
+  #         - aa in (xx1, xx2, 123333)
+  #   required:
+  #     - matchExpressions:
+  #         - a = b
+  #     - matchFields:
+  #         - key: fields
+  #           operator: NotIn
+  #           values:
+  #           - value1
+  #           - value2
+  # podAffinity:
+  #   preferred:
+  #     - weight: 11
+  #       topologyKey: topologyKey-preferred
+  #       namespaceSelector:
+  #         matchExpressions:
+  #           - "!partition1"
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       labelSelector:
+  #         matchExpressions:
+  #           - "!partition2"
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       matchLabelKeys: []
+  #       namespaces:
+  #         - aaa bbb
+  #         - c
+  #   required:
+  #     - topologyKey: topologyKey-required
+  #       namespaceSelector:
+  #         matchExpressions:
+  #           - "!partition1"
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       labelSelector:
+  #         matchExpressions:
+  #           - "partition2"
+  #           - ssss != aaa
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       matchLabelKeys: []
+  #       namespaces:
+  #         - aaa bbb
+  #         - c
+  # podAntiAffinity:
+  #   preferred:
+  #     - weight: 22
+  #       topologyKey: topologyKey-preferred
+  #       namespaceSelector:
+  #         matchExpressions:
+  #           - partition1
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       labelSelector:
+  #         matchExpressions:
+  #           - aaa = cxxx
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       matchLabelKeys:
+  #       - labels1 labels2
+  #   required:
+  #     - topologyKey: topologyKey-required
+  #       namespaceSelector:
+  #         matchExpressions:
+  #           - "!partition1"
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       labelSelector:
+  #         matchExpressions:
+  #           - "partition2"
+  #           - ssss != aaa
+  #         matchLabels:
+  #           matchLabels-pod-affinity: zzz
+  #       matchLabelKeys: []
+  #       namespaces:
+  #         - aaa bbb
+  #         - c
   # 通常它是一个返回 true / false 的 api
   readinessGates:
     - www.example.com/feature-1
@@ -262,7 +266,7 @@ deployment:
     # volumeType volumeName path [type]
     - hostPath vol-ccc /config/xxx/ Directory
     # volumeType volumeName targetPortal iqn lun fsType [readOnly] [iscsiInterface] [initiatorName] [chap (chapAuthDiscovery, chapAuthSession)] [portals (ip, ip)] [secretRef]
-    - iscsi vol-eee targetPortal iqn 0 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secretRef
+    - iscsi vol-eee targetPortal iqn 0 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secret-ref
     # volumeType volumeName server path [readOnly]
     - nfs vol-nfs x.xom /config/xx true
     # volumeType volumeName claimName [readOnly]
@@ -296,7 +300,7 @@ deployment:
         - vol-name1 /mnt/vol-name1 config/xx1 false
       # name devicePath
       volumeDevices:
-        - name devicePath
+        - name /path/to/devicePath
       # [cpu] [memory] [hugepages-size hugepages-max]
       # 原生 map
       resources:
@@ -360,6 +364,7 @@ deployment:
           exec:
             - xxx
             - xxx
+          # [scheme] [host] [port] path <<header>> (name value, ...)
           httpGet: http 1.1.1.1 7777 /api/health header (xxx aa/bb, yyy ccc/dd)
           sleep: 30
           tcpSocket: 1.1.1.1 8888
@@ -420,7 +425,7 @@ deployment:
     - name: c-1
       image: init:latest
 
-statefulset:
+StatefulSet:
   minReadySeconds: 10
   ordinals: 11
   persistentVolumeClaimRetentionPolicy: delete retain
@@ -428,7 +433,7 @@ statefulset:
   replicas: 0
   revisionHistoryLimit: 22
   serviceName: xxx
-  # OnDelete|RollingUpdate [maxUnavailable(1)] [partition(0)]
+  # [OnDelete|RollingUpdate] [maxUnavailable(1)] [partition(0)]
   updateStrategy: 10% 0
   # <storageClassName> <name> [namespace] accessMode|accessModes (accessModes, ...) <requests> [limits] [volumeName] [volumeMode]
   # 原生格式（有限字段支持）
@@ -453,11 +458,15 @@ statefulset:
     - name: sts-c1
       image: xxx
 
-daemonset:
+DaemonSet:
+  name: ds-xxx
   # type maxSurge maxUnavailable
   updateStrategy: RollingUpdate 10% 11
+  containers:
+    - name: ds-name
+      image: xxxx
 
-cronjob:
+CronJob:
   concurrencyPolicy: Allow
   failedJobsHistoryLimit: 1
   schedule: "*/10 00 3 12 3"
@@ -465,6 +474,8 @@ cronjob:
   successfulJobsHistoryLimit: 22
   suspend: true
   timeZone: Asia/Shanghai
+  labels:
+    aaa: xxxxx
   jobTemplate:
     activeDeadlineSeconds: 11
     ttlSecondsAfterFinished: "0"
@@ -481,6 +492,11 @@ cronjob:
     podFailurePolicy:
       - FailJob cn-name in (1, 2)
       - Ignore (DisruptionTarget True, IgnoreXXX)
+    selector:
+      matchExpressions:
+        - aaa in (a, b)
+      matchLabels:
+        lll: aaaa
     template:
       activeDeadlineSeconds: 111
       containers:
@@ -491,7 +507,7 @@ cronjob:
             - -c
             - sleep 5
 
-ingress:
+Ingress:
   # resource name kind [apiGroup]
   # service name port.name|port.number
   # resource 和 service 是介定词，属于固定词缀
@@ -542,10 +558,14 @@ ConfigMap:
 
 Secret:
   immutable: true
+  name: secret-name
+  annotations:
+    xxxx.com/aaa: 1123
+    kubernetes.io/service-account-name: xxxx
   type: Opaque
   data:
     # # kubernetes.io/service-account-token
-    # serviceAccount: string
+    # serviceAccount: sa-token
     # namespace: "default"
     # # kubernetes.io/dockercfg kubernetes.io/dockerconfigjson
     # server: registry.docker.com:5000
@@ -593,11 +613,10 @@ StorageClass:
 PodTemplate:
   name: hhhh
   namespace: xxxx
-  template:
-    activeDeadlineSeconds: 11
-    containers:
-      - name: xxxx
-        image: xxxxxx:v11
+  activeDeadlineSeconds: 11
+  containers:
+    - name: xxxx
+      image: xxxxxx:v11
 
 Binding:
   target:
@@ -610,28 +629,28 @@ Binding:
     uid: string
 
 ClusterRole:
-  # aggregationRule:
-  #   clusterRoleSelectors:
-  #     - matchExpressions:
-  #         # 基于等值 / 不等值
-  #         - environment = production
-  #         - environment1 == production1
-  #         - tier != frontend
-  #         # 基于集合
-  #         - environment2 in (production2, qa2, xxx)
-  #         - tier2 notin (frontend2, backend2)
-  #         - partition
-  #         - "!partition1"
-  #         # 原生
-  #         - key: key
-  #           operator: In  # In/NotIn/Exists/DoesNotExist
-  #           values:
-  #           - value1
-  #           - value2
-  #         - key: key2
-  #           operator: Exists  # In/NotIn/Exists/DoesNotExist
-  #       matchLabels:
-  #         xxx: a1231221
+  aggregationRule:
+    clusterRoleSelectors:
+      - matchExpressions:
+          # 基于等值 / 不等值
+          - environment = production
+          - environment1 == production1
+          - tier != frontend
+          # 基于集合
+          - environment2 in (production2, qa2, xxx)
+          - tier2 notin (frontend2, backend2)
+          - partition
+          - "!partition1"
+          # 原生
+          - key: key
+            operator: In  # In/NotIn/Exists/DoesNotExist
+            values:
+            - value1
+            - value2
+          - key: key2
+            operator: Exists  # In/NotIn/Exists/DoesNotExist
+        matchLabels:
+          xxx: a1231221
   rules:
     - apiGroups: ["*"]
       resources: ["certificates"]
@@ -817,3 +836,253 @@ NetworkPolicy:
   policyTypes:
     - Ingress
     - Egress
+
+Service:
+  name: svc-xxx
+  type: NodePort
+  # [hostIP:][hostPort:]containerPort[/protocol][#name]
+  # [nodePort:]port[:targetPort][/protocol][@appProtocol][#name]
+  ports:
+    - 32767:80:8080/tcp#svc-port-name-1
+    - 443#svc-port-name-2
+  sessionAffinityConfig: 86400
+  sessionAffinity: ClientIP
+  allocateLoadBalancerNodePorts: false
+
+Kustomization:
+  buildMetadata:
+    - managedByLabel
+    - originAnnotations
+    - transformerAnnotations
+  commonAnnotations:
+    oncallPager: 800-555-1212
+  commonLabels:
+    someName: someValue
+    owner: alice
+    app: bingo
+  components:
+    - ../../aaa/bbb
+    - ../../aaa/bbb/ccc
+  configMapGenerator:
+    - name: my-java-server-props
+      namespace: ns-111
+      behavior: merge
+      files:
+      - application.properties
+      - more.properties
+    - name: my-java-server-env-file-vars
+      namespace: ns-222
+      envs:
+      - my-server-env.properties
+      - more-server-props.env
+    - name: my-java-server-env-vars
+      namespace: ns-333
+      literals:
+      - JAVA_HOME=/opt/java/jdk
+      - JAVA_TOOL_OPTIONS=-agentlib:hprof
+      options:
+        disableNameSuffixHash: true
+        labels:
+          pet: dog
+    - name: dashboards
+      namespace: ns-444
+      files:
+      - mydashboard.json
+      options:
+        annotations:
+          dashboard: "1"
+        labels:
+          app.kubernetes.io/name: "app1"
+  crds:
+    - crds/typeA.yaml
+    - crds/typeB.yaml
+  generatorOptions:
+    # labels to add to all generated resources
+    labels:
+      kustomize.generated.resources: somevalue
+    # annotations to add to all generated resources
+    annotations:
+      kustomize.generated.resource: somevalue
+    # disableNameSuffixHash is true disables the default behavior of adding a
+    # suffix to the names of generated resources that is a hash of
+    # the resource contents.
+    disableNameSuffixHash: true
+    # if set to true, the immutable property is added to generated resources
+    immutable: true
+  helmCharts:
+    - name: minecraft
+      repo: https://kubernetes-charts.storage.googleapis.com
+      version: v1.2.0
+      releaseName: test
+      namespace: testNamespace
+      valuesFile: values.yaml
+      additionalValuesFiles:
+        - values-file-1.yml
+        - values-file-2.yml
+  helmGlobals:
+    chartHome: my-charts-dir
+    configHome: my-config-dir
+  images:
+    - name: postgres
+      newName: my-registry/my-postgres
+      newTag: v1
+    - name: nginx
+      newTag: "1.8.0"
+    - name: my-demo-app
+      newName: my-app
+    - name: alpine
+      digest: sha256:24a0c4b4a4c0eb97a1aabb8e29f18e917d05abfe1b7a7c07857230879ce7d3d3
+  labels:
+    - pairs:
+        someName: someValue
+        owner: alice
+        app: bingo
+      includeSelectors: true # <-- false by default
+      includeTemplates: true # <-- false by default
+  namePrefix: aaa-
+  namespace: ns-xxx
+  nameSuffix: -bbb
+  openapi:
+    path: my_schema.json
+    version: v1.20.4
+  patches:
+    - path: patch.yaml
+      target:
+        group: apps
+        version: v1
+        kind: Deployment
+        name: deploy.*
+        labelSelector: "env=dev"
+        annotationSelector: "zone=west"
+    - patch: |-
+        - op: replace
+          path: /some/existing/path
+          value: new value
+      target:
+        kind: MyKind
+        labelSelector: "env=dev"
+      options:
+        allowNameChange: true
+        allowKindChange: true
+    - patch: |-
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: not-used
+        spec:
+          template:
+            spec:
+              containers:
+                - name: nginx
+                  image: nginx:1.21.0
+  replacements:
+    - source:
+        group: string
+        version: string
+        kind: string
+        name: string
+        namespace: string
+        fieldPath: string
+        options:
+          delimiter: string
+          index: 1
+          create: false
+      sourceValue: string
+      targets:
+        - select:
+            group: string
+            version: string
+            kind: string
+            name: string
+            namespace: string
+            annotationSelector: string
+            labelSelector: string
+          reject:
+            - group: string
+              version: string
+              kind: string
+              name: string
+              namespace: string
+              annotationSelector: string
+              labelSelector: string
+          fieldPaths:
+            - string
+          options:
+            delimiter: string
+            index: 0
+            create: true
+  replicas:
+    - name: deployment-name
+      count: 5
+    - name: deployment-name11
+      count: 10
+  resources:
+    # Local files
+    - myNamespace.yaml
+    - deployment.yaml
+    - sub-dir/some-deployment.yaml
+
+    # Local directories
+    - ../../commonbase
+
+    # Remote URLs
+    - https://github.com/kubernetes-sigs/kustomize//examples/multibases/?timeout=120&ref=v3.3.1
+
+    # Legacy hashicorp/go-getter format
+    - github.com/kubernets-sigs/kustomize/examples/helloWorld?ref=test-branch
+  secretGenerator:
+    - name: app-tls
+      files:
+      - secret/tls.crt
+      - secret/tls.key
+      type: "kubernetes.io/tls"
+    - name: app-tls-namespaced
+      # you can define a namespace to generate
+      # a secret in, defaults to: "default"
+      namespace: apps
+      files:
+      - tls.crt=catsecret/tls.crt
+      - tls.key=secret/tls.key
+      type: "kubernetes.io/tls"
+    - name: env-file-secret
+      envs:
+      - env.txt
+      type: Opaque
+    - name: secret-with-annotation
+      files:
+      - app-config.yaml
+      type: Opaque
+      options:
+        annotations:
+          app_config: "true"
+        labels:
+          app.kubernetes.io/name: "app2"
+  sortOptions:
+    order: legacy
+    legacySortOptions:
+      orderFirst:
+        - Namespace
+        - ResourceQuota
+        - StorageClass
+        - CustomResourceDefinition
+        - ServiceAccount
+        - PodSecurityPolicy
+        - Role
+        - ClusterRole
+        - RoleBinding
+        - ClusterRoleBinding
+        - ConfigMap
+        - Secret
+        - Endpoints
+        - Service
+        - LimitRange
+        - PriorityClass
+        - PersistentVolume
+        - PersistentVolumeClaim
+        - Deployment
+        - StatefulSet
+        - CronJob
+        - PodDisruptionBudget
+      orderLast:
+        - MutatingWebhookConfiguration
+        - ValidatingWebhookConfiguration
