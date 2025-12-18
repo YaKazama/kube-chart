@@ -11,7 +11,7 @@
     {{- /* {{- toYamlPretty . | replace "'" "\"" }} 可将单引号强制换为双引号，对 CronJob 中的 schedule 有奇效 */ -}}
     {{- toYamlPretty . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.map" "iValue" . "iLine" 14) }}
+    {{- include "base.faild" (dict "iName" "base.map" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -31,7 +31,7 @@
       {{- . }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.bool" "iValue" . "iLine" 34) }}
+    {{- include "base.faild" (dict "iName" "base.bool" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -57,7 +57,7 @@
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- if mustRegexMatch $const.regexCheckInt . }}
+    {{- if mustRegexMatch $const.types.int . }}
       {{- $val := atoi . }}
       {{- if eq $val 9223372036854775807 }}
         {{- . }}
@@ -65,10 +65,49 @@
         {{- $val }}
       {{- end }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 68) }}
+      {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 1) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 71) }}
+    {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 2) }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  float64 / int / int64 类型检查
+
+  检查整数
+
+  return: 值或打印报错信息
+*/ -}}
+{{- define "base.int.positive" -}}
+  {{- include "base.invalid" . }}
+
+  {{- $typesNum := list "float64" "int" "int64" }}
+  {{- $typesStr := list "string" }}
+
+  {{- $type := kindOf . }}
+
+  {{- if mustHas $type $typesNum }}
+    {{- /* float64 精度只有 15 位，从 16 位开始四舍五入 */ -}}
+    {{- /* 此处直接强制转为 int 类型，但会丢失小数位后的所有内容，这似乎适用于大部分场景 */ -}}
+    {{- /* 若确实需要原样返回，在定义时添加双引号，使用字符串即可 */ -}}
+    {{- int . }}
+  {{- else if mustHas $type $typesStr }}
+    {{- $const := include "base.env" "" | fromYaml }}
+
+    {{- if mustRegexMatch $const.types.positiveInt . }}
+      {{- $val := atoi . }}
+      {{- if eq $val 9223372036854775807 }}
+        {{- . }}
+      {{- else }}
+        {{- $val }}
+      {{- end }}
+    {{- else }}
+      {{- include "base.faild" (dict "iName" "base.int.positive" "iValue" . "iLine" 1) }}
+    {{- end }}
+  {{- else }}
+    {{- include "base.faild" (dict "iName" "base.int.positive" "iValue" . "iLine" 2) }}
   {{- end }}
 {{- end }}
 
@@ -94,17 +133,17 @@
   {{- if kindIs "string" . }}
     {{- /* 字符串全为 0 。包括 UID="0000"（不能有 +/- 符号） */ -}}
     {{- /* 字符串以 0 开头且全为数字。包括 UMASK="022"（不能有 +/- 符号） */ -}}
-    {{- if mustRegexMatch $const.regexReplaceZero . }}
-      {{- mustRegexReplaceAll $const.regexReplaceZero . "${1}0${2}" | trim }}
+    {{- if mustRegexMatch $const.types.zero . }}
+      {{- mustRegexReplaceAll $const.types.zero . "${1}0${2}" | trim }}
     {{- /* 八进制和十六进制字符串 以 0x, 0o 开头 */ -}}
-    {{- else if mustRegexMatch $const.regexOctalHex . }}
+    {{- else if mustRegexMatch $const.types.octalHex . }}
       {{- . | trim }}
     {{- /* 默认 原值（不带双引号） */ -}}
     {{- else }}
       {{- . | trim }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.string" "iValue" . "iLine" 107) }}
+    {{- include "base.faild" (dict "iName" "base.string" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -120,7 +159,7 @@
   {{- if kindIs "slice" . }}
     {{- toYamlPretty . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.slice" "iValue" . "iLine" 123) }}
+    {{- include "base.faild" (dict "iName" "base.slice" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -134,7 +173,7 @@
   {{- if kindIs "float64" . }}
     {{- int . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.ftoi" "iValue" . "iLine" 137) }}
+    {{- include "base.faild" (dict "iName" "base.ftoi" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -148,6 +187,6 @@
   {{- if kindIs "bool" . }}
     {{- toString . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.btoa" "iValue" . "iLine" 151) }}
+    {{- include "base.faild" (dict "iName" "base.btoa" "iValue" .) }}
   {{- end }}
 {{- end }}

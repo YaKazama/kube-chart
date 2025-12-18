@@ -1,18 +1,15 @@
 {{- define "definitions.ContainerResizePolicy" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- $match := regexFindAll $const.regexContainerResizePolicy . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "definitions.ContainerResizePolicy: error. Values: %s, format: 'resourceName [restartPolicy]'" .) }}
+  {{- /* resourceName string */ -}}
+  {{- $resourceName := include "base.getValue" (list . "resourceName") }}
+  {{- $resourceNameAllows := list "cpu" "memory" }}
+  {{- if $resourceName }}
+    {{- include "base.field" (list "resourceName" $resourceName "base.string" $resourceNameAllows) }}
   {{- end }}
 
-  {{- /* resourceName string */ -}}
-  {{- $resourceName := regexReplaceAll $const.regexContainerResizePolicy . "${1}" }}
-  {{- include "base.field" (list "resourceName" $resourceName) }}
-
   {{- /* resourcePolicy string */ -}}
-  {{- $resourcePolicy := regexReplaceAll $const.regexContainerResizePolicy . "${2}" }}
+  {{- $resourcePolicy := include "base.getValue" (list . "resourcePolicy") }}
+  {{- $resourcePolicyAllows := list "NotRequired" "RestartContainer" }}
   {{- if $resourcePolicy }}
-    {{- include "base.field" (list "resourcePolicy" $resourcePolicy) }}
+    {{- include "base.field" (list "resourcePolicy" $resourcePolicy "base.string" $resourcePolicyAllows) }}
   {{- end }}
 {{- end }}

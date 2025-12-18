@@ -1,6 +1,8 @@
 {{- define "service.ServiceSpec" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* allocateLoadBalancerNodePorts bool */ -}}
-  {{- $allocateLoadBalancerNodePorts := include "base.getValue" (list . "allocateLoadBalancerNodePorts") }}
+  {{- $allocateLoadBalancerNodePorts := include "base.getValue" (list . "allocateLoadBalancerNodePorts" "toString") }}
   {{- if $allocateLoadBalancerNodePorts }}
     {{- include "base.field" (list "allocateLoadBalancerNodePorts" $allocateLoadBalancerNodePorts "base.bool") }}
   {{- end }}
@@ -24,21 +26,24 @@
   {{- end }}
 
   {{- /* externalName string */ -}}
-  {{- $externalIPs := include "base.getValue" (list . "externalIPs") }}
-  {{- if $externalIPs }}
-    {{- include "base.field" (list "externalIPs" $externalIPs "base.slice") }}
+  {{- $externalName := include "base.getValue" (list . "externalName") }}
+  {{- if $externalName }}
+    {{- include "base.field" (list "externalName" $externalName "base.rfc1123") }}
   {{- end }}
 
   {{- /* externalTrafficPolicy string */ -}}
-  {{- $externalIPs := include "base.getValue" (list . "externalIPs") }}
-  {{- if $externalIPs }}
-    {{- include "base.field" (list "externalIPs" $externalIPs) }}
+  {{- $externalTrafficPolicy := include "base.getValue" (list . "externalTrafficPolicy") }}
+  {{- $externalTrafficPolicyAllows := list "Cluster" "Local" }}
+  {{- if $externalTrafficPolicy }}
+    {{- include "base.field" (list "externalTrafficPolicy" $externalTrafficPolicy "base.string" $externalTrafficPolicyAllows) }}
   {{- end }}
 
   {{- /* healthCheckNodePort int */ -}}
-  {{- $externalIPs := include "base.getValue" (list . "externalIPs") }}
-  {{- if $externalIPs }}
-    {{- include "base.field" (list "externalIPs" $externalIPs) }}
+  {{- $healthCheckNodePort := include "base.getValue" (list . "healthCheckNodePort") }}
+  {{- $_externalTrafficPolicy := include "base.getValue" (list . "externalTrafficPolicy") }}
+  {{- $_type := include "base.getValue" (list . "type") }}
+  {{- if and $healthCheckNodePort (eq $_type "LoadBalancer") (eq $_externalTrafficPolicy "Local") }}
+    {{- include "base.field" (list "healthCheckNodePort" $healthCheckNodePort "base.int") }}
   {{- end }}
 
   {{- /* internalTrafficPolicy string */ -}}
@@ -51,7 +56,7 @@
   {{- /* ipFamilies string array */ -}}
   {{- $ipFamilies := include "base.getValue" (list . "ipFamilies") | fromYamlArray }}
   {{- if $ipFamilies }}
-    {{- include "base.field" (list "ipFamilies" $ipFamilies "base.slice") }}
+    {{- include "base.field" (list "ipFamilies" (dict "s" $ipFamilies "c" $const.k8s.service.ipFamilies) "base.slice.cleanup") }}
   {{- end }}
 
   {{- /* ipFamilyPolicy string */ -}}
@@ -71,6 +76,7 @@
   {{- end }}
 
   {{- /* loadBalancerIP string */ -}}
+  {{- /* Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available. */ -}}
   {{- $loadBalancerIP := include "base.getValue" (list . "loadBalancerIP") }}
   {{- if $loadBalancerIP }}
     {{- include "base.field" (list "loadBalancerIP" $loadBalancerIP "base.ip") }}
@@ -83,23 +89,22 @@
   {{- end }}
 
   {{- /* ports array */ -}}
-  {{- $const := include "base.env" "" | fromYaml }}
   {{- $portsVal := include "base.getValue" (list . "ports") | fromYamlArray }}
   {{- $ports := list }}
   {{- range $portsVal }}
     {{- $_ports := toString . }}
-    {{- $match := regexFindAll $const.regexServiceSpecPorts $_ports -1 }}
+    {{- $match := regexFindAll $const.k8s.service.ports $_ports -1 }}
     {{- if not $match }}
       {{- fail (printf "ServiceSpec: ports error. Values: %s, format: '[nodePort:]port[:targetPort][/protocol][@appProtocol][#name]'" $_ports) }}
     {{- end }}
 
     {{- $val := dict }}
-    {{- $_ := set $val "nodePort" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${1}") }}
-    {{- $_ := set $val "port" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${2}") }}
-    {{- $_ := set $val "targetPort" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${3}") }}
-    {{- $_ := set $val "protocol" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${4}") }}
-    {{- $_ := set $val "appProtocol" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${5}") }}
-    {{- $_ := set $val "name" (regexReplaceAll $const.regexServiceSpecPorts $_ports "${6}") }}
+    {{- $_ := set $val "nodePort" (regexReplaceAll $const.k8s.service.ports $_ports "${1}") }}
+    {{- $_ := set $val "port" (regexReplaceAll $const.k8s.service.ports $_ports "${2}") }}
+    {{- $_ := set $val "targetPort" (regexReplaceAll $const.k8s.service.ports $_ports "${3}") }}
+    {{- $_ := set $val "protocol" (regexReplaceAll $const.k8s.service.ports $_ports "${4}") }}
+    {{- $_ := set $val "appProtocol" (regexReplaceAll $const.k8s.service.ports $_ports "${5}") }}
+    {{- $_ := set $val "name" (regexReplaceAll $const.k8s.service.ports $_ports "${6}") }}
 
     {{- $ports = append $ports (include "definitions.ServicePort" $val | fromYaml) }}
   {{- end }}
@@ -118,14 +123,14 @@
   {{- $_type := include "base.getValue" (list . "type") }}
   {{- $_selectorAllows := list "ClusterIP" "NodePort" "LoadBalancer" }}
   {{- if mustHas $_type $_selectorAllows }}
-    {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-    {{- $selector := dict }}
+    {{- $selector := include "base.getValue" (list . "selector") | fromYaml }}
     {{- /* 将 labels helmLabels 追加到 selector 中 */ -}}
-    {{- $selector = mustMerge $selector (include "base.getValue" (list . "labels") | fromYaml) }}
+    {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
     {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
     {{- if $isHelmLabels }}
-      {{- $selector = mustMerge $selector (include "base.helmLabels" . | fromYaml) }}
+      {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
     {{- end }}
+    {{- $selector = merge $selector $labels }}
     {{- if $selector }}
       {{- include "base.field" (list "selector" $selector "base.map") }}
     {{- end }}
@@ -141,10 +146,8 @@
   {{- /* sessionAffinityConfig map */ -}}
   {{- $sessionAffinityConfigVal := include "base.getValue" (list . "sessionAffinityConfig") | int }}
   {{- if $sessionAffinityConfigVal }}
-    {{- $_sessionAffinityConfigVal := dict }}
-    {{- $_ := set $_sessionAffinityConfigVal "timeoutSeconds" $sessionAffinityConfigVal }}
-    {{- $_ := set $_sessionAffinityConfigVal "sessionAffinity" $sessionAffinity }}
-    {{- $sessionAffinityConfig := include "definitions.SessionAffinityConfig" $_sessionAffinityConfigVal | fromYaml }}
+    {{- $val := dict "clientIP" (dict "timeoutSeconds" $sessionAffinityConfigVal "sessionAffinity" $sessionAffinity) }}
+    {{- $sessionAffinityConfig := include "definitions.SessionAffinityConfig" $val | fromYaml }}
     {{- if $sessionAffinityConfig }}
       {{- include "base.field" (list "sessionAffinityConfig" $sessionAffinityConfig "base.map") }}
     {{- end }}

@@ -7,11 +7,13 @@
   {{- range $pathsVal }}
     {{- $val := dict }}
 
-    {{- $match := regexFindAll $const.regexHTTPIngressRuleValue . -1 }}
+    {{- $match := regexFindAll $const.k8s.ingress.path . -1 }}
     {{- if $match }}
-      {{- $_ := set $val "path" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${1}") }}
-      {{- $_ := set $val "pathType" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${2}") }}
-      {{- $_ := set $val "backend" (regexReplaceAll $const.regexHTTPIngressRuleValue . "${3} ${4}") }}
+      {{- $path := regexReplaceAll $const.k8s.ingress.path . "${1}" | trim }}
+      {{- $pathType := regexReplaceAll $const.k8s.ingress.path . "${2}" | trim }}
+      {{- $backend := regexReplaceAll $const.k8s.ingress.path . "${3} ${4}" | trim }}
+      {{- $val = dict "path" $path "pathType" $pathType "backend" $backend }}
+
     {{- else }}
       {{- fail (printf "HTTPIngressRuleValue: paths error. Values: %s, format: 'path [pathType] resource name kind [apiGroup]' or 'path [pathType] service name port.name|port.number'" .) }}
     {{- end }}

@@ -1,12 +1,12 @@
 {{- define "definitions.ISCSIVolumeSource" -}}
   {{- /* chapAuthDiscovery bool */ -}}
-  {{- $chapAuthDiscovery := include "base.getValue" (list . "chapAuthDiscovery") }}
+  {{- $chapAuthDiscovery := include "base.getValue" (list . "chapAuthDiscovery" "toString") }}
   {{- if $chapAuthDiscovery }}
     {{- include "base.field" (list "chapAuthDiscovery" $chapAuthDiscovery "base.bool") }}
   {{- end }}
 
   {{- /* chapAuthSession bool */ -}}
-  {{- $chapAuthSession := include "base.getValue" (list . "chapAuthSession") }}
+  {{- $chapAuthSession := include "base.getValue" (list . "chapAuthSession" "toString") }}
   {{- if $chapAuthSession }}
     {{- include "base.field" (list "chapAuthSession" $chapAuthSession "base.bool") }}
   {{- end }}

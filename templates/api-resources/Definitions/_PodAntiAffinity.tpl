@@ -1,21 +1,25 @@
 {{- define "definitions.PodAntiAffinity" -}}
   {{- /* preferredDuringSchedulingIgnoredDuringExecution array */ -}}
-  {{- $preferredDuringSchedulingIgnoredDuringExecutionVal := include "base.getValue" (list . "preferred") | fromYamlArray }}
-  {{- $preferredDuringSchedulingIgnoredDuringExecution := list }}
-  {{- range $preferredDuringSchedulingIgnoredDuringExecutionVal }}
-    {{- $preferredDuringSchedulingIgnoredDuringExecution = append $preferredDuringSchedulingIgnoredDuringExecution (include "definitions.WeightedPodAffinityTerm" . | fromYaml) }}
+  {{- $preferredVal := include "base.getValue" (list . "preferred") | fromYamlArray }}
+  {{- $preferred := list }}
+  {{- range $preferredVal }}
+    {{- $val := dict "weight" (get . "weight") "podAffinityTerm" (pick . "labelSelector" "matchLabelKeys" "mismatchLabelKeys" "namespaceSelector" "namespaces" "topologyKey") }}
+    {{- $preferred = append $preferred (include "definitions.WeightedPodAffinityTerm" $val | fromYaml) }}
   {{- end }}
-  {{- if $preferredDuringSchedulingIgnoredDuringExecution }}
-    {{- include "base.field" (list "preferredDuringSchedulingIgnoredDuringExecution" $preferredDuringSchedulingIgnoredDuringExecution "base.slice") }}
+  {{- $preferred = $preferred | mustUniq | mustCompact }}
+  {{- if $preferred }}
+    {{- include "base.field" (list "preferredDuringSchedulingIgnoredDuringExecution" $preferred "base.slice") }}
   {{- end }}
 
   {{- /* requiredDuringSchedulingIgnoredDuringExecution array */ -}}
-  {{- $requiredDuringSchedulingIgnoredDuringExecutionVal := include "base.getValue" (list . "required") | fromYamlArray }}
-  {{- $requiredDuringSchedulingIgnoredDuringExecution := list }}
-  {{- range $requiredDuringSchedulingIgnoredDuringExecutionVal }}
-    {{- $requiredDuringSchedulingIgnoredDuringExecution = append $requiredDuringSchedulingIgnoredDuringExecution (include "definitions.PodAffinityTerm" . | fromYaml) }}
+  {{- $requiredVal := include "base.getValue" (list . "required") | fromYamlArray }}
+  {{- $required := list }}
+  {{- range $requiredVal }}
+    {{- $val := pick . "labelSelector" "matchLabelKeys" "mismatchLabelKeys" "namespaceSelector" "namespaces" "topologyKey" }}
+    {{- $required = append $required (include "definitions.PodAffinityTerm" $val | fromYaml) }}
   {{- end }}
-  {{- if $requiredDuringSchedulingIgnoredDuringExecution }}
-    {{- include "base.field" (list "requiredDuringSchedulingIgnoredDuringExecution" $requiredDuringSchedulingIgnoredDuringExecution "base.slice") }}
+  {{- $required = $required | mustUniq | mustCompact }}
+  {{- if $required }}
+    {{- include "base.field" (list "requiredDuringSchedulingIgnoredDuringExecution" $required "base.slice") }}
   {{- end }}
 {{- end }}

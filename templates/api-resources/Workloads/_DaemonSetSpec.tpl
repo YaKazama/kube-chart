@@ -1,7 +1,5 @@
 {{- define "workloads.DaemonSetSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "DaemonSetSpec" }}
-  {{- $__kind := get . "_kind" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* minReadySeconds int */ -}}
   {{- $minReadySeconds := include "base.getValue" (list . "minReadySeconds") }}
@@ -23,16 +21,26 @@
   {{- if $isHelmLabels }}
     {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
   {{- end }}
-  {{- if $labels }}
-    {{- $_ := set $selectorVal "labels" $labels }}
+  {{- $_matchLabels := get $selectorVal "matchLabels" }}
+  {{- if kindIs "map" $_matchLabels }}
+    {{- $_matchLabels = mustMerge $_matchLabels $labels }}
+  {{- else }}
+    {{- $_matchLabels = $labels }}
   {{- end }}
+  {{- /* 设置 matchLabels */ -}}
+  {{- $_ := set $selectorVal "matchLabels" $_matchLabels }}
+  {{- /* 传递 _kind */ -}}
+  {{- $_ := set $selectorVal "_kind" "DeploymentSpec" }}
   {{- $selector := include "definitions.LabelSelector" $selectorVal | fromYaml }}
   {{- if $selector }}
     {{- include "base.field" (list "selector" $selector "base.map") }}
   {{- end }}
 
   {{- /* template map */ -}}
-  {{- $template := include "metadata.PodTemplateSpec" . | fromYaml }}
+  {{- /* 透传顶层上下文 . */ -}}
+  {{- /* 此处赋值是为了防止上层的 ._kind 被修改 */ -}}
+  {{- $templateVal := . }}
+  {{- $template := include "metadata.PodTemplateSpec" $templateVal | fromYaml }}
   {{- if $template }}
     {{- include "base.field" (list "template" $template "base.map") }}
   {{- end }}
@@ -40,12 +48,11 @@
   {{- /* updateStrategy map */ -}}
   {{- $updateStrategyVal := include "base.getValue" (list . "updateStrategy") }}
   {{- if $updateStrategyVal }}
-    {{- $const := include "base.env" "" | fromYaml }}
-    {{- $match := regexFindAll $const.regexUpdateStrategy $updateStrategyVal -1 }}
+    {{- $match := regexFindAll $const.k8s.strategy.deamonset $updateStrategyVal -1 }}
     {{- if $match }}
-      {{- $type := regexReplaceAll $const.regexUpdateStrategy $updateStrategyVal "${1}" }}
-      {{- $maxSurge := regexReplaceAll $const.regexUpdateStrategy $updateStrategyVal "${2}" }}
-      {{- $maxUnavailable := regexReplaceAll $const.regexUpdateStrategy $updateStrategyVal "${3}" }}
+      {{- $type := regexReplaceAll $const.k8s.strategy.deamonset $updateStrategyVal "${1}" | trim }}
+      {{- $maxSurge := regexReplaceAll $const.k8s.strategy.deamonset $updateStrategyVal "${2}" | trim }}
+      {{- $maxUnavailable := regexReplaceAll $const.k8s.strategy.deamonset $updateStrategyVal "${3}" | trim }}
       {{- $val := dict "type" $type "rollingUpdate" (dict "maxSurge" $maxSurge "maxUnavailable" $maxUnavailable) }}
       {{- $updateStrategy := include "definitions.DaemonSetUpdateStrategy" $val | fromYaml }}
       {{- if $updateStrategy }}

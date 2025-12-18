@@ -13,7 +13,8 @@
   {{- if not (eq $os "windows") }}
     {{- $appArmorProfileVal := include "base.getValue" (list . "appArmorProfile") | fromYaml }}
     {{- if $appArmorProfileVal }}
-      {{- $appArmorProfile := include "definitions.AppArmorProfile" $appArmorProfileVal | fromYaml }}
+      {{- $val := pick $appArmorProfileVal "localhostProfile" "type" }}
+      {{- $appArmorProfile := include "definitions.AppArmorProfile" $val | fromYaml }}
       {{- if $appArmorProfile }}
         {{- include "base.field" (list "appArmorProfile" $appArmorProfile "base.map") }}
       {{- end }}
@@ -24,7 +25,8 @@
   {{- if not (eq $os "windows") }}
     {{- $capabilitiesVal := include "base.getValue" (list . "capabilities") | fromYaml }}
     {{- if $capabilitiesVal }}
-      {{- $capabilities := include "definitions.Capabilities" $capabilitiesVal | fromYaml }}
+      {{- $val := pick $capabilitiesVal "add" "drop" }}
+      {{- $capabilities := include "definitions.Capabilities" $val | fromYaml }}
       {{- if $capabilities }}
         {{- include "base.field" (list "capabilities" $capabilities "base.map") }}
       {{- end }}
@@ -82,7 +84,8 @@
   {{- if not (eq $os "windows") }}
     {{- $seLinuxOptionsVal := include "base.getValue" (list . "seLinuxOptions") | fromYaml }}
     {{- if $seLinuxOptionsVal }}
-      {{- $seLinuxOptions := include "definitions.SELinuxOptions" $seLinuxOptionsVal | fromYaml }}
+      {{- $val := pick $seLinuxOptionsVal "level" "role" "type" "user" }}
+      {{- $seLinuxOptions := include "definitions.SELinuxOptions" $val | fromYaml }}
       {{- if $seLinuxOptions }}
         {{- include "base.field" (list "seLinuxOptions" $seLinuxOptions "base.map") }}
       {{- end }}
@@ -93,7 +96,8 @@
   {{- if not (eq $os "windows") }}
     {{- $seccompProfileVal := include "base.getValue" (list . "seccompProfile") | fromYaml }}
     {{- if $seccompProfileVal }}
-      {{- $seccompProfile := include "definitions.SeccompProfile" $seccompProfileVal | fromYaml }}
+      {{- $val := pick $seccompProfileVal "localhostProfile" "type" }}
+      {{- $seccompProfile := include "definitions.SeccompProfile" $val | fromYaml }}
       {{- if $seccompProfile }}
         {{- include "base.field" (list "seccompProfile" $seccompProfile "base.map") }}
       {{- end }}
@@ -104,7 +108,8 @@
   {{- if eq $os "windows" }}
     {{- $windowsOptionsVal := include "base.getValue" (list . "windowsOptions") | fromYaml }}
     {{- if $windowsOptionsVal }}
-      {{- $windowsOptions := include "definitions.WindowsSecurityContextOptions" $windowsOptionsVal | fromYaml }}
+      {{- $val := pick $windowsOptionsVal "gmsaCredentialSpec" "gmsaCredentialSpecName" "hostProcess" "runAsUserName" }}
+      {{- $windowsOptions := include "definitions.WindowsSecurityContextOptions" $val | fromYaml }}
       {{- if $windowsOptions }}
         {{- include "base.field" (list "windowsOptions" $windowsOptions "base.map") }}
       {{- end }}

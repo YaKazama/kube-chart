@@ -1,5 +1,4 @@
 {{- define "workloads.Deployment" -}}
-  {{- $_ := set . "_pkind" "" }}
   {{- $_ := set . "_kind" "Deployment" }}
 
   {{- include "base.field" (list "apiVersion" "apps/v1") }}

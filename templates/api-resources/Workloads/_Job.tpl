@@ -1,5 +1,4 @@
 {{- define "workloads.Job" -}}
-  {{- $_ := set . "_pkind" "" }}
   {{- $_ := set . "_kind" "Job" }}
 
   {{- include "base.field" (list "apiVersion" "batch/v1") }}

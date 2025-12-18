@@ -2,8 +2,8 @@
 
 zzz: {{ include "base.getValue" (list .Values "zz") }}
 
-{{- $_ := set . "Context" .Values.Deployment }}
-{{- include "workloads.Deployment" . }}
-*/ -}}
 {{- $_ := set . "Context" .Values.Kustomization }}
 {{- include "kustomize.Kustomization" . }}
+*/ -}}
+{{- $_ := set . "Context" .Values.TkeServiceConfig }}
+{{- include "tke.TkeServiceConfig" . }}

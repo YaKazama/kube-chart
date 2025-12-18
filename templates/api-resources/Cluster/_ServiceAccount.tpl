@@ -11,7 +11,7 @@
   {{- end }}
 
   {{- /* automountServiceAccountToken bool */ -}}
-  {{- $automountServiceAccountToken := include "base.getValue" (list . "automountServiceAccountToken") }}
+  {{- $automountServiceAccountToken := include "base.getValue" (list . "automountServiceAccountToken" "toString") }}
   {{- if $automountServiceAccountToken }}
     {{- include "base.field" (list "automountServiceAccountToken" $automountServiceAccountToken "base.bool") }}
   {{- end }}

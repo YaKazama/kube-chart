@@ -1,7 +1,9 @@
 {{- define "definitions.IngressRule" -}}
   {{- /* host string */ -}}
   {{- $host := include "base.getValue" (list . "host") }}
-  {{- include "base.field" (list "host" $host "quote") }}
+  {{- if $host }}
+    {{- include "base.field" (list "host" $host "quote") }}
+  {{- end }}
 
   {{- /* http map */ -}}
   {{- /* rules 中没有定义 http , 但抽象成了一个 slice . 直接透传 */ -}}

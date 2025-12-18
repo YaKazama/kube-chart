@@ -3,7 +3,7 @@
 
   variables:
   - m: Map
-  - k: 以分隔符分隔的键字符串 默认使用 base.env 定义下的 regexSplitStr
+  - k: 以分隔符分隔的键字符串 默认使用 base.env 定义下的 split.all
   - default: 默认值，默认返回空符字串
 
   return: toYaml 转换后的 YAML 字符串或默认值
@@ -17,7 +17,7 @@
 
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $keys := mustRegexSplit $const.regexSplitStr .k -1 }}
+  {{- $keys := mustRegexSplit $const.split.all .k -1 }}
   {{- $keysLen := len $keys }}
   {{- $first := mustFirst $keys }}
 
@@ -38,7 +38,7 @@
 {{- /*
   对 map 的值进行 base64 编码后输出。主要用于 configMap 和 secret
 
-  return: base64 编码后的字符串
+  return: 键和 base64 编码后的值
 */ -}}
 {{- define "base.map.b64enc" -}}
   {{- include "base.invalid" . }}
@@ -50,7 +50,38 @@
     {{- end }}
     {{- toYamlPretty $val }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.map.b64enc" "iValue" . "iLine" 53) }}
+    {{- include "base.faild" (dict "iName" "base.map.b64enc" "iValue" .) }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  对 map 的值进行校验。不符合的值会报错。主要用于 resources.requests 和 resources.limits
+
+  variables(slice): dict regex(string)
+
+  return: 键和校验后的值
+*/ -}}
+{{- define "base.map.verify" -}}
+  {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
+    {{- fail (printf "base.map.verify: Must be a slice and requires 2 parameters. Values: '%s', Format: '[dict, regex(string)]'" .) }}
+  {{- end }}
+
+  {{- $data := first . }}
+  {{- $regex := default "" (index . 1) }}
+  {{- if kindIs "map" $data }} {{- /* Map 为空也合法 */ -}}
+    {{- $val := dict }}
+    {{- range $k, $v := $data }}
+      {{- if $regex }}
+        {{- if not (regexMatch $regex $v) }}
+          {{- include "base.faild" (dict "iName" "base.map.verify" "iValue" $data) }}
+        {{- end }}
+      {{- end }}
+      {{- $val = mustMerge $val (dict $k $v) }}
+    {{- end }}
+    {{- toYamlPretty $val }}
+  {{- else }}
+    {{- include "base.faild" (dict "iName" "base.map.b64enc" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -124,31 +155,30 @@
 
   {{- if eq $len 1 }}
     {{- include "base.int" (index . 0) }}
+
   {{- else if eq $len 2 }}
     {{- $num := (index . 0) }}
     {{- $min := (index . 1) }}
 
-    {{- include "base.empty" $min }}
-
     {{- if ge $num $min }}
-      {{- include "base.int" $num }}
+      {{- $num }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 136) }}
+      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" .) }}
     {{- end }}
+
   {{- else if eq $len 3 }}
     {{- $num := (index . 0) }}
     {{- $min := (index . 1) }}
     {{- $max := (index . 2) }}
 
-    {{- include "base.empty" $min }}
-
     {{- if and (ge $num $min) (le $num $max) }}
-      {{- include "base.int" $num }}
+      {{- $num }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 148) }}
+      {{- include "base.faild" (dict "iName" "base.int.range" "iValue" .) }}
     {{- end }}
+
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.int.range" "iValue" . "iLine" 151) }}
+    {{- include "base.faild" (dict "iName" "base.int.range" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -162,9 +192,10 @@
   {{- if and (ge (int .) 1) (le (int .) 65535) }}
     {{- int . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.port" "iValue" . "iLine" 165) }}
+    {{- include "base.faild" (dict "iName" "base.port" "iValue" .) }}
   {{- end }}
 {{- end }}
+
 
 {{- /*
   检查 IP 地址是否合法
@@ -176,25 +207,91 @@
 
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- if mustRegexMatch $const.regexIP (toString .) }}
+  {{- if mustRegexMatch $const.net.ip (toString .) }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.ip" "iValue" . "iLine" 182) }}
+    {{- include "base.faild" (dict "iName" "base.ip" "iValue" .) }}
   {{- end }}
 {{- end }}
 
 
+{{- /*
+  校验列表中的值是否为 IP 地址
+*/ -}}
 {{- define "base.slice.ips" -}}
   {{- include "base.invalid" . }}
 
-  {{- if kindIs "slice" . }}
-    {{- $val := list }}
-    {{- range . }}
-      {{- $val = append $val (include "base.ip" .) }}
+  {{- if not (kindIs "slice" .) }}
+    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" .) }}
+  {{- end }}
+
+  {{- $val := list }}
+  {{- range . }}
+    {{- $val = append $val (include "base.ip" .) }}
+  {{- end }}
+  {{- toYamlPretty ($val | uniq) }}
+{{- end }}
+
+
+{{- /*
+  校验列表中的值是否在允许范围内。不在范围内的值会被丢弃
+*/ -}}
+{{- define "base.slice.allows" -}}
+  {{- if not (and (kindIs "slice" .) (eq (len .) 2)) }}
+    {{- fail (printf "base.slice.allows: Must be a slice and requires 2 parameters. format: '[]any{value(slice) allowsList(slice)}', values: '%s'" .) }}
+  {{- end }}
+
+  {{- $data := index . 0 }}
+  {{- $allows := index . 1 }}
+
+  {{- if not (kindIs "slice" $data) }}
+    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 1) }}
+  {{- end }}
+
+  {{- if not (kindIs "slice" $allows) }}
+    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 1) }}
+  {{- end }}
+
+  {{- $val := list }}
+  {{- range $data }}
+    {{- if has . $allows }}
+      {{- $val = append $val . }}
     {{- end }}
-    {{- toYamlPretty ($val | uniq) }}
+  {{- end }}
+  {{- toYamlPretty ($val | uniq) }}
+{{- end }}
+
+
+{{- /*
+  校验是否为 IP 或域名
+*/ -}}
+{{- define "base.dns" -}}
+  {{- include "base.invalid" . }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+
+  {{- if regexMatch $const.net.ip (toString .) }}
+    {{- . }}
+  {{- else if regexMatch $const.net.domainName (toString .) }}
+    {{- . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 197) }}
+    {{- include "base.faild" (dict "iName" "base.dns" "iValue" .) }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  校验是否域名
+*/ -}}
+{{- define "base.domain" -}}
+  {{- include "base.invalid" . }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+
+  {{- if regexMatch $const.net.domainName (toString .) }}
+    {{- . }}
+  {{- else }}
+    {{- include "base.faild" (dict "iName" "base.domain" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -250,7 +347,7 @@
   {{- $val := list }}
   {{- $clean := list }}
 
-  {{- $regexSplit := coalesce .r $const.regexSplitStr }}
+  {{- $regexSplit := coalesce .r $const.split.all }}
   {{- $regexCheck := coalesce .c $const.emptyStr }}
   {{- $define := coalesce .define $const.emptyStr }}
   {{- $sep := coalesce .sep $const.emptyStr }}
@@ -270,7 +367,7 @@
       {{- $_val := mustRegexSplit $regexSplit . -1 }}
       {{- $valTmp := list }}
       {{- range $_val }}
-        {{- if regexMatch $const.regexCheckInt . }}
+        {{- if regexMatch $const.types.int . }}
           {{- $valTmp = append $valTmp (. | trim | atoi) }}   {{- /* 纯数字的字符串，使用 int 转换成数字 */ -}}
         {{- else }}
           {{- $valTmp = append $valTmp (. | trim) }}
@@ -280,7 +377,7 @@
     {{- else if or (kindIs "float64" .) (kindIs "int" .) (kindIs "int64" .) }}
       {{- $clean = mustAppend $clean . }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" . "iLine" 283) }}
+      {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" .) }}
     {{- end }}
   {{- end }}
 
@@ -288,7 +385,7 @@
     {{- if $regexCheck }}
       {{- /* mustRegexMatch 有问题时会向模板引擎返回错误 */ -}}
       {{- if not (mustRegexMatch $regexCheck (toString .)) }}
-        {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" . "iLine" 291) }}
+        {{- include "base.faild" (dict "iName" "base.slice.cleanup" "iValue" .) }}
       {{- end }}
     {{- end }}
 
@@ -320,7 +417,7 @@
   {{- if kindIs "slice" . }}
     {{- toYamlPretty . | replace "'" "\"" }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.slice.quote" "iValue" . "iLine" 323) }}
+    {{- include "base.faild" (dict "iName" "base.slice.quote" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -343,13 +440,13 @@
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- if mustRegexMatch $const.regexFileMode . }}
+    {{- if mustRegexMatch $const.sys.fileMode . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" . "iLine" 349) }}
+      {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" .) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" . "iLine" 352) }}
+    {{- include "base.faild" (dict "iName" "base.fileMode" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -384,3 +481,72 @@
     {{- fail (printf "base.relPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
   {{- end }}
 {{- end }}
+
+
+	{{- /*
+  功能与 base.bool 相同，但允许使用 false 值。传入的是一个 slice ( list )
+
+  descr:
+  - 是
+    - true  => "true"
+    - false => "false"
+  - 否 => 打印报错信息
+  - 传入的列表可以由内置的 pluck 函数生成
+*/ -}}
+{{- define "base.bool.false" -}}
+  {{- range . }}
+    {{- if kindIs "bool" . }}
+      {{- if . }}
+        {{- "true" }}
+      {{- else }}
+        {{- "false" }}
+      {{- end }}
+    {{- else }}
+      {{- fail (printf "base.bool.false: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) . (kindOf .)) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
+  使用正则校验字符串
+*/ -}}
+{{- define "base.string.verify" -}}
+  {{- if not (and (kindIs "slice" .) (eq (len .) 2)) }}
+    {{- fail (printf "base.string.verify: Must be a slice and requires 2 parameters. format: '[]any{value(string) regex}', values: '%s'" .) }}
+  {{- end }}
+
+  {{- $data := index . 0 }}
+  {{- $regex := index . 1 }}
+
+  {{- if kindIs "string" $data }}
+    {{- if $regex }}
+      {{- if mustRegexMatch $regex $data }}
+        {{- $data | trim }}
+      {{- else }}
+        {{- include "base.faild" (dict "iName" "base.string.verify" "iValue" $data "iLine" 1) }}
+      {{- end }}
+    {{- else }}
+      {{- include "base.faild" (dict "iName" "base.string.verify" "iValue" . "iLine" 2) }}
+    {{- end }}
+  {{- else }}
+    {{- include "base.faild" (dict "iName" "base.string.verify" "iValue" . "iLine" 3) }}
+  {{- end }}
+{{- end }}
+
+
+{{- /* 判断是否为多行字符串（包含换行符） */ -}}
+{{- define "base.isMultiLine" -}}
+  {{- if kindIs "string" . -}}
+    {{- contains "\n" . -}}
+  {{- else -}}
+    {{- false -}}
+  {{- end -}}
+{{- end -}}
+
+
+{{- /* 保留原始字符串（避免base.string破坏多行内容） */ -}}
+{{- define "base.rawString" -}}
+  {{- /* 仅做空值处理，不修改内容 */ -}}
+  {{- default "" . -}}
+{{- end -}}

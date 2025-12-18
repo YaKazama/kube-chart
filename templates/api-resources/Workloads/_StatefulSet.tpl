@@ -1,5 +1,4 @@
 {{- define "workloads.StatefulSet" -}}
-  {{- $_ := set . "_pkind" "" }}
   {{- $_ := set . "_kind" "StatefulSet" }}
 
   {{- include "base.field" (list "apiVersion" "apps/v1") }}

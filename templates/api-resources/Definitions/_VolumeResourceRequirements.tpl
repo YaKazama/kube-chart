@@ -2,22 +2,14 @@
   {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* limits map */ -}}
-  {{- $limitsVal := include "base.getValue" (list . "limits") }}
-  {{- $limits := dict }}
-  {{- if regexMatch $const.regexResources $limitsVal }}
-    {{- $_ := set $limits "storage" $limitsVal }}
-  {{- end }}
+  {{- $limits := include "base.getValue" (list . "limits") | fromYaml }}
   {{- if $limits }}
-    {{- include "base.field" (list "limits" $limits "base.map") }}
+    {{- include "base.field" (list "limits" (list $limits $const.k8s.resources) "base.map.verify") }}
   {{- end }}
 
   {{- /* requests map */ -}}
-  {{- $requestsVal := include "base.getValue" (list . "requests") }}
-  {{- $requests := dict }}
-  {{- if regexMatch $const.regexResources $requestsVal }}
-    {{- $_ := set $requests "storage" $requestsVal }}
-  {{- end }}
+  {{- $requests := include "base.getValue" (list . "requests") | fromYaml }}
   {{- if $requests }}
-    {{- include "base.field" (list "requests" $requests "base.map") }}
+    {{- include "base.field" (list "requests" (list $requests $const.k8s.resources)  "base.map.verify") }}
   {{- end }}
 {{- end }}

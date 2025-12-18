@@ -24,7 +24,6 @@
   {{- /* podSelector map */ -}}
   {{- $podSelectorVal := include "base.getValue" (list . "podSelector") | fromYaml }}
   {{- if $podSelectorVal }}
-    {{- $_ := set $podSelectorVal "_kind" "NetworkPolicySpec" }}
     {{- $podSelector := include "definitions.LabelSelector" $podSelectorVal | fromYaml }}
     {{- if $podSelector }}
       {{- include "base.field" (list "podSelector" $podSelector "base.map") }}

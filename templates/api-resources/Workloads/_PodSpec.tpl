@@ -1,7 +1,4 @@
 {{- define "workloads.PodSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "PodSpec" }}
-
   {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* activeDeadlineSeconds int */ -}}
@@ -12,23 +9,28 @@
 
   {{- /* affinity map */ -}}
   {{- /* 由 nodeAffinity podAffinity podAntiAffinity 三个定义完成 */ -}}
-  {{- $affinity := include "definitions.Affinity" . | fromYaml }}
+  {{- $nodeAffinity := include "base.getValue" (list . "nodeAffinity") | fromYaml }}
+  {{- $podAffinity := include "base.getValue" (list . "podAffinity") | fromYaml }}
+  {{- $podAntiAffinity := include "base.getValue" (list . "podAntiAffinity") | fromYaml }}
+  {{- $val := dict "nodeAffinity" $nodeAffinity "podAffinity" $podAffinity "podAntiAffinity" $podAntiAffinity }}
+  {{- $affinity := include "definitions.Affinity" $val | fromYaml }}
   {{- if $affinity }}
     {{- include "base.field" (list "affinity" $affinity "base.map") }}
   {{- end }}
 
   {{- /* automountServiceAccountToken bool */ -}}
-  {{- $automountServiceAccountToken := include "base.getValue" (list . "automountServiceAccountToken") }}
+  {{- $automountServiceAccountToken := include "base.getValue" (list . "automountServiceAccountToken" "toString") }}
   {{- if $automountServiceAccountToken }}
     {{- include "base.field" (list "automountServiceAccountToken" $automountServiceAccountToken "base.bool") }}
   {{- end }}
 
   {{- /* containers array */ -}}
   {{- $containersVal := include "base.getValue" (list . "containers") | fromYamlArray }}
+  {{- $_os := include "base.getValue" (list . "os") }}
   {{- $containers := list }}
   {{- range $containersVal }}
-    {{- $osVal := include "base.getValue" (list . "os") }}
-    {{- $_ := set . "os" $osVal }}  {{- /* securityContext 需要用到它 */ -}}
+    {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+    {{- $_ := set . "Files" $.Files }}
     {{- $containers = append $containers (include "workloads.Container" . | fromYaml) }}
   {{- end }}
   {{- $containers = $containers | mustUniq | mustCompact }}
@@ -47,7 +49,14 @@
   {{- $hostAliasesVal := include "base.getValue" (list . "hostAliases") | fromYamlArray }}
   {{- $hostAliases := list }}
   {{- range $hostAliasesVal }}
-    {{- $hostAliases = append $hostAliases (include "definitions.HostAlias" . | fromYaml) }}
+    {{- if not (regexMatch $const.k8s.hostAlias .) }}
+      {{- fail (printf "workloads.PodSpec: hostAlias invalid. Values: '%s'" .) }}
+    {{- end }}
+
+    {{- $splitVal := regexSplit $const.split.space . -1 }}
+    {{- $val := dict "ip" (first $splitVal) "hostnames" (rest $splitVal) }}
+
+    {{- $hostAliases = append $hostAliases (include "definitions.HostAlias" $val | fromYaml) }}
   {{- end }}
   {{- $hostAliases = $hostAliases | mustUniq | mustCompact }}
   {{- if $hostAliases }}
@@ -55,8 +64,8 @@
   {{- end }}
 
   {{- /* hostNetwork bool */ -}}
-  {{- $hostnameOverride := include "base.getValue" (list . "hostnameOverride") }}
-  {{- if not (regexMatch $const.regexRFC1035 $hostnameOverride) }}
+  {{- $_hostnameOverride := include "base.getValue" (list . "hostnameOverride") }}
+  {{- if not (regexMatch $const.rfc.RFC1035 $_hostnameOverride) }}
     {{- $hostNetwork := include "base.getValue" (list . "hostNetwork") }}
     {{- if $hostNetwork }}
       {{- include "base.field" (list "hostNetwork" $hostNetwork "base.bool") }}
@@ -71,21 +80,22 @@
   {{- end }}
 
   {{- /* hostUsers bool */ -}}
-  {{- $hostUsers := include "base.getValue" (list . "hostUsers") }}
+  {{- /* 需要能显示指定 false */ -}}
+  {{- $hostUsers := include "base.getValue" (list . "hostUsers" "toString") }}
   {{- if $hostUsers }}
-    {{- include "base.field" (list "hostUsers" $hostUsers "base.bool") }}
+    {{- include "base.field" (list "hostUsers" $hostUsers) }}
   {{- end }}
 
   {{- /* hostname string */ -}}
   {{- $hostname := include "base.getValue" (list . "hostname") }}
-  {{- if regexMatch $const.regexRFC1035 $hostname }}
-    {{- include "base.field" (list "hostname" $hostname) }}
+  {{- if $hostname }}
+    {{- include "base.field" (list "hostname" $hostname "base.rfc1035") }}
   {{- end }}
 
   {{- /* hostnameOverride string */ -}}
   {{- $hostnameOverride := include "base.getValue" (list . "hostnameOverride") }}
-  {{- if regexMatch $const.regexRFC1035 $hostnameOverride }}
-    {{- include "base.field" (list "hostnameOverride" $hostnameOverride) }}
+  {{- if $hostnameOverride }}
+    {{- include "base.field" (list "hostnameOverride" $hostnameOverride "base.rfc1035") }}
   {{- end }}
 
   {{- /* imagePullSecrets array */ -}}
@@ -100,12 +110,13 @@
     {{- include "base.field" (list "imagePullSecrets" $imagePullSecrets "base.slice") }}
   {{- end }}
 
-  {{- /* initContainers */ -}}
+  {{- /* initContainers array */ -}}
   {{- $initContainersVal := include "base.getValue" (list . "initContainers") | fromYamlArray }}
+  {{- $_os := include "base.getValue" (list . "os") }}
   {{- $initContainers := list }}
   {{- range $initContainersVal }}
-    {{- $osVal := include "base.getValue" (list . "os") }}
-    {{- $_ := set . "os" $osVal }}  {{- /* securityContext 需要用到它 */ -}}
+    {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+    {{- $_ := set . "Files" $.Files }}
     {{- $initContainers = append $initContainers (include "workloads.Container" . | fromYaml) }}
   {{- end }}
   {{- $initContainers = $initContainers | mustUniq | mustCompact }}
@@ -128,7 +139,8 @@
   {{- /* os map */ -}}
   {{- $osVal := include "base.getValue" (list . "os") }}
   {{- if $osVal }}
-    {{- $os := include "definitions.PodOS" $osVal | fromYaml }}
+    {{- $val := dict "name" $osVal }}
+    {{- $os := include "definitions.PodOS" $val | fromYaml }}
     {{- if $os }}
       {{- include "base.field" (list "os" $os "base.map") }}
     {{- end }}
@@ -157,8 +169,10 @@
   {{- $readinessGatesVal := include "base.getValue" (list . "readinessGates") | fromYamlArray }}
   {{- $readinessGates := list }}
   {{- range $readinessGatesVal }}
-    {{- $readinessGates = append $readinessGates (include "definitions.PodReadinessGate" . | fromYaml) }}
+    {{- $val := dict "conditionType" . }}
+    {{- $readinessGates = append $readinessGates (include "definitions.PodReadinessGate" $val | fromYaml) }}
   {{- end }}
+  {{- $readinessGates = $readinessGates | mustUniq | mustCompact }}
   {{- if $readinessGates }}
     {{- include "base.field" (list "readinessGates" $readinessGates "base.slice") }}
   {{- end }}
@@ -166,7 +180,8 @@
   {{- /* resources map */ -}}
   {{- $resourcesVal := include "base.getValue" (list . "resources") | fromYaml }}
   {{- if $resourcesVal }}
-    {{- $resources := include "definitions.ResourceRequirements" $resourcesVal | fromYaml }}
+    {{- $val := pick $resourcesVal "limits" "requests" }}
+    {{- $resources := include "definitions.ResourceRequirements" $val | fromYaml }}
     {{- if $resources }}
       {{- include "base.field" (list "resources" $resources "base.map") }}
     {{- end }}
@@ -189,18 +204,22 @@
   {{- $schedulingGatesVal := include "base.getValue" (list . "schedulingGates") | fromYamlArray }}
   {{- $schedulingGates := list }}
   {{- range $schedulingGatesVal }}
-    {{- $schedulingGates = append $schedulingGates (include "definitions.PodSchedulingGate" . | fromYaml) }}
+    {{- $val := dict "name" . }}
+    {{- $schedulingGates = append $schedulingGates (include "definitions.PodSchedulingGate" $val | fromYaml) }}
   {{- end }}
+  {{- $schedulingGates = $schedulingGates | mustUniq | mustCompact }}
   {{- if $schedulingGates }}
     {{- include "base.field" (list "schedulingGates" $schedulingGates "base.slice") }}
   {{- end }}
 
   {{- /* securityContext */ -}}
   {{- $securityContextVal := include "base.getValue" (list . "securityContext") | fromYaml }}
+  {{- $_os := include "base.getValue" (list . "os") }}
   {{- if $securityContextVal }}
+    {{- $val := pick . "appArmorProfile" "fsGroup" "fsGroupChangePolicy" "runAsGroup" "runAsNonRoot" "runAsUser" "seLinuxChangePolicy" "seLinuxOptions" "seccompProfile" "supplementalGroups" "supplementalGroupsPolicy" "sysctls" "windowsOptions" }}
     {{- /* 将 os 的值传递下去 */ -}}
-    {{- $_ := set $securityContextVal "os" $osVal }}
-    {{- $securityContext := include "definitions.PodSecurityContext" $securityContextVal | fromYaml }}
+    {{- $_ := set $val "os" $_os }}
+    {{- $securityContext := include "definitions.PodSecurityContext" $val | fromYaml }}
     {{- if $securityContext }}
       {{- include "base.field" (list "securityContext" $securityContext "base.map") }}
     {{- end }}
@@ -231,21 +250,23 @@
     {{- include "base.field" (list "terminationGracePeriodSeconds" $terminationGracePeriodSeconds "base.int") }}
   {{- end }}
 
-  {{- /* tolerations */ -}}
+  {{- /* tolerations array */ -}}
   {{- $tolerationsVal := include "base.getValue" (list . "tolerations") | fromYamlArray }}
   {{- $tolerations := list }}
   {{- range $tolerationsVal }}
-    {{- $tolerations = append $tolerations (include "definitions.Toleration" . | fromYaml) }}
+    {{- $val := pick . "effect" "key" "operator" "tolerationSeconds" "value" }}
+    {{- $tolerations = append $tolerations (include "definitions.Toleration" $val | fromYaml) }}
   {{- end }}
   {{- if $tolerations }}
     {{- include "base.field" (list "tolerations" $tolerations "base.slice") }}
   {{- end }}
 
-  {{- /* topologySpreadConstraints */ -}}
+  {{- /* topologySpreadConstraints array */ -}}
   {{- $topologySpreadConstraintsVal := include "base.getValue" (list . "topologySpreadConstraints") | fromYamlArray }}
   {{- $topologySpreadConstraints := list }}
   {{- range $topologySpreadConstraintsVal }}
-    {{- $topologySpreadConstraints = append $topologySpreadConstraints (include "definitions.TopologySpreadConstraint" . | fromYaml) }}
+    {{- $val := pick . "labelSelector" "matchLabelKeys" "maxSkew" "minDomains" "nodeAffinityPolicy" "nodeTaintsPolicy" "topologyKey" "whenUnsatisfiable" }}
+    {{- $topologySpreadConstraints = append $topologySpreadConstraints (include "definitions.TopologySpreadConstraint" $val | fromYaml) }}
   {{- end }}
   {{- if $topologySpreadConstraints }}
     {{- include "base.field" (list "topologySpreadConstraints" $topologySpreadConstraints "base.slice") }}
@@ -255,12 +276,12 @@
   {{- $volumesVal := include "base.getValue" (list . "volumes") | fromYamlArray }}
   {{- $volumes := list }}
   {{- range $volumesVal }}
-    {{- if not (regexMatch $const.regexVolumes .) }}
+    {{- if not (regexMatch $const.k8s.volume.volumes .) }}
       {{- fail (printf "workloads.PodSpec: volume invalid. Values: '%s'." .) }}
     {{- end }}
-    {{- $volumeType := regexReplaceAll $const.regexVolumes . "${1}" }}
-    {{- $name := regexReplaceAll $const.regexVolumes . "${2}" }}
-    {{- $volumeData := regexReplaceAll $const.regexVolumes . "${3}" }}
+    {{- $volumeType := regexReplaceAll $const.k8s.volume.volumes . "${1}" | trim }}
+    {{- $name := regexReplaceAll $const.k8s.volume.volumes . "${2}" | trim }}
+    {{- $volumeData := regexReplaceAll $const.k8s.volume.volumes . "${3}" | trim }}
     {{- $val := dict "volumeType" $volumeType "name" $name "volumeData" $volumeData }}
     {{- $volumes = append $volumes (include "configStorage.Volume" $val | fromYaml) }}
   {{- end }}

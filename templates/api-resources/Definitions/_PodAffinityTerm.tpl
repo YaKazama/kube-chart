@@ -1,6 +1,4 @@
 {{- define "definitions.PodAffinityTerm" -}}
-  {{- $_ := set . "_kind" "PodAffinityTerm" }}
-
   {{- /* labelSelector map */ -}}
   {{- $labelSelectorVal := include "base.getValue" (list . "labelSelector") | fromYaml }}
   {{- $labelSelector := include "definitions.LabelSelector" $labelSelectorVal | fromYaml }}
@@ -32,6 +30,6 @@
   {{- if $topologyKey }}
     {{- include "base.field" (list "topologyKey" $topologyKey) }}
   {{- else }}
-    {{- fail "topologyKey must be exists" }}
+    {{- fail "definitions.PodAffinityTerm: topologyKey must be exists" }}
   {{- end }}
 {{- end }}

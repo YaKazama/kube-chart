@@ -1,14 +1,13 @@
 {{- define "definitions.TopologySpreadConstraint" -}}
-  {{- $_ := set . "_kind" "TopologySpreadConstraint" }}
-
   {{- /* labelSelector map */ -}}
   {{- $labelSelectorVal := include "base.getValue" (list . "labelSelector") | fromYaml }}
+  {{- $labelSelector := dict }}
   {{- if $labelSelectorVal }}
-    {{- $_ := set $labelSelectorVal "_kind" ._kind }}
-  {{- end }}
-  {{- $labelSelector := include "definitions.LabelSelector" $labelSelectorVal | fromYaml }}
-  {{- if $labelSelector }}
-    {{- include "base.field" (list "labelSelector" $labelSelector "base.map") }}
+    {{- $val := pick $labelSelectorVal "matchExpressions" "matchLabels" }}
+    {{- $labelSelector = include "definitions.LabelSelector" $val | fromYaml }}
+    {{- if $labelSelector }}
+      {{- include "base.field" (list "labelSelector" $labelSelector "base.map") }}
+    {{- end }}
   {{- end }}
 
   {{- /* matchLabelKeys string array */ -}}

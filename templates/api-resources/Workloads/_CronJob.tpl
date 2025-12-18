@@ -1,5 +1,4 @@
 {{- define "workloads.CronJob" -}}
-  {{- $_ := set . "_pkind" "" }}
   {{- $_ := set . "_kind" "CronJob" }}
 
   {{- include "base.field" (list "apiVersion" "batch/v1") }}

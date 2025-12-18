@@ -10,7 +10,7 @@
   {{- $name := include "base.getValue" (list . "name") }}
   {{- $namespace := include "base.getValue" (list . "namespace") }}
   {{- $ns := coalesce $name $namespace }}
-  {{- if and $ns (regexMatch $const.regexReservedNamespace $ns) }}
+  {{- if and $ns (regexMatch $const.k8s.reservedNamespace $ns) }}
     {{- fail (printf "Namespace: namespace '%s' cannot be empty or use 'default' or start with 'kube-'." $ns) }}
   {{- end }}
   {{- $_ := set . "name" (coalesce $name $namespace) }}

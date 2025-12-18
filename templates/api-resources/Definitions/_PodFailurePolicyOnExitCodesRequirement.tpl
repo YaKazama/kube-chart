@@ -1,38 +1,28 @@
 {{- define "definitions.PodFailurePolicyOnExitCodesRequirement" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- $match := regexFindAll $const.regexPodFailurePolicyOnExitCodesRequirement . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "PodFailurePolicyOnExitCodesRequirement: error. Values: %s, format: '<action> [containerName] <in|notin> (values, ...)'" .) }}
-  {{- end }}
-
-  {{- /* contaerinName string */ -}}
-  {{- $contaerinName := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${2}" }}
-  {{- if $contaerinName }}
-    {{- include "base.field" (list "contaerinName" $contaerinName) }}
+  {{- /* containerName string */ -}}
+  {{- $containerName := include "base.getValue" (list . "containerName") }}
+  {{- if $containerName }}
+    {{- include "base.field" (list "containerName" $containerName) }}
   {{- end }}
 
   {{- /* operator string */ -}}
-  {{- $operator := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${3}" }}
+  {{- $operator := include "base.getValue" (list . "operator") }}
+  {{- $operatorAllows := list "In" "NotIn" }}
   {{- if $operator }}
     {{- if eq $operator "in" }}
       {{- $operator = "In" }}
     {{- else if eq $operator "notin" }}
       {{- $operator = "NotIn" }}
     {{- end }}
-    {{- include "base.field" (list "operator" $operator) }}
+    {{- include "base.field" (list "operator" $operator "base.string" $operatorAllows) }}
   {{- end }}
 
   {{- /* values int array */ -}}
-  {{- $values := regexReplaceAll $const.regexPodFailurePolicyOnExitCodesRequirement . "${4}" }}
-  {{- if not (regexMatch $const.regexPodFailurePolicyOnExitCodesRequirementValues $values) }}
-    {{- fail (printf "PodFailurePolicyOnExitCodesRequirement: values invalid. Values: '%s'" $values) }}
-  {{- end }}
-  {{- $checkValues := regexSplit ",\\s*" $values -1 }}
-  {{- if and (mustHas "0" $checkValues) (eq $operator "In") }}
-    {{- fail "PodFailurePolicyOnExitCodesRequirement: Value '0' cannot be used for the In operator" }}
+  {{- $values := include "base.getValue" (list . "values") | fromYamlArray }}
+  {{- if and (mustHas "0" $values) (eq $operator "In") }}
+    {{- fail "definitions.PodFailurePolicyOnExitCodesRequirement: Value '0' cannot be used for the In operator" }}
   {{- end }}
   {{- if $values }}
-    {{- include "base.field" (list "values" (dict "s" $values "r" ",\\s*" "empty" true) "base.slice.cleanup") }}
+    {{- include "base.field" (list "values" $values "base.slice") }}
   {{- end }}
 {{- end }}

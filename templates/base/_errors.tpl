@@ -4,7 +4,7 @@
   数据格式: dict/map, 包括 iName(string) iValue(string) iLine(int)
 */ -}}
 {{- define "base.faild" }}
-  {{- fail (printf "%s: Type not support! Values: '%v', Type: %s (%s), Line: %d" .iName .iValue (typeOf .iValue) (kindOf .iValue) .iLine) }}
+  {{- fail (printf "%s: Type not support! Values: '%v', Type: %s (%s), Line: %d" .iName .iValue (typeOf .iValue) (kindOf .iValue) (get . "iLine" | default 0)) }}
 {{- end }}
 
 {{- /*
@@ -12,7 +12,7 @@
 */ -}}
 {{- define "base.invalid" -}}
   {{- if kindIs "invalid" . }}
-    {{- include "base.faild" (dict "iName" "base.invalid" "iValue" . "iLine" 13) }}
+    {{- include "base.faild" (dict "iName" "base.invalid" "iValue" .) }}
   {{- end }}
 {{- end }}
 
@@ -21,6 +21,6 @@
 */ -}}
 {{- define "base.empty" -}}
   {{- if empty . }}
-    {{- include "base.faild" (dict "iName" "base.empty" "iValue" . "iLine" 22) }}
+    {{- include "base.faild" (dict "iName" "base.empty" "iValue" .) }}
   {{- end }}
 {{- end }}

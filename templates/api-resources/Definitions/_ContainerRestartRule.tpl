@@ -1,28 +1,29 @@
 {{- define "definitions.ContainerRestartRule" -}}
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $const.regexContainerRestartRule . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "definitions.ContainerRestartRule: error. Values: %s, format: 'restart <in|notin> (codeNumber, ...)'" .) }}
-  {{- end }}
-
   {{- /* action string */ -}}
-  {{- $action := regexReplaceAll $const.regexContainerRestartRule . "${1}" | trim | title }}
-  {{- include "base.field" (list "action" $action) }}
+  {{- $action := include "base.getValue" (list . "action") }}
+  {{- if $action }}
+    {{- include "base.field" (list "action" $action) }}
+  {{- end }}
 
   {{- /* exitCodes map */ -}}
-  {{- $operator := regexReplaceAll $const.regexContainerRestartRule . "${2}" | trim }}
-  {{- $values := regexReplaceAll $const.regexContainerRestartRule . "${3}" | trim }}
+  {{- $exitCodesVal := include "base.getValue" (list . "exitCodes") }}
+  {{- if $exitCodesVal }}
+    {{- $operator := regexReplaceAll $const.k8s.container.exitCodes $exitCodesVal "${1}" | trim }}
+    {{- $values := regexReplaceAll $const.k8s.container.exitCodes $exitCodesVal "${2}" | trim }}
 
-  {{- if eq $operator "in" }}
-    {{- $operator = "In" }}
-  {{- else if eq $operator "notin" }}
-    {{- $operator = "NotIn" }}
-  {{- end }}
+    {{- if eq $operator "in" }}
+      {{- $operator = "In" }}
+    {{- else if eq $operator "notin" }}
+      {{- $operator = "NotIn" }}
+    {{- end }}
 
-  {{- $exitCodesVal := dict "operator" $operator "values" (include "base.slice.cleanup" (dict "s" $values "r" ",\\s*" "c" "^\\d+$") | fromYamlArray) }}
-  {{- $exitCodes := include "definitions.ContainerRestartRuleOnExitCodes" $exitCodesVal | fromYaml }}
-  {{- if $exitCodes }}
-    {{- include "base.field" (list "exitCodes" $exitCodes "base.map") }}
+    {{- $val := dict "operator" $operator "values" (include "base.slice.cleanup" (dict "s" $values "r" $const.split.comma "c" $const.types.positiveInt) | fromYamlArray) }}
+
+    {{- $exitCodes := include "definitions.ContainerRestartRuleOnExitCodes" $val | fromYaml }}
+    {{- if $exitCodes }}
+      {{- include "base.field" (list "exitCodes" $exitCodes "base.map") }}
+    {{- end }}
   {{- end }}
 {{- end }}

@@ -1,7 +1,5 @@
 {{- define "workloads.CronJobSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "CronJobSpec" }}
-  {{- $__kind := get . "_kind" }}
+  {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* concurrencyPolicy string */ -}}
   {{- $concurrencyPolicy := include "base.getValue" (list . "concurrencyPolicy") }}
@@ -18,11 +16,8 @@
 
   {{- /* jobTemplate map */ -}}
   {{- $jobTemplateVal := include "base.getValue" (list . "jobTemplate") | fromYaml }}
-  {{- if $jobTemplateVal }}   {{- /* 透传 Context Values */ -}}
-    {{- $_ := set $jobTemplateVal "Values" .Values }}
-    {{- if .Context }}
-      {{- $_ := set $jobTemplateVal "Context" .Context }}
-    {{- end }}
+  {{- if $jobTemplateVal }}
+    {{- $jobTemplateVal = merge $jobTemplateVal (pick . "Values" "Chart" "Release" "Files" "Context") }}
     {{- $jobTemplate := include "definitions.JobTemplateSpec" $jobTemplateVal | fromYaml }}
     {{- if $jobTemplate }}
       {{- include "base.field" (list "jobTemplate" $jobTemplate "base.map") }}
@@ -31,8 +26,7 @@
 
   {{- /* schedule string */ -}}
   {{- $schedule := include "base.getValue" (list . "schedule") }}
-  {{- $const := include "base.env" "" | fromYaml }}
-  {{- if regexMatch $const.regexCron $schedule }}
+  {{- if regexMatch $const.sys.cron $schedule }}
     {{- include "base.field" (list "schedule" $schedule "quote") }}
   {{- end }}
 

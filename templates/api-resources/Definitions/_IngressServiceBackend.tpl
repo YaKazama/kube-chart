@@ -1,4 +1,6 @@
 {{- define "definitions.IngressServiceBackend" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* name string */ -}}
   {{- $name := include "base.getValue" (list . "name") }}
   {{- if $name }}
@@ -6,15 +8,14 @@
   {{- end }}
 
   {{- /* port map */ -}}
-  {{- $const := include "base.env" "" | fromYaml }}
   {{- $portVal := include "base.getValue" (list . "port") }}
-  {{- $_port := dict }}
-  {{- if regexMatch $const.regexPort $portVal }}
-    {{- $_ := set $_port "number" $portVal }}
+  {{- $val := dict }}
+  {{- if regexMatch $const.net.port $portVal }}
+    {{- $val = dict "number" $portVal }}
   {{- else }}
-    {{- $_ := set $_port "name" $portVal }}
+    {{- $val = dict "name" $portVal }}
   {{- end }}
-  {{- $port := include "definitions.ServiceBackendPort" $_port | fromYaml }}
+  {{- $port := include "definitions.ServiceBackendPort" $val | fromYaml }}
   {{- if $port }}
     {{- include "base.field" (list "port" $port "base.map") }}
   {{- end }}

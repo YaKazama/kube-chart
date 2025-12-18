@@ -1,7 +1,4 @@
 {{- define "workloads.JobSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
-  {{- $_ := set . "_kind" "JobSpec" }}
-
   {{- /* activeDeadlineSeconds int */ -}}
   {{- $activeDeadlineSeconds := include "base.getValue" (list . "activeDeadlineSeconds" "int") }}
   {{- if $activeDeadlineSeconds }}
@@ -60,7 +57,8 @@
   {{- /* podFailurePolicy map */ -}}
   {{- $podFailurePolicyVal := include "base.getValue" (list . "podFailurePolicy") | fromYamlArray }}
   {{- if $podFailurePolicyVal }}
-    {{- $podFailurePolicy := include "definitions.PodFailurePolicy" $podFailurePolicyVal | fromYaml }}
+    {{- $val := dict "rules" $podFailurePolicyVal }}
+    {{- $podFailurePolicy := include "definitions.PodFailurePolicy" $val | fromYaml }}
     {{- if $podFailurePolicy }}
       {{- include "base.field" (list "podFailurePolicy" $podFailurePolicy "base.map") }}
     {{- end }}
@@ -75,15 +73,20 @@
 
   {{- /* selector map */ -}}
   {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-  {{- /* 将 labels helmLabels name 追加到 selector 中一并传入 参考 definitions.ObjectMeta 中的 labels */ -}}
+  {{- /* 将 labels helmLabels 追加到 selector 中一并传入 参考 definitions.ObjectMeta 中的 labels */ -}}
   {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
   {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
   {{- if $isHelmLabels }}
     {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
   {{- end }}
-  {{- if $labels }}
-    {{- $_ := set $selectorVal "labels" $labels }}
+  {{- $_matchLabels := get $selectorVal "matchLabels" }}
+  {{- if kindIs "map" $_matchLabels }}
+    {{- $_matchLabels = mustMerge $_matchLabels $labels }}
+  {{- else }}
+    {{- $_matchLabels = $labels }}
   {{- end }}
+  {{- /* 设置 matchLabels */ -}}
+  {{- $_ := set $selectorVal "matchLabels" $_matchLabels }}
   {{- $selector := include "definitions.LabelSelector" $selectorVal | fromYaml }}
   {{- if $selector }}
     {{- include "base.field" (list "selector" $selector "base.map") }}
@@ -92,7 +95,8 @@
   {{- /* successPolicy map */ -}}
   {{- $successPolicyVal := include "base.getValue" (list . "successPolicy") | fromYamlArray }}
   {{- if $successPolicyVal }}
-    {{- $successPolicy := include "definitions.SuccessPolicy" $successPolicyVal | fromYaml }}
+    {{- $val := dict "rules" $successPolicyVal }}
+    {{- $successPolicy := include "definitions.SuccessPolicy" $val | fromYaml }}
     {{- if $successPolicy }}
       {{- include "base.field" (list "successPolicy" $successPolicy "base.map") }}
     {{- end }}
@@ -107,10 +111,9 @@
   {{- /* template map */ -}}
   {{- $templateVal := include "base.getValue" (list . "template") | fromYaml }}
   {{- if $templateVal }}
-    {{- $_ := set $templateVal "Values" .Values }}
-    {{- if .Context }}
-      {{- $_ := set $templateVal "Context" .Context }}
-    {{- end }}
+    {{- /* 透传顶层上下文 . */ -}}
+    {{- /* 此处赋值是为了防止上层的 ._kind 被修改 */ -}}
+    {{- $templateVal = merge $templateVal . }}
     {{- $template := include "metadata.PodTemplateSpec" $templateVal | fromYaml }}
     {{- if $template }}
       {{- include "base.field" (list "template" $template "base.map") }}

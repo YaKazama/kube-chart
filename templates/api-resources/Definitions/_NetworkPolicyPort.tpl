@@ -8,10 +8,10 @@
   {{- /* port string or int*/ -}}
   {{- $port := include "base.getValue" (list . "port") }}
   {{- $const := include "base.env" "" | fromYaml }}
-  {{- if regexMatch $const.regexPort $port }}
+  {{- if regexMatch $const.net.port $port }}
     {{- include "base.field" (list "port" $port "base.port") }}
   {{- else }}
-    {{- include "base.field" (list "port" $port "base.name") }}
+    {{- include "base.field" (list "port" $port "base.rfc1035") }}
   {{- end }}
 
   {{- /* protocol string */ -}}

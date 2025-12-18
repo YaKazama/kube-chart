@@ -1,4 +1,6 @@
 {{- define "workloads.Container" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* args string array */ -}}
   {{- $args := include "base.getValue" (list . "args") | fromYamlArray }}
   {{- if $args }}
@@ -15,7 +17,8 @@
   {{- $envVal := include "base.getValue" (list . "env") | fromYamlArray }}
   {{- $env := list }}
   {{- range $envVal }}
-    {{- $env = append $env (include "definitions.EnvVar" . | fromYaml) }}
+    {{- $val := pick . "name" "value" "valueFrom" }}
+    {{- $env = append $env (include "definitions.EnvVar" $val | fromYaml) }}
   {{- end }}
   {{- $env = $env | mustUniq | mustCompact }}
   {{- if $env }}
@@ -26,7 +29,27 @@
   {{- $envFromVal := include "base.getValue" (list . "envFrom") | fromYamlArray }}
   {{- $envFrom := list }}
   {{- range $envFromVal }}
-    {{- $envFrom = append $envFrom (include "definitions.EnvFromSource" . | fromYaml) }}
+    {{- $match := regexFindAll $const.k8s.container.envFrom . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container: envFrom invalid, must start with 'cm|configMap|secret'. Values: '%s'" .) }}
+    {{- end }}
+
+    {{- $val := dict }}
+
+    {{- $_key := regexReplaceAll $const.k8s.container.envFrom . "${1}" | trim }}
+    {{- $_prefix := regexReplaceAll $const.k8s.container.envFrom . "${3}" | trim }}
+    {{- $_value := regexReplaceAll $const.k8s.container.envFrom . "${2} ${4}" | trim }}
+
+    {{- $_ := set $val "prefix" $_prefix }}
+
+    {{- if or (eq $_key "configMap") (eq $_key "cm") }}
+      {{- $_ := set $val "configMapKeyRef" $_value }}
+
+    {{- else if eq $_key "secret" }}
+      {{- $_ := set $val "secretRef" $_value }}
+    {{- end }}
+
+    {{- $envFrom = append $envFrom (include "definitions.EnvFromSource" $val | fromYaml) }}
   {{- end }}
   {{- $envFrom = $envFrom | mustUniq | mustCompact }}
   {{- if $envFrom }}
@@ -45,7 +68,7 @@
     {{- $_tag := get $imageRefVal "tag" }}
     {{- $_digest := get $imageRefVal "digest" }}
     {{- if empty $_repository }}
-      {{- fail "Container: imageRef.repository cannot be empty." }}
+      {{- fail "workloads.Container: imageRef.repository cannot be empty." }}
     {{- end }}
     {{- if and (empty $_tag) (empty $_digest) }}
       {{- $_tag = "latest" }}
@@ -61,7 +84,7 @@
   {{- if $image }}
     {{- include "base.field" (list "image" $image) }}
   {{- else }}
-    {{- fail "Container: image must be exists. need set 'image' or 'imageRef'." }}
+    {{- fail "workloads.Container: image must be exists. need set 'image' or 'imageRef'." }}
   {{- end }}
 
   {{- /* imagePullPolicy string */ -}}
@@ -74,7 +97,8 @@
   {{- /* lifecycle map */ -}}
   {{- $lifecycleVal := include "base.getValue" (list . "lifecycle") | fromYaml }}
   {{- if $lifecycleVal }}
-    {{- $lifecycle := include "definitions.Lifecycle" $lifecycleVal | fromYaml }}
+    {{- $val := pick $lifecycleVal "postStart" "preStop" "stopSignal" }}
+    {{- $lifecycle := include "definitions.Lifecycle" $val | fromYaml }}
     {{- if $lifecycle }}
       {{- include "base.field" (list "lifecycle" $lifecycle "base.map") }}
     {{- end }}
@@ -83,8 +107,9 @@
   {{- /* livenessProbe map */ -}}
   {{- $livenessProbeVal := include "base.getValue" (list . "livenessProbe") | fromYaml }}
   {{- if $livenessProbeVal }}
-    {{- $_ := set $livenessProbeVal "_type" "liveness" }}
-    {{- $livenessProbe := include "definitions.Probe" $livenessProbeVal | fromYaml }}
+    {{- $val := pick $livenessProbeVal "exec" "failureThreshold" "grpc" "httpGet" "initialDelaySeconds" "periodSeconds" "successThreshold" "tcpSocket" "terminationGracePeriodSeconds" "timeoutSeconds" }}
+    {{- $_ := set $val "_type" "liveness" }}
+    {{- $livenessProbe := include "definitions.Probe" $val | fromYaml }}
     {{- if $livenessProbe }}
       {{- include "base.field" (list "livenessProbe" $livenessProbe "base.map") }}
     {{- end }}
@@ -92,7 +117,7 @@
 
   {{- /* name string */ -}}
   {{- $name := include "base.getValue" (list . "name") }}
-  {{- if (include "base.name" $name) }}
+  {{- if (include "base.rfc1035" $name) }}
     {{- include "base.field" (list "name" $name) }}
   {{- end }}
 
@@ -100,7 +125,28 @@
   {{- $portsVal := include "base.getValue" (list . "ports") | fromYamlArray }}
   {{- $ports := list }}
   {{- range $portsVal }}
-    {{- $ports = append $ports (include "definitions.ContainerPort" . | fromYaml) }}
+    {{- /* 此处与其他模板定义处理方式不同 */ -}}
+    {{- /* 当只有一个值是，一般来说它是 containerPort */ -}}
+    {{- /* 此时在内部会被识别为 float64 类型，但实际上此处应该处理 string 类型 */ -}}
+    {{- /* 所以，在此处将上下文赋于 $root 以方例单独处理 float64 类型 */ -}}
+    {{- $root := . }}
+    {{- if kindIs "float64" . }}
+      {{- $root = include "base.int" . }}
+    {{- end }}
+
+    {{- $match := regexFindAll $const.k8s.container.ports $root -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container: ports invalid. Values: %s, format: '[hostIP:][hostPort:]containerPort[/protocol][#name]'" .) }}
+    {{- end }}
+
+    {{- $hostIP := regexReplaceAll $const.k8s.container.ports $root "${2}" | trim }}
+    {{- $hostPort := regexReplaceAll $const.k8s.container.ports $root "${3}" | trim }}
+    {{- $containerPort := regexReplaceAll $const.k8s.container.ports $root "${4}" | trim }}
+    {{- $protocol := regexReplaceAll $const.k8s.container.ports $root "${5}" | trim | upper }}
+    {{- $name := regexReplaceAll $const.k8s.container.ports $root "${6}" | trim }}
+    {{- $val := dict "hostIP" $hostIP "hostPort" $hostPort "containerPort" $containerPort "protocol" $protocol "name" $name }}
+
+    {{- $ports = append $ports (include "definitions.ContainerPort" $val | fromYaml) }}
   {{- end }}
   {{- $ports = $ports | mustUniq | mustCompact }}
   {{- if $ports }}
@@ -110,8 +156,9 @@
   {{- /* readinessProbe map */ -}}
   {{- $readinessProbeVal := include "base.getValue" (list . "readinessProbe") | fromYaml }}
   {{- if $readinessProbeVal }}
-    {{- $_ := set $readinessProbeVal "_type" "readiness" }}
-    {{- $readinessProbe := include "definitions.Probe" $readinessProbeVal | fromYaml }}
+    {{- $val := pick $readinessProbeVal "exec" "failureThreshold" "grpc" "httpGet" "initialDelaySeconds" "periodSeconds" "successThreshold" "tcpSocket" "terminationGracePeriodSeconds" "timeoutSeconds" }}
+    {{- $_ := set $val "_type" "readiness" }}
+    {{- $readinessProbe := include "definitions.Probe" $val | fromYaml }}
     {{- if $readinessProbe }}
       {{- include "base.field" (list "readinessProbe" $readinessProbe "base.map") }}
     {{- end }}
@@ -121,7 +168,16 @@
   {{- $resizePolicyVal := include "base.getValue" (list . "resizePolicy") | fromYamlArray }}
   {{- $resizePolicy := list }}
   {{- range $resizePolicyVal }}
-    {{- $resizePolicy = append $resizePolicy (include "definitions.ContainerResizePolicy" . | fromYaml) }}
+    {{- $match := regexFindAll $const.k8s.container.resizePolicy . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container: resizePolicy invalid. Values: %s, format: 'resourceName [restartPolicy]'" .) }}
+    {{- end }}
+
+    {{- $resourceName := regexReplaceAll $const.k8s.container.resizePolicy . "${1}" | trim | lower }}
+    {{- $resourcePolicy := regexReplaceAll $const.k8s.container.resizePolicy . "${2}" | trim }}
+    {{- $val := dict "resourceName" $resourceName "resourcePolicy" $resourcePolicy }}
+
+    {{- $resizePolicy = append $resizePolicy (include "definitions.ContainerResizePolicy" $val | fromYaml) }}
   {{- end }}
   {{- $resizePolicy = $resizePolicy | mustUniq | mustCompact }}
   {{- if $resizePolicy }}
@@ -131,7 +187,8 @@
   {{- /* resources map */ -}}
   {{- $resourcesVal := include "base.getValue" (list . "resources") | fromYaml }}
   {{- if $resourcesVal }}
-    {{- $resources := include "definitions.ResourceRequirements" $resourcesVal | fromYaml }}
+    {{- $val := pick $resourcesVal "limits" "requests" }}
+    {{- $resources := include "definitions.ResourceRequirements" $val | fromYaml }}
     {{- if $resources }}
       {{- include "base.field" (list "resources" $resources "base.map") }}
     {{- end }}
@@ -141,7 +198,16 @@
   {{- $restartPolicyRulesVal := include "base.getValue" (list . "restartPolicyRules") | fromYamlArray }}
   {{- $restartPolicyRules := list }}
   {{- range $restartPolicyRulesVal }}
-    {{- $restartPolicyRules = append $restartPolicyRules (include "definitions.ContainerRestartRule" . | fromYaml) }}
+    {{- $match := regexFindAll $const.k8s.container.restartPolicyRules . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container: restartPolicyRules invalid. Values: %s, format: 'restart <in|notin> (codeNumber, ...)'" .) }}
+    {{- end }}
+
+    {{- $action := regexReplaceAll $const.k8s.container.restartPolicyRules . "${1}" | trim | title }}
+    {{- $exitCodes := regexReplaceAll $const.k8s.container.restartPolicyRules . "${2} (${3})" | trim }}
+    {{- $val := dict "action" $action "exitCodes" $exitCodes }}
+
+    {{- $restartPolicyRules = append $restartPolicyRules (include "definitions.ContainerRestartRule" $val | fromYaml) }}
   {{- end }}
   {{- $restartPolicyRules = $restartPolicyRules | mustUniq | mustCompact }}
   {{- if gt (len $restartPolicyRules) 20 }}
@@ -164,10 +230,11 @@
   {{- /* securityContext map */ -}}
   {{- $securityContextVal := include "base.getValue" (list . "securityContext") | fromYaml }}
   {{- if $securityContextVal }}
+    {{- $val := pick $securityContextVal "allowPrivilegeEscalation" "appArmorProfile" "capabilities" "privileged" "procMount" "readOnlyRootFilesystem" "runAsGroup" "runAsNonRoot" "runAsUser" "seLinuxOptions" "seccompProfile" "windowsOptions" }}
     {{- /* 将 os 的值传递下去 */ -}}
-    {{- $osVal := include "base.getValue" (list . "os") }}
-    {{- $_ := set $securityContextVal "os" $osVal }}
-    {{- $securityContext := include "definitions.SecurityContext" $securityContextVal | fromYaml }}
+    {{- $_os := include "base.getValue" (list . "os") }}
+    {{- $_ := set $val "os" $_os }}
+    {{- $securityContext := include "definitions.SecurityContext" $val | fromYaml }}
     {{- if $securityContext }}
       {{- include "base.field" (list "securityContext" $securityContext "base.map") }}
     {{- end }}
@@ -176,8 +243,9 @@
   {{- /* startupProbe map */ -}}
   {{- $startupProbeVal := include "base.getValue" (list . "startupProbe") | fromYaml }}
   {{- if $startupProbeVal }}
-    {{- $_ := set $startupProbeVal "_type" "startup" }}
-    {{- $startupProbe := include "definitions.Probe" $startupProbeVal | fromYaml }}
+    {{- $val := pick $startupProbeVal "exec" "failureThreshold" "grpc" "httpGet" "initialDelaySeconds" "periodSeconds" "successThreshold" "tcpSocket" "terminationGracePeriodSeconds" "timeoutSeconds" }}
+    {{- $_ := set $val "_type" "startup" }}
+    {{- $startupProbe := include "definitions.Probe" $val | fromYaml }}
     {{- if $startupProbe }}
       {{- include "base.field" (list "startupProbe" $startupProbe "base.map") }}
     {{- end }}
@@ -218,7 +286,16 @@
   {{- $volumeDevicesVal := include "base.getValue" (list . "volumeDevices") | fromYamlArray }}
   {{- $volumeDevices := list }}
   {{- range $volumeDevicesVal }}
-    {{- $volumeDevices = append $volumeDevices (include "definitions.VolumeDevice" . | fromYaml) }}
+    {{- $match := regexFindAll $const.k8s.volume.device . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "volumeDevice: error. Values: '%s', format: 'name devicePath'" .) }}
+    {{- end }}
+
+    {{- $name := regexReplaceAll $const.k8s.volume.device . "${1}" | trim }}
+    {{- $devicePath := regexReplaceAll $const.k8s.volume.device . "${2}" | trim }}
+    {{- $val := dict "name" $name "devicePath" $devicePath }}
+
+    {{- $volumeDevices = append $volumeDevices (include "definitions.VolumeDevice" $val | fromYaml) }}
   {{- end }}
   {{- $volumeDevices = $volumeDevices | mustUniq | mustCompact }}
   {{- if $volumeDevices }}
@@ -229,7 +306,22 @@
   {{- $volumeMountsVal := include "base.getValue" (list . "volumeMounts") | fromYamlArray }}
   {{- $volumeMounts := list }}
   {{- range $volumeMountsVal }}
-    {{- $volumeMounts = append $volumeMounts (include "definitions.VolumeMount" . | fromYaml) }}
+    {{- $match := regexFindAll $const.k8s.volume.mount . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container: volumeMounts invalid. Values: %s, format: 'name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]'" .) }}
+    {{- end }}
+
+    {{- $name := regexReplaceAll $const.k8s.volume.mount . "${1}" | trim }}
+    {{- $mountPath := regexReplaceAll $const.k8s.volume.mount . "${2}" | trim }}
+    {{- $subPath := regexReplaceAll $const.k8s.volume.mount . "${3}" | trim }}
+    {{- $subPathExpr := regexReplaceAll $const.k8s.volume.mount . "${4}" | trim }}
+    {{- $readOnly := regexReplaceAll $const.k8s.volume.mount . "${5}" | trim }}
+    {{- $recursiveReadOnly := regexReplaceAll $const.k8s.volume.mount . "${6}" | trim }}
+    {{- $mountPropagation := regexReplaceAll $const.k8s.volume.mount . "${7}" | trim }}
+
+    {{- $val := dict "name" $name "mountPath" $mountPath "subPath" $subPath "subPathExpr" $subPathExpr "readOnly" $readOnly "recursiveReadOnly" $recursiveReadOnly "mountPropagation" $mountPropagation }}
+
+    {{- $volumeMounts = append $volumeMounts (include "definitions.VolumeMount" $val | fromYaml) }}
   {{- end }}
   {{- $volumeMounts = $volumeMounts | mustUniq | mustCompact }}
   {{- if $volumeMounts }}
@@ -239,6 +331,6 @@
   {{- /* workingDir string */ -}}
   {{- $workingDir := include "base.getValue" (list . "workingDir") }}
   {{- if $workingDir }}
-    {{- include "base.field" (list "workingDir" $workingDir) }}
+    {{- include "base.field" (list "workingDir" $workingDir "base.absPath") }}
   {{- end }}
 {{- end }}

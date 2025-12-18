@@ -4,8 +4,10 @@
   {{- $nodeSelectorTermsVal := include "base.getValue" (list . "nodeSelectorTerms") | fromYamlArray }}
   {{- $nodeSelectorTerms := list }}
   {{- range $nodeSelectorTermsVal }}
-    {{- $nodeSelectorTerms = append $nodeSelectorTerms (include "definitions.NodeSelectorTerm" . | fromYaml) }}
+    {{- $val := pick . "matchExpressions" "matchFields" }}
+    {{- $nodeSelectorTerms = append $nodeSelectorTerms (include "definitions.NodeSelectorTerm" $val | fromYaml) }}
   {{- end }}
+  {{- $nodeSelectorTerms = $nodeSelectorTerms | mustUniq | mustCompact }}
   {{- if $nodeSelectorTerms }}
     {{- include "base.field" (list "nodeSelectorTerms" $nodeSelectorTerms "base.slice") }}
   {{- end }}

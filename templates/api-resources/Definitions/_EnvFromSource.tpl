@@ -1,35 +1,35 @@
 {{- define "definitions.EnvFromSource" -}}
-  {{- /*
-    正则:
-      configMap sourceName prefix true
-      secret sourceName prefix true
-  */ -}}
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- $match := regexFindAll $const.regexEnvFromSource . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "envFrom: error, must start with 'configMap|secret'. Values: %s, format: '<configMap|secret> sourceName [prefix] [optional]'" .) }}
-  {{- end }}
-
   {{- /* prefix string */ -}}
-  {{- $prefix := regexReplaceAll $const.regexEnvFromSource . "${3}" }}
+  {{- $prefix := include "base.getValue" (list . "prefix") }}
   {{- if $prefix }}
     {{- include "base.field" (list "prefix" $prefix) }}
   {{- end }}
 
   {{- /* configMapRef map */ -}}
-  {{- if hasPrefix "configMap" . }}
-    {{- $configMapRef := include "definitions.ConfigMapEnvSource" . | fromYaml }}
+  {{- $configMapRefVal := include "base.getValue" (list . "configMapRef") }}
+  {{- if regexMatch $const.k8s.container.envFromConfigMap $configMapRefVal }}
+    {{- $name := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${1}" | trim }}
+    {{- $optional := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${2}" | trim }}
+    {{- $val := dict "name" $name "optional" $optional }}
+
+    {{- $configMapRef := include "definitions.ConfigMapEnvSource" $val | fromYaml }}
     {{- if $configMapRef }}
       {{- include "base.field" (list "configMapRef" $configMapRef "base.map") }}
     {{- end }}
+  {{- end }}
 
   {{- /* secretRef map */ -}}
-  {{- else if hasPrefix "secret" . }}
-    {{- $secretRef := include "definitions.SecretEnvSource" . | fromYaml }}
+  {{- $secretRefVal := include "base.getValue" (list . "secretRef") }}
+  {{- if regexMatch $const.k8s.container.envFromSecret $secretRefVal }}
+    {{- $name := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${1}" | trim }}
+    {{- $optional := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${2}" | trim }}
+    {{- $val := dict "name" $name "optional" $optional }}
+
+    {{- $secretRef := include "definitions.SecretEnvSource" $val | fromYaml }}
     {{- if $secretRef }}
       {{- include "base.field" (list "secretRef" $secretRef "base.map") }}
     {{- end }}
   {{- end }}
-
 {{- end }}

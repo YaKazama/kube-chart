@@ -28,7 +28,7 @@
     {{- include "base.field" (list "mountOptions" $mountOptions "base.slice") }}
   {{- end }}
 
-  {{- /* parameters object */ -}}
+  {{- /* parameters object/map */ -}}
   {{- $parameters := include "base.getValue" (list . "parameters") | fromYaml }}
   {{- if $parameters }}
     {{- include "base.field" (list "parameters" $parameters "base.map") }}

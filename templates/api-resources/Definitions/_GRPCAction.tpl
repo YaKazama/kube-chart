@@ -1,19 +1,12 @@
 {{- define "definitions.GRPCAction" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- $match := regexFindAll $const.regexGRPCAction . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "GRPCAction: error. Values: %s, format: '[service] port'" .) }}
-  {{- end }}
-
   {{- /* port int */ -}}
-  {{- $port := regexReplaceAll $const.regexGRPCAction . "${2}" }}
+  {{- $port := include "base.getValue" (list . "port") }}
   {{- if $port }}
     {{- include "base.field" (list "port" $port "base.port") }}
   {{- end }}
 
   {{- /* service string */ -}}
-  {{- $service := regexReplaceAll $const.regexGRPCAction . "${1}" }}
+  {{- $service := include "base.getValue" (list . "service") }}
   {{- if $service }}
     {{- include "base.field" (list "service" $service) }}
   {{- end }}

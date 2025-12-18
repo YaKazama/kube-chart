@@ -1,4 +1,7 @@
 {{- define "definitions.StatefulSetOrdinals" -}}
   {{- /* start int */ -}}
-  {{- include "base.field" (list "start" . "base.int") }}
+  {{- $start := include "base.getValue" (list . "start") }}
+  {{- if $start }}
+    {{- include "base.field" (list "start" $start "base.int") }}
+  {{- end }}
 {{- end }}

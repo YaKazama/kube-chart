@@ -3,7 +3,6 @@
   {{- $number := include "base.getValue" (list . "number") }}
 
   {{- /* name 和 number 互斥 */ -}}
-
   {{- if $name }}
     {{- /* name string */ -}}
     {{- if $name }}

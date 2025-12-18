@@ -4,19 +4,18 @@
   {{- /* backend map */ -}}
   {{- $backendVal := include "base.getValue" (list . "backend") }}
   {{- if $backendVal }}
-    {{- $backend := dict }}
-    {{- $_backend := dict }}
+    {{- $val := dict }}
 
-    {{- $match1 := regexFindAll $const.regexHTTPIngressPathResource $backendVal -1 }}
-    {{- $match2 := regexFindAll $const.regexHTTPIngressPathService $backendVal -1 }}
+    {{- $match1 := regexFindAll $const.k8s.ingress.resource $backendVal -1 }}
+    {{- $match2 := regexFindAll $const.k8s.ingress.service $backendVal -1 }}
     {{- if $match1 }}
-      {{- $_ := set $_backend "resource" $backendVal }}
+      {{- $val = dict "resource" $backendVal }}
     {{- else if $match2 }}
-      {{- $_ := set $_backend "service" $backendVal }}
+      {{- $val = dict "service" $backendVal }}
     {{- else }}
-      {{- fail (printf "HTTPIngressPath: backend error. Values: %s, format: 'resource name kind [apiGroup]' or 'service name port.name|port.number'" .) }}
+      {{- fail (printf "definitions.HTTPIngressPath: backend invalid. Values: '%s', format: 'resource name kind [apiGroup]' or 'service name port.name|port.number'" .) }}
     {{- end }}
-    {{- $backend = include "definitions.IngressBackend" $_backend | fromYaml }}
+    {{- $backend := include "definitions.IngressBackend" $val | fromYaml }}
     {{- if $backend }}
       {{- include "base.field" (list "backend" $backend "base.map") }}
     {{- end }}

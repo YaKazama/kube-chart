@@ -1,17 +1,25 @@
 {{- define "definitions.WindowsSecurityContextOptions" -}}
   {{- /* gmsaCredentialSpec string */ -}}
   {{- $gmsaCredentialSpec := include "base.getValue" (list . "gmsaCredentialSpec") }}
-  {{- include "base.field" (list "gmsaCredentialSpec" $gmsaCredentialSpec) }}
+  {{- if $gmsaCredentialSpec }}
+    {{- include "base.field" (list "gmsaCredentialSpec" $gmsaCredentialSpec) }}
+  {{- end }}
 
   {{- /* gmsaCredentialSpecName string */ -}}
   {{- $gmsaCredentialSpecName := include "base.getValue" (list . "gmsaCredentialSpecName") }}
-  {{- include "base.field" (list "gmsaCredentialSpecName" $gmsaCredentialSpecName) }}
+  {{- if $gmsaCredentialSpecName }}
+    {{- include "base.field" (list "gmsaCredentialSpecName" $gmsaCredentialSpecName) }}
+  {{- end }}
 
   {{- /* hostProcess bool */ -}}
   {{- $hostProcess := include "base.getValue" (list . "hostProcess") }}
-  {{- include "base.field" (list "hostProcess" $hostProcess "base.bool") }}
+  {{- if $hostProcess }}
+    {{- include "base.field" (list "hostProcess" $hostProcess "base.bool") }}
+  {{- end }}
 
   {{- /* runAsUserName string */ -}}
   {{- $runAsUserName := include "base.getValue" (list . "runAsUserName") }}
-  {{- include "base.field" (list "runAsUserName" $runAsUserName) }}
+  {{- if $runAsUserName }}
+    {{- include "base.field" (list "runAsUserName" $runAsUserName) }}
+  {{- end }}
 {{- end }}

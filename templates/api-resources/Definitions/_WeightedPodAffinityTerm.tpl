@@ -6,7 +6,8 @@
   {{- end }}
 
   {{- /* podAffinityTerm map */ -}}
-  {{- $podAffinityTerm := include "definitions.PodAffinityTerm" . | fromYaml }}
+  {{- $podAffinityTermVal := include "base.getValue" (list . "podAffinityTerm") | fromYaml }}
+  {{- $podAffinityTerm := include "definitions.PodAffinityTerm" $podAffinityTermVal | fromYaml }}
   {{- if $podAffinityTerm }}
     {{- include "base.field" (list "podAffinityTerm" $podAffinityTerm "base.map") }}
   {{- end }}

@@ -9,6 +9,7 @@
   {{- end }}
 {{- end }}
 
+
 {{- /*
   helm labels
   more: https://helm.sh/docs/chart_best_practices/labels/#standard-labels
@@ -27,6 +28,7 @@
   {{- end }}
 {{- end }}
 
+
 {{- /*
   使用正则表达式检查 Quantity 是否合法
   参考：https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
@@ -38,12 +40,13 @@
 
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- if mustRegexMatch $const.regexQuantity (toString .) }}
+  {{- if mustRegexMatch $const.k8s.quantity (toString .) }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.Quantity" "iValue" . "iLine" 44) }}
+    {{- include "base.faild" (dict "iName" "base.Quantity" "iValue" .) }}
   {{- end }}
 {{- end }}
+
 
 {{- /*
   使用正则表达式检查 Time 是否合法
@@ -64,17 +67,18 @@
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- if regexMatch $const.regexCheckInt . }}
+    {{- if regexMatch $const.types.int . }}
       {{- duration (atoi .) }}
-    {{- else if regexMatch $const.regexTime . }}
+    {{- else if regexMatch $const.k8s.time . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 72) }}
+      {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 1) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 75) }}
+    {{- include "base.faild" (dict "iName" "base.Time" "iValue" . "iLine" 2) }}
   {{- end }}
 {{- end }}
+
 
 {{- /*
   使用正则表达式检查 FieldsV1 是否合法
@@ -88,12 +92,13 @@
 
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- if mustRegexMatch $const.regexFieldsV1 . }}
+  {{- if mustRegexMatch $const.k8s.fieldsV1 . }}
     {{- . }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.FieldsV1" "iValue" . "iLine" 94) }}
+    {{- include "base.faild" (dict "iName" "base.FieldsV1" "iValue" .) }}
   {{- end }}
 {{- end }}
+
 
 {{- /*
   检查 RollingUpdate 中的值是否合法
@@ -113,13 +118,13 @@
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- if mustRegexMatch $const.regexPercent . }}
+    {{- if mustRegexMatch $const.types.percent . }}
       {{- . }}
     {{- else }}
-      {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 119) }}
+      {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 1) }}
     {{- end }}
   {{- else }}
-    {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 122) }}
+    {{- include "base.faild" (dict "iName" "base.RollingUpdate" "iValue" . "iLine" 2) }}
   {{- end }}
 {{- end }}
 
@@ -142,17 +147,18 @@
   {{- else if kindIs "string" . }}
     {{- $name = . }}
   {{- else }}
-    {{- fail (printf "Type not support! Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
+    {{- fail (printf "base.name: Type not support! Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
   {{- end }}
 
   {{- /* 正则校验 */ -}}
   {{- $const := include "base.env" "" | fromYaml }}
-  {{- if not (regexMatch $const.regexRFC1035 $name) }}
-    {{- fail (printf "name '%s' invalid (must match RFC1035: %s)" $name $const.regexRFC1035) }}
+  {{- if not (regexMatch $const.rfc.RFC1035 $name) }}
+    {{- fail (printf "base.name: '%s' invalid (must match RFC1035: %s)" $name $const.rfc.RFC1035) }}
   {{- end }}
 
   {{- $name }}
 {{- end }}
+
 
 {{- /*
   取 namespace 的值
@@ -172,9 +178,83 @@
 
   {{- /*  */ -}}
   {{- $const := include "base.env" "" | fromYaml }}
-  {{- if not (regexMatch $const.regexRFC1123 $namespace) }}
-    {{- fail (printf "namespace '%s'(%s) invalid (must match RFC1123: %s)" $namespace (kindOf $namespace) $const.regexRFC1123) }}
+  {{- if not (regexMatch $const.rfc.RFC1123 $namespace) }}
+    {{- fail (printf "base.namespace: '%s'(%s) invalid (must match RFC1123: %s)" $namespace (kindOf $namespace) $const.rfc.RFC1123) }}
   {{- end }}
 
   {{- $namespace }}
+{{- end }}
+
+
+{{- define "base.name.rbac" -}}
+  {{- $name := "" }}
+  {{- if kindIs "map" . }}
+    {{- $fullnameVal := include "base.getValue" (list . "fullname") }}
+    {{- $nameVal := include "base.getValue" (list . "name") }}
+    {{- $name = coalesce $fullnameVal $nameVal (printf "helm4-name-%s" (randAlpha 8)) | lower | nospace | trimSuffix "-" }}
+  {{- else if kindIs "string" . }}
+    {{- $name = . }}
+  {{- else }}
+    {{- fail (printf "base.name.rbac: Type not support! Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
+  {{- end }}
+
+  {{- /* 正则校验 */ -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- if not (regexMatch $const.rfc.RFC1035RBAC $name) }}
+    {{- fail (printf "base.name.rbac: '%s' invalid (must match RFC1035RBAC: %s)" $name $const.rfc.RFC1035RBAC) }}
+  {{- end }}
+
+  {{- $name }}
+{{- end }}
+
+
+{{- define "base.name.apiservice" -}}
+  {{- $name := "" }}
+  {{- if kindIs "map" . }}
+    {{- $fullnameVal := include "base.getValue" (list . "fullname") }}
+    {{- $nameVal := include "base.getValue" (list . "name") }}
+    {{- $name = coalesce $fullnameVal $nameVal (printf "helm4-name-%s" (randAlpha 8)) | lower | nospace | trimSuffix "-" }}
+  {{- else if kindIs "string" . }}
+    {{- $name = . }}
+  {{- else }}
+    {{- fail (printf "base.name.apiservice: Type not support! Values: %s, type: %s (%s)" . (typeOf .) (kindOf .)) }}
+  {{- end }}
+
+  {{- /* 正则校验 */ -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- if not (regexMatch $const.rfc.APIService $name) }}
+    {{- fail (printf "base.name.apiservice: '%s' invalid (must match APIService: %s)" $name $const.rfc.APIService) }}
+  {{- end }}
+
+  {{- $name }}
+{{- end }}
+
+
+{{- define "base.rfc1035" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- if not (regexMatch $const.rfc.RFC1035 .) }}
+    {{- fail (printf "base.rfc1035: '%s'(%s) invalid (must match RFC1035: %s)" . (kindOf .) $const.rfc.RFC1035) }}
+  {{- end }}
+
+  {{- . }}
+{{- end }}
+
+
+{{- define "base.rfc1123" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- if not (regexMatch $const.rfc.RFC1123 .) }}
+    {{- fail (printf "base.rfc1123 '%s'(%s) invalid (must match RFC1123: %s)" . (kindOf .) $const.rfc.RFC1123) }}
+  {{- end }}
+
+  {{- . }}
+{{- end }}
+
+
+{{- define "base.rfc1035.rbac" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- if not (regexMatch $const.rfc.RFC1035RBAC .) }}
+    {{- fail (printf "base.rfc1035.rbac '%s'(%s) invalid (must match RFC1035RBAC: %s)" . (kindOf .) $const.rfc.RFC1035RBAC) }}
+  {{- end }}
+
+  {{- . }}
 {{- end }}

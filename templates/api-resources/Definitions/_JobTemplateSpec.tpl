@@ -1,5 +1,4 @@
 {{- define "definitions.JobTemplateSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
   {{- $_ := set . "_kind" "JobTemplateSpec" }}
 
   {{- /* metadata ObjectMeta */ -}}

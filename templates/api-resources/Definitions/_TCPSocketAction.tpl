@@ -1,19 +1,12 @@
 {{- define "definitions.TCPSocketAction" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- $match := regexFindAll $const.regexGRPCAction . -1 }}
-  {{- if not $match }}
-    {{- fail (printf "TCPSocketAction: error. Values: %s, format: '[host] port'" .) }}
-  {{- end }}
-
   {{- /* host string */ -}}
-  {{- $host := regexReplaceAll $const.regexGRPCAction . "${1}" }}
+  {{- $host := include "base.getValue" (list . "host") }}
   {{- if $host }}
-    {{- include "base.field" (list "host" $host) }}
+    {{- include "base.field" (list "host" $host "base.dns") }}
   {{- end }}
 
   {{- /* port int */ -}}
-  {{- $port := regexReplaceAll $const.regexGRPCAction . "${2}" }}
+  {{- $port := include "base.getValue" (list . "port") }}
   {{- if $port }}
     {{- include "base.field" (list "port" $port "base.port") }}
   {{- end }}

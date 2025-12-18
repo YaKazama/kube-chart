@@ -1,4 +1,7 @@
 {{- define "definitions.ExecAction" -}}
   {{- /* command string array */ -}}
-  {{- include "base.field" (list "command" . "base.slice") }}
+  {{- $command := include "base.getValue" (list . "command") | fromYamlArray }}
+  {{- if $command }}
+    {{- include "base.field" (list "command" $command "base.slice") }}
+  {{- end }}
 {{- end }}

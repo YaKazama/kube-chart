@@ -5,19 +5,18 @@
   {{- $_rules := include "base.getValue" (list . "rules") | fromYamlArray }}
   {{- if not $_rules }}
     {{- $defaultBackendVal := include "base.getValue" (list . "defaultBackend") }}
-    {{- $defaultBackend := dict }}
-    {{- $_defaultBackend := dict }}
+    {{- $val := dict }}
 
-    {{- $match1 := regexFindAll $const.regexIngressSpecResource $defaultBackendVal -1 }}
-    {{- $match2 := regexFindAll $const.regexIngressSpecService $defaultBackendVal -1 }}
+    {{- $match1 := regexFindAll $const.k8s.ingress.resource $defaultBackendVal -1 }}
+    {{- $match2 := regexFindAll $const.k8s.ingress.service $defaultBackendVal -1 }}
     {{- if $match1 }}
-      {{- $_ := set $_defaultBackend "resource" $defaultBackendVal }}
+      {{- $val = dict "resource" $defaultBackendVal }}
     {{- else if $match2 }}
-      {{- $_ := set $_defaultBackend "service" $defaultBackendVal }}
+      {{- $val = dict "service" $defaultBackendVal }}
     {{- else }}
-      {{- fail (printf "IngressSpec: defaultBackend error. Values: %s, format: 'resource name kind [apiGroup]' or 'service name port.name|port.number'" .) }}
+      {{- fail (printf "service.IngressSpec: defaultBackend invalid. Values: %s, format: 'resource name kind [apiGroup]' or 'service name port.name|port.number'" .) }}
     {{- end }}
-    {{- $defaultBackend = include "definitions.IngressBackend" $_defaultBackend | fromYaml }}
+    {{- $defaultBackend := include "definitions.IngressBackend" $val | fromYaml }}
     {{- if $defaultBackend }}
       {{- include "base.field" (list "defaultBackend" $defaultBackend "base.map") }}
     {{- end }}
@@ -25,7 +24,9 @@
 
   {{- /* ingressClassName string */ -}}
   {{- $ingressClassName := include "base.getValue" (list . "ingressClassName") }}
-  {{- include "base.field" (list "ingressClassName" $ingressClassName) }}
+  {{- if $ingressClassName }}
+    {{- include "base.field" (list "ingressClassName" $ingressClassName) }}
+  {{- end }}
 
   {{- /* rules array */ -}}
   {{- $rulesVal := include "base.getValue" (list . "rules") | fromYaml }}
@@ -43,16 +44,15 @@
   {{- $tlsVal := include "base.getValue" (list . "tls") | fromYamlArray }}
   {{- $tls := list }}
   {{- range $tlsVal }}
-    {{- $val := dict }}
-
-    {{- $match := regexFindAll $const.regexIngressSpecTLS . -1 }}
+    {{- $match := regexFindAll $const.k8s.ingress.tls . -1 }}
     {{- if not $match }}
-      {{- fail (printf "IngressSpec: tls error. secretName and hosts must be exists. Values: %s, format: 'secretName hosts hostsN'" .) }}
+      {{- fail (printf "service.IngressSpec: tls invalid. secretName and hosts must be exists. Values: %s, format: 'secretName hosts hostsN'" .) }}
     {{- end }}
 
-    {{- $_val := regexSplit $const.regexSplit . -1 }}
-    {{- $_ := set $val "secretName" (first $_val) }}
-    {{- $_ := set $val "hosts" (include "base.slice" (slice $_val 1) | fromYamlArray) }}
+    {{- $_val := regexSplit $const.split.space . -1 }}
+    {{- $secretName := first $_val | trim }}
+    {{- $hosts := include "base.slice" (slice $_val 1) | fromYamlArray }}
+    {{- $val := dict "secretName" $secretName "hosts" $hosts }}
 
     {{- $tls = append $tls (include "definitions.IngressTLS" $val | fromYaml) }}
   {{- end }}

@@ -1,5 +1,8 @@
 {{- define "definitions.PodOS" -}}
-  {{- /* name */ -}}
-  {{- $osAllows := list "linux" "windows" }}
-  {{- include "base.field" (list "name" . "base.string" $osAllows) }}
+  {{- /* name string */ -}}
+  {{- $name := include "base.getValue" (list . "name") }}
+  {{- $nameAllows := list "linux" "windows" }}
+  {{- if $name }}
+    {{- include "base.field" (list "name" $name "base.string" $nameAllows) }}
+  {{- end }}
 {{- end }}

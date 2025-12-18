@@ -11,7 +11,7 @@
   {{- $items := list }}
   {{- range $itemsVal }}
     {{- $val := dict }}
-    {{- $_val := regexSplit $const.regexSplit (. | trim) -1 }}
+    {{- $_val := regexSplit $const.split.space (. | trim) -1 }}
     {{- if eq (len $_val) 2 }}
       {{- $val = dict "key" (index $_val 0) "path" (index $_val 1) }}
     {{- else if eq (len $_val) 3 }}

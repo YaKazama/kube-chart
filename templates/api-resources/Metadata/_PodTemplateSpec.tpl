@@ -1,5 +1,4 @@
 {{- define "metadata.PodTemplateSpec" -}}
-  {{- $_ := set . "_pkind" (get . "_kind") }}
   {{- $_ := set . "_kind" "PodTemplateSpec" }}
 
   {{- /* metadata ObjectMeta */ -}}

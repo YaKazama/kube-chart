@@ -1,5 +1,4 @@
 {{- define "workloads.DaemonSet" -}}
-  {{- $_ := set . "_pkind" "" }}
   {{- $_ := set . "_kind" "DaemonSet" }}
 
   {{- include "base.field" (list "apiVersion" "apps/v1") }}

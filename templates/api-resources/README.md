@@ -8,6 +8,3 @@
 - [Metadata](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#metadata-apis)
 - [Cluster](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#cluster-apis)
 - [Definitions](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#definitions)
-- 云平台
-  - GCP
-  - Tencent

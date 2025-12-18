@@ -1,4 +1,6 @@
 {{- define "definitions.EnvVar" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
   {{- /* name string */ -}}
   {{- $name := include "base.getValue" (list . "name") }}
   {{- include "base.field" (list "name" $name) }}
@@ -9,8 +11,34 @@
   {{- $valueFromVal := include "base.getValue" (list . "valueFrom") }}
   {{- if $value }}
     {{- include "base.field" (list "value" $value) }}
+
   {{- else if $valueFromVal }}
-    {{- $valueFrom := include "definitions.EnvVarSource" $valueFromVal | fromYaml }}
+    {{- $match := regexFindAll $const.k8s.container.envVar $valueFromVal -1 }}
+    {{- if not $match }}
+      {{- fail (printf "definitions.EnvVarSource: env.valueFrom invalid, must start with 'cm|configMap|field|file|resource|secret'. Values: '%s'" $valueFromVal) }}
+    {{- end }}
+
+    {{- $val := dict }}
+
+    {{- $_key := regexReplaceAll $const.k8s.container.envVar $valueFromVal "${1}" | trim }}
+    {{- $_value := regexReplaceAll $const.k8s.container.envVar $valueFromVal "${2}" | trim }}
+    {{- if or (eq $_key "configMap") (eq $_key "cm") }}
+      {{- $_ := set $val "configMapKeyRef" $_value }}
+
+    {{- else if eq $_key "field" }}
+      {{- $_ := set $val "fieldRef" $_value }}
+
+    {{- else if eq $_key "file" }}
+      {{- $_ := set $val "fileKeyRef" $_value }}
+
+    {{- else if eq $_key "resource" }}
+      {{- $_ := set $val "resourceFieldRef" $_value }}
+
+    {{- else if eq $_key "secret" }}
+      {{- $_ := set $val "secretKeyRef" $_value }}
+    {{- end }}
+
+    {{- $valueFrom := include "definitions.EnvVarSource" $val | fromYaml }}
     {{- if $valueFrom }}
       {{- include "base.field" (list "valueFrom" $valueFrom "base.map") }}
     {{- end }}

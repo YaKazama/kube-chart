@@ -11,8 +11,8 @@
   {{- /* limits */ -}}
   {{- $limitsVal := include "base.getValue" (list . "limits") }}
   {{- $limits := dict }}
-  {{- if regexMatch $const.regexResources $limitsVal }}
-    {{- $val := regexSplit $const.regexSplit $limitsVal -1 }}
+  {{- if regexMatch $const.k8s.resources $limitsVal }}
+    {{- $val := regexSplit $const.split.space $limitsVal -1 }}
     {{- $len := len $val }}
 
     {{- if or (lt $len 1) (eq $len 3) }}
@@ -51,8 +51,8 @@
   {{- /* requests */ -}}
   {{- $requestsVal := include "base.getValue" (list . "requests") }}
   {{- $requests := dict }}
-  {{- if regexMatch $const.regexResources $requestsVal }}
-    {{- $val := regexSplit $const.regexSplit $requestsVal -1 }}
+  {{- if regexMatch $const.k8s.resources $requestsVal }}
+    {{- $val := regexSplit $const.split.space $requestsVal -1 }}
     {{- $len := len $val }}
 
     {{- if or (lt $len 1) (eq $len 3) }}

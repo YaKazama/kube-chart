@@ -5,5 +5,8 @@
 */ -}}
 {{- define "definitions.PodReadinessGate" -}}
   {{- /* conditionType string */ -}}
-  {{- include "base.field" (list "conditionType" .) }}
+  {{- $conditionType := include "base.getValue" (list . "conditionType") }}
+  {{- if $conditionType }}
+    {{- include "base.field" (list "conditionType" $conditionType) }}
+  {{- end }}
 {{- end }}

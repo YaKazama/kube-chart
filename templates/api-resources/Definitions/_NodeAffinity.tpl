@@ -1,22 +1,21 @@
-{{- /*
-  数据格式：
-    - map[preferred required]
-*/ -}}
 {{- define "definitions.NodeAffinity" -}}
-  {{- /* preferredDuringSchedulingIgnoredDuringExecution */ -}}
-  {{- $preferredDuringSchedulingIgnoredDuringExecutionVal := include "base.getValue" (list . "preferred") | fromYamlArray }}
-  {{- $preferredDuringSchedulingIgnoredDuringExecution := list }}
-  {{- range $preferredDuringSchedulingIgnoredDuringExecutionVal }}
-    {{- $preferredDuringSchedulingIgnoredDuringExecution = append $preferredDuringSchedulingIgnoredDuringExecution (include "definitions.PreferredSchedulingTerm" . | fromYaml) }}
+  {{- /* preferredDuringSchedulingIgnoredDuringExecution array */ -}}
+  {{- $preferredVal := include "base.getValue" (list . "preferred") | fromYamlArray }}
+  {{- $preferred := list }}
+  {{- range $preferredVal }}
+    {{- $val := dict "weight" (get . "weight") "preference" (pick . "matchExpressions" "matchFields") }}
+    {{- $preferred = append $preferred (include "definitions.PreferredSchedulingTerm" $val | fromYaml) }}
   {{- end }}
-  {{- if $preferredDuringSchedulingIgnoredDuringExecution }}
-    {{- include "base.field" (list "preferredDuringSchedulingIgnoredDuringExecution" $preferredDuringSchedulingIgnoredDuringExecution "base.slice") }}
+  {{- $preferred = $preferred | mustUniq | mustCompact }}
+  {{- if $preferred }}
+    {{- include "base.field" (list "preferredDuringSchedulingIgnoredDuringExecution" $preferred "base.slice") }}
   {{- end }}
 
-  {{- /* requiredDuringSchedulingIgnoredDuringExecution */ -}}
-  {{- $requiredDuringSchedulingIgnoredDuringExecutionVal := include "base.getValue" (list . "required") | fromYamlArray }}
-  {{- $requiredDuringSchedulingIgnoredDuringExecution := include "definitions.NodeSelector" $requiredDuringSchedulingIgnoredDuringExecutionVal | fromYaml }}
-  {{- if $requiredDuringSchedulingIgnoredDuringExecution }}
-    {{- include "base.field" (list "requiredDuringSchedulingIgnoredDuringExecution" $requiredDuringSchedulingIgnoredDuringExecution "base.map") }}
+  {{- /* requiredDuringSchedulingIgnoredDuringExecution map */ -}}
+  {{- $requiredVal := include "base.getValue" (list . "required") | fromYamlArray }}
+  {{- $val := dict "nodeSelectorTerms" $requiredVal }}
+  {{- $required := include "definitions.NodeSelector" $val | fromYaml }}
+  {{- if $required }}
+    {{- include "base.field" (list "requiredDuringSchedulingIgnoredDuringExecution" $required "base.map") }}
   {{- end }}
 {{- end }}

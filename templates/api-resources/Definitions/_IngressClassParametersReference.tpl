@@ -3,7 +3,7 @@
   {{- $apiGroup := include "base.getValue" (list . "apiGroup") }}
   {{- $_kind := include "base.getValue" (list . "kind") }}
   {{- if and (empty $apiGroup) (ne $_kind "core") }}
-    {{- fail (printf "IngressClassParametersReference: apiGroup '%s' is required when kind is not core." $apiGroup) }}
+    {{- fail (printf "definitions.IngressClassParametersReference: apiGroup '%s' is required when kind is not core." $apiGroup) }}
   {{- end }}
   {{- if $apiGroup }}
     {{- include "base.field" (list "apiGroup" $apiGroup) }}

@@ -20,6 +20,8 @@
   {{- /* data object/map */ -}}
   {{- $data := include "base.getValue" (list . "data") | fromYaml }}
   {{- if eq $type "kubernetes.io/service-account-token" }}
+    {{- /* 这里设置 annotations 的方式看着有点奇怪，但它确实能正常使用且不影响其他位置的定义 */ -}}
+    {{- /* 此处定义的 kubernetes.io/service-account-name 优先级最高 */ -}}
     {{- $_ := set . "annotations" dict }}
     {{- $_ := set .annotations "kubernetes.io/service-account-name" (get $data "serviceAccount") }}
     {{- $data = omit $data "serviceAccount" }}
@@ -34,7 +36,7 @@
       {{- fail (printf "Secret: dockercfg error. server, username, password cannot be empty.") }}
     {{- end }}
 
-    {{- $auth := printf "%s:%s" $username $password | b64enc }}
+    {{- $auth := printf "%v:%v" $username $password | b64enc }}
     {{- $data = dict ".dockercfg" (dict "auths" (dict $server (dict "username" $username "password" $password "email" $email "auth" $auth)) | toJson) }}
 
   {{- else if eq $type "kubernetes.io/dockerconfigjson" }}
@@ -47,7 +49,7 @@
       {{- fail (printf "Secret: dockerconfigjson error. server, username, password cannot be empty.") }}
     {{- end }}
 
-    {{- $auth := printf "%s:%s" $username $password | b64enc }}
+    {{- $auth := printf "%v:%v" $username $password | b64enc }}
     {{- $data = dict ".dockerconfigjson" (dict "auths" (dict $server (dict "username" $username "password" $password "email" $email "auth" $auth)) | toJson) }}
 
   {{- else if eq $type "kubernetes.io/basic-auth" }}
