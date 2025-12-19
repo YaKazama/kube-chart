@@ -17,9 +17,8 @@
 # #     - environment3 == production4
 # terminationGracePeriodSeconds: 99
 replicas: 33
-# helmPortsRange: 30000-32767
 
-zz:
+# zz:
   # fieldPaths:
   #   - path.to.key
   #   - path1.to.key
