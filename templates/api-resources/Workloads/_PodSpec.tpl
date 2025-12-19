@@ -31,6 +31,7 @@
   {{- range $containersVal }}
     {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
     {{- $_ := set . "Files" $.Files }}
+    {{- $_ := set . "Values" $.Values }}
     {{- $containers = append $containers (include "workloads.Container" . | fromYaml) }}
   {{- end }}
   {{- $containers = $containers | mustUniq | mustCompact }}
@@ -117,6 +118,7 @@
   {{- range $initContainersVal }}
     {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
     {{- $_ := set . "Files" $.Files }}
+    {{- $_ := set . "Values" $.Values }}
     {{- $initContainers = append $initContainers (include "workloads.Container" . | fromYaml) }}
   {{- end }}
   {{- $initContainers = $initContainers | mustUniq | mustCompact }}

@@ -4,6 +4,11 @@ zzz: {{ include "base.getValue" (list .Values "zz") }}
 
 {{- $_ := set . "Context" .Values.Kustomization }}
 {{- include "kustomize.Kustomization" . }}
+{{- $a := .Files.Get "_configs/tls.crt" }}
+{{- $b := fromYamlArray $a }}
+zzz: {{ kindOf $b }}
+yyy: {{ $b }} {{ len $b }}
+xxx: {{ contains "error" (toString ($a | fromYaml)) }}
 */ -}}
-{{- $_ := set . "Context" .Values.TkeServiceConfig }}
-{{- include "tke.TkeServiceConfig" . }}
+{{- $_ := set . "Context" .Values.Deployment }}
+{{- include "workloads.Deployment" . }}

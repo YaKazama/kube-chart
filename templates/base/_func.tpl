@@ -10,7 +10,7 @@
 */ -}}
 {{- define "base.map.dig" -}}
   {{- if not (kindIs "map" .) }}
-    {{- fail "Must be a map(dict)." }}
+    {{- fail "Must be a map(dict). Format: 'map[m(map) k(path.to.key) default(string)]'" }}
   {{- end }}
 
   {{- include "base.invalid" .m }}
@@ -460,7 +460,7 @@
 {{- define "base.absPath" -}}
   {{- $path := regexReplaceAll "^(\\.\\.\\/)*" (include "base.string" . | clean) "" }}
   {{- if isAbs $path }}
-    {{- $path }}
+    {{- $path | trim }}
   {{- else }}
     {{- fail (printf "base.absPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
   {{- end }}
@@ -476,7 +476,7 @@
 {{- define "base.relPath" -}}
   {{- $path := regexReplaceAll "^(\\.\\.\\/)*" (include "base.string" . | clean) "" }}
   {{- if not (isAbs $path) }}
-    {{- $path }}
+    {{- $path | trim }}
   {{- else }}
     {{- fail (printf "base.relPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
   {{- end }}
@@ -550,3 +550,21 @@
   {{- /* 仅做空值处理，不修改内容 */ -}}
   {{- default "" . -}}
 {{- end -}}
+
+
+{{- /* 判断 fromYaml 返回的是否为错误 map */}}
+{{- define "base.isFromYamlError" }}
+  {{- /* 判定条件：是 map 且包含 "Error" 键 */}}
+  {{- and (kindIs "map" .) (hasKey . "Error") }}
+{{- end }}
+
+
+{{- /* 判断 fromYamlArray 返回的是否为错误 slice */}}
+{{- define "base.isFromYamlArrayError" }}
+  {{- /* 判定条件：是 slice 且首个元素包含错误关键词 */}}
+  {{- if kindIs "slice" . }}
+    {{- and (ne (len .) 0) (contains "error" (toString (index . 0))) }}
+  {{- else }}
+    {{- false }}
+  {{- end }}
+{{- end }}

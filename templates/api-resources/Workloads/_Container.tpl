@@ -14,11 +14,53 @@
   {{- end }}
 
   {{- /* env array */ -}}
+  {{- /* envFileRefs array */ -}}
+  {{- /*
+    # 读取内容后与 env 合并
+    # 优先级 env < envFileRefs
+  */ -}}
   {{- $envVal := include "base.getValue" (list . "env") | fromYamlArray }}
   {{- $env := list }}
   {{- range $envVal }}
     {{- $val := pick . "name" "value" "valueFrom" }}
     {{- $env = append $env (include "definitions.EnvVar" $val | fromYaml) }}
+  {{- end }}
+  {{- /* 处理 envFileRefs 将数据追加到 env 中 */ -}}
+  {{- $envFileRefs := include "base.getValue" (list . "envFileRefs") | fromYamlArray }}
+  {{- range $envFileRefs }}
+    {{- $filePath := include "base.getValue" (list . "filePath") }}
+    {{- $filePath = include "base.relPath" $filePath }}
+    {{- if empty $filePath }}
+      {{- fail "workloads.Container: envFileRefs[].filePath cannot be empty" }}
+    {{- end }}
+    {{- $content := $.Files.Get $filePath }}
+
+    {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
+    {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
+    {{- if empty $fieldPaths }}
+      {{- $contentFormat := $content | fromYamlArray }}
+      {{- $isNotSlice := include "base.isFromYamlArrayError" $contentFormat }}
+      {{- /* 文件中的数据是 list 才追加 */ -}}
+      {{- if eq $isNotSlice "false" }}
+        {{- $env = concat $env $contentFormat }}
+      {{- end }}
+
+    {{- /* 通过 fieldPaths 取值 */ -}}
+    {{- else }}
+      {{- range $fieldPaths }}
+        {{- $contentFormat := $content | fromYaml }}
+        {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+        {{- /* 文件中的数据是 map 才追加 */ -}}
+        {{- if eq $isNotMap "false" }}
+          {{- $val := include "base.map.dig" (dict "m" $contentFormat "k" .) | fromYamlArray }}
+          {{- $isNotSlice := include "base.isFromYamlArrayError" $val }}
+          {{- /* 文件中的数据是 list 才追加 */ -}}
+          {{- if eq $isNotSlice "false" }}
+            {{- $env = concat $env $val }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
   {{- end }}
   {{- $env = $env | mustUniq | mustCompact }}
   {{- if $env }}
@@ -26,30 +68,56 @@
   {{- end }}
 
   {{- /* envFrom array */ -}}
+  {{- /* envFromFileRefs array */ -}}
+  {{- /*
+    # 读取内容后与 envFrom 合并
+    # 优先级 envFrom < envFromFileRefs
+  */ -}}
   {{- $envFromVal := include "base.getValue" (list . "envFrom") | fromYamlArray }}
   {{- $envFrom := list }}
   {{- range $envFromVal }}
-    {{- $match := regexFindAll $const.k8s.container.envFrom . -1 }}
-    {{- if not $match }}
-      {{- fail (printf "workloads.Container: envFrom invalid, must start with 'cm|configMap|secret'. Values: '%s'" .) }}
+    {{- $envFrom = append $envFrom (include "workloads.Container.envFrom" . | fromYaml) }}
+  {{- end }}
+  {{- /* 处理 envFromFileRefs 将数据追加到 envFrom 中 */ -}}
+  {{- $envFromFileRefs := include "base.getValue" (list . "envFromFileRefs") | fromYamlArray }}
+  {{- range $envFromFileRefs }}
+    {{- $filePath := include "base.getValue" (list . "filePath") }}
+    {{- $filePath = include "base.relPath" $filePath }}
+    {{- if empty $filePath }}
+      {{- fail "workloads.Container: envFileRefs[].filePath cannot be empty" }}
     {{- end }}
+    {{- $content := $.Files.Get $filePath }}
 
-    {{- $val := dict }}
+    {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
+    {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
+    {{- if empty $fieldPaths }}
+      {{- /* 文件中的数据是 list 才追加 */ -}}
+      {{- $contentFormat := $content | fromYamlArray }}
+      {{- $isNotSlice := include "base.isFromYamlArrayError" $contentFormat }}
+      {{- if eq $isNotSlice "false" }}
+        {{- range $contentFormat }}
+          {{- $envFrom = append $envFrom (include "workloads.Container.envFrom" . | fromYaml) }}
+        {{- end }}
+      {{- end }}
 
-    {{- $_key := regexReplaceAll $const.k8s.container.envFrom . "${1}" | trim }}
-    {{- $_prefix := regexReplaceAll $const.k8s.container.envFrom . "${3}" | trim }}
-    {{- $_value := regexReplaceAll $const.k8s.container.envFrom . "${2} ${4}" | trim }}
-
-    {{- $_ := set $val "prefix" $_prefix }}
-
-    {{- if or (eq $_key "configMap") (eq $_key "cm") }}
-      {{- $_ := set $val "configMapKeyRef" $_value }}
-
-    {{- else if eq $_key "secret" }}
-      {{- $_ := set $val "secretRef" $_value }}
+    {{- /* 通过 fieldPaths 取值 */ -}}
+    {{- else }}
+      {{- range $fieldPaths }}
+        {{- $contentFormat := $content | fromYaml }}
+        {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+        {{- /* 文件中的数据是 map 才追加 */ -}}
+        {{- if eq $isNotMap "false" }}
+          {{- $val := include "base.map.dig" (dict "m" $contentFormat "k" .) | fromYamlArray }}
+          {{- $isNotSlice := include "base.isFromYamlArrayError" $val }}
+          {{- /* 文件中的数据是 list 才追加 */ -}}
+          {{- if eq $isNotSlice "false" }}
+            {{- range $val }}
+              {{- $envFrom = append $envFrom (include "workloads.Container.envFrom" . | fromYaml) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
     {{- end }}
-
-    {{- $envFrom = append $envFrom (include "definitions.EnvFromSource" $val | fromYaml) }}
   {{- end }}
   {{- $envFrom = $envFrom | mustUniq | mustCompact }}
   {{- if $envFrom }}
@@ -57,34 +125,10 @@
   {{- end }}
 
   {{- /* image string */ -}}
-  {{- /* 支持 image(string) 和 imageRef(map) 两种定义，且 image 优先级更高 */ -}}
-  {{- $imageVal := include "base.getValue" (list . "image") }}
-  {{- $imageRef := "" }}
-  {{- $imageRefVal := include "base.getValue" (list . "imageRef") | fromYaml }}
-  {{- if $imageRefVal }}
-    {{- $_registry := get $imageRefVal "registry" | default "docker.io" | trimPrefix "/" | trimSuffix "/" }}
-    {{- $_namespace := get $imageRefVal "namespace" | default "library" | trimPrefix "/" | trimSuffix "/" }}
-    {{- $_repository := get $imageRefVal "repository" }}
-    {{- $_tag := get $imageRefVal "tag" }}
-    {{- $_digest := get $imageRefVal "digest" }}
-    {{- if empty $_repository }}
-      {{- fail "workloads.Container: imageRef.repository cannot be empty." }}
-    {{- end }}
-    {{- if and (empty $_tag) (empty $_digest) }}
-      {{- $_tag = "latest" }}
-    {{- end }}
-    {{- if and $_digest (not (hasPrefix "sha256" $_digest)) }}
-      {{- $_digest = printf "sha256:%s" $_digest }}
-    {{- end }}
-    {{- $image0 := join "/" (list $_registry $_namespace $_repository | compact) }}
-    {{- $image1 := join ":" (list $image0 $_tag | compact) }}
-    {{- $imageRef = join "@" (list $image1 $_digest | compact) }}
-  {{- end }}
-  {{- $image := coalesce $imageVal $imageRef }}
+  {{- /* 支持 image(string) 和 imageRef(map) 两种定义，且 imageRef 优先级更高 */ -}}
+  {{- $image := include "workloads.Container.image" . }}
   {{- if $image }}
     {{- include "base.field" (list "image" $image) }}
-  {{- else }}
-    {{- fail "workloads.Container: image must be exists. need set 'image' or 'imageRef'." }}
   {{- end }}
 
   {{- /* imagePullPolicy string */ -}}
@@ -185,10 +229,52 @@
   {{- end }}
 
   {{- /* resources map */ -}}
+  {{- /* resourcesFileRefs array */ -}}
+  {{- /*
+    # 读取内容后与 resources 合并
+    # 优先级 resources < resourcesFileRefs 且 resourcesFileRefs 按序覆盖
+  */ -}}
   {{- $resourcesVal := include "base.getValue" (list . "resources") | fromYaml }}
+  {{- $resources := dict }}
   {{- if $resourcesVal }}
     {{- $val := pick $resourcesVal "limits" "requests" }}
-    {{- $resources := include "definitions.ResourceRequirements" $val | fromYaml }}
+    {{- $resources = include "definitions.ResourceRequirements" $val | fromYaml }}
+  {{- end }}
+  {{- /* 处理 resourcesFileRefs 将数据追加到 resources 中 */ -}}
+  {{- $resourcesFileRefs := include "base.getValue" (list . "resourcesFileRefs") | fromYamlArray }}
+  {{- range $resourcesFileRefs }}
+    {{- $filePath := include "base.getValue" (list . "filePath") }}
+    {{- $filePath = include "base.relPath" $filePath }}
+    {{- if empty $filePath }}
+      {{- fail "workloads.Container: envFileRefs[].filePath cannot be empty" }}
+    {{- end }}
+    {{- $content := $.Files.Get $filePath }}
+
+    {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
+    {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
+    {{- if empty $fieldPaths }}
+      {{- /* 文件中的数据是 map 才追加 */ -}}
+      {{- $contentFormat := $content | fromYaml }}
+      {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+      {{- if eq $isNotMap "false" }}
+        {{- $val := pick $contentFormat "limits" "requests" }}
+        {{- $resources = mergeOverwrite $resources (include "definitions.ResourceRequirements" $val | fromYaml) }}
+      {{- end }}
+
+    {{- /* 通过 fieldPaths 取值 */ -}}
+    {{- else }}
+      {{- range $fieldPaths }}
+        {{- $contentFormat := $content | fromYaml }}
+        {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+        {{- if eq $isNotMap "false" }}
+          {{- $_val := include "base.map.dig" (dict "m" $contentFormat "k" .) | fromYaml }}
+          {{- $val := pick $_val "limits" "requests" }}
+          {{- $resources = mergeOverwrite $resources (include "definitions.ResourceRequirements" $val | fromYaml) }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if $resources }}
     {{- if $resources }}
       {{- include "base.field" (list "resources" $resources "base.map") }}
     {{- end }}
@@ -333,4 +419,153 @@
   {{- if $workingDir }}
     {{- include "base.field" (list "workingDir" $workingDir "base.absPath") }}
   {{- end }}
+{{- end }}
+
+{{- /* envFrom 处理模板 返回 list */ -}}
+{{- define "workloads.Container.envFrom" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+
+  {{- $val := dict }}
+  {{- if kindIs "string" . }}
+    {{- $match := regexFindAll $const.k8s.container.envFrom . -1 }}
+    {{- if not $match }}
+      {{- fail (printf "workloads.Container.envFrom: invalid, must start with 'cm|configMap|secret'. Values: '%s'" .) }}
+    {{- end }}
+
+    {{- $_key := regexReplaceAll $const.k8s.container.envFrom . "${1}" | lower | trim }}
+    {{- $_prefix := regexReplaceAll $const.k8s.container.envFrom . "${3}" | trim }}
+    {{- $_value := regexReplaceAll $const.k8s.container.envFrom . "${2} ${4}" | trim }}
+
+    {{- $val = merge $val (dict "prefix" $_prefix) }}
+    {{- if or (eq $_key "configMap") (eq $_key "configmap") (eq $_key "cm") }}
+      {{- $val = merge (dict "configMapRef" $_value) }}
+    {{- else if eq $_key "secret" }}
+      {{- $val = merge (dict "secretRef" $_value) }}
+    {{- end }}
+
+  {{- else if kindIs "map" . }}
+    {{- $val = . }}
+  {{- end }}
+  {{- include "definitions.EnvFromSource" $val | fromYaml | toYamlPretty }}
+{{- end }}
+
+{{- /* 获取最终的镜像地址（优先 imageRef，其次 image） */ -}}
+{{- define "workloads.Container.image" -}}
+  {{- /* 处理 imageFileRefs 获取外部候选值 */ -}}
+  {{- $imageFileRefs := include "base.getValue" (list . "imageFileRefs") | fromYamlArray }}
+  {{- $extImage := "" }}
+  {{- range $imageFileRefs }}
+    {{- $filePath := include "base.getValue" (list . "filePath") }}
+    {{- $filePath = include "base.relPath" $filePath }}
+    {{- if empty $filePath }}
+      {{- fail "workloads.Container.image: envFileRefs[].filePath cannot be empty" }}
+    {{- end }}
+    {{- $content := $.Files.Get $filePath }}
+
+    {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
+    {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
+    {{- if empty $fieldPaths }}
+      {{- $contentFormat := $content | fromYaml }}
+      {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+      {{- $isNotSlice := include "base.isFromYamlArrayError" ($content | fromYamlArray) }}
+      {{- /* map 调 workloads.Container.imageRef 处理 */ -}}
+      {{- if eq $isNotMap "false" }}
+        {{- $extImage = include "workloads.Container.imageRef" $contentFormat }}
+      {{- /* slice 什么都不做 会报错 */ -}}
+      {{- else if eq $isNotSlice "false" }}
+        {{- fail (printf "workloads.Container.image: imageFileRefs invalid. Values: '%v', File: '%v'" $content $filePath) }}
+      {{- /* 其他情况当作字符串处理 */ -}}
+      {{- else }}
+        {{- $extImage = $content }}
+      {{- end }}
+
+    {{- /* 通过 fieldPaths 取值 */ -}}
+    {{- else }}
+      {{- range $fieldPaths }}
+        {{- $contentFormat := $content | fromYaml }}
+        {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+        {{- $isNotSlice := include "base.isFromYamlArrayError" ($content | fromYamlArray) }}
+        {{- /* map 调 workloads.Container.imageRef 处理 */ -}}
+        {{- if eq $isNotMap "false" }}
+          {{- $_val := include "base.map.dig" (dict "m" $contentFormat "k" .) }}
+          {{- $val := $_val | fromYaml }}
+          {{- $isNotMap := include "base.isFromYamlError" $val }}
+          {{- $isNotSlice := include "base.isFromYamlArrayError" ($_val | fromYamlArray) }}
+          {{- if eq $isNotMap "false" }}
+            {{- $extImage = include "workloads.Container.imageRef" $val }}
+          {{- else if eq $isNotSlice "false" }}
+            {{- fail (printf "workloads.Container.image: imageFileRefs invalid. Values: '%v', fieldPath: '%v', File: '%v'" $content . $filePath) }}
+          {{- else }}
+            {{- $extImage = $_val }}
+          {{- end }}
+
+        {{- /* slice 什么都不做 会报错 */ -}}
+        {{- else if eq $isNotSlice "false" }}
+          {{- fail (printf "workloads.Container.image: imageFileRefs invalid. Values: '%v', fieldPath: '%v', File: '%v'" $content . $filePath) }}
+        {{- /* 其他情况当作字符串处理 */ -}}
+        {{- else }}
+          {{- $extImage = $content }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* 获取内部 image 原始值 */ -}}
+  {{- $image := include "base.getValue" (list . "image") }}
+
+  {{- /* 解析内部 imageRef 并拼接 */ -}}
+  {{- $imageRefVal := include "base.getValue" (list . "imageRef") | fromYaml }}
+  {{- $imageRef := "" }}
+  {{- if $imageRefVal }}
+    {{- $imageRef = include "workloads.Container.imageRef" $imageRefVal }}
+  {{- end }}
+
+  {{- /* 按优先级取非空值 */ -}}
+  {{- $fullImage := coalesce $extImage $imageRef $image }}
+
+  {{- /* 最终校验 */ -}}
+  {{- if empty $fullImage }}
+    {{- fail "workloads.Container: image must be set (either 'image' or 'imageRef' is required)" }}
+  {{- end }}
+
+  {{- /* 返回最终值 */ -}}
+  {{- $fullImage }}
+{{- end }}
+
+{{- /* 解析 imageRef 为完整的镜像地址 */ -}}
+{{- define "workloads.Container.imageRef" -}}
+  {{- /* 1. 提取字段并处理默认值 */ -}}
+  {{- $registry := get . "registry" }}
+  {{- if $registry }}
+    {{- $registry = $registry | trimPrefix "/" | trimSuffix "/" }}
+  {{- end }}
+  {{- $namespace := get . "namespace" }}
+  {{- if $namespace }}
+    {{- $namespace = $namespace | trimPrefix "/" | trimSuffix "/" }}
+  {{- end }}
+  {{- $repository := get . "repository" }}
+  {{- $tag := get . "tag" }}
+  {{- $digest := get . "digest" }}
+
+  {{- /* 2. 必选字段校验 */ -}}
+  {{- if empty $repository -}}
+    {{- fail (printf "workloads.Container.imageRef: imageRef.repository cannot be empty (required field). Values: '%v'" .) -}}
+  {{- end -}}
+
+  {{- /* 3. 处理 tag 和 digest 的默认值（二者至少一个非空） */ -}}
+  {{- if and (empty $tag) (empty $digest) -}}
+    {{- $tag = "latest" -}}
+  {{- end -}}
+
+  {{- /* 4. 补全 digest 的 sha256 前缀 */ -}}
+  {{- if and $digest (not (hasPrefix "sha256" $digest)) -}}
+    {{- $digest = printf "sha256:%s" $digest -}}
+  {{- end -}}
+
+  {{- /* 5. 拼接镜像地址：registry/namespace/repository:tag@digest */ -}}
+  {{- $imagePrefix := join "/" (list $registry $namespace $repository | compact) }}
+  {{- $imageWithTag := join ":" (list $imagePrefix $tag | compact) }}
+  {{- $fullImage := join "@" (list $imageWithTag $digest | compact) }}
+
+  {{- $fullImage }}
 {{- end }}

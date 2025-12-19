@@ -10,6 +10,7 @@ split:
   all: "\\s*[,\\:\\.\\|\\/\\*\\^@#\\s]+\\s*"
   space: "\\s+"
   comma: ",\\s*"
+  equal: "=+"
 # 类型相关
 types:
   int: "^[+-]?\\d+(\\.\\d+)?$"
@@ -39,13 +40,13 @@ k8s:
       rules: "^(\\d+)?(?:\\s*((?:\\d+(?:-\\d+)?)(?:,\\s*\\d+(?:-\\d+)?)*))?$"
     statefulSetPVCRetention: "^(Retain|retain|Delete|delete)?(?:\\s+(Retain|retain|Delete|delete))?$"
   container:
-    envVar: "^(cm|configMap|field|file|resource|secret)(?:\\s+(.*?))$"
+    envVar: "^((?i)cm|configMap|field|file|resource|secret)(?:\\s+(.*?))$"
     envVarConfigMap: "^(\\S+)(?:\\s+(\\S+))?(?:\\s+(true|false))?$"
     envVarField: "^(\\S+)(?:\\s+(\\S+))?$"
     envVarFile: "^(\\S+)\\s+(\\S+)\\s+(\\S+)(?:\\s+(true|false))?$"
     envVarResource: "^(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?$"
     envVarSecret: "^(\\S+)\\s+(\\S+)(?:\\s+(true|false))?$"
-    envFrom: "^(cm|configMap|secret)(?:\\s+(\\S+))(?:\\s+(\\S+))?(?:\\s+(true|false))?$"
+    envFrom: "^((?i)cm|configMap|secret)(?:\\s+(\\S+))(?:\\s+(\\S+))?(?:\\s+(true|false))?$"
     envFromConfigMap: "^(\\S+)(?:\\s+(true|false))?$"
     envFromSecret: "^(\\S+)(?:\\s+(true|false))?$"
     ports: "^((?:((?:\\d{1,3}\\.){3}\\d{1,3}):)?(?:(\\d{1,5}):)?)?(\\d{1,5})(?:/(TCP|tcp|UDP|udp|SCTP|sctp))?(?:#(\\S+))?$"

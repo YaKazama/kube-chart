@@ -9,12 +9,23 @@
 
   {{- /* configMapRef map */ -}}
   {{- $configMapRefVal := include "base.getValue" (list . "configMapRef") }}
-  {{- if regexMatch $const.k8s.container.envFromConfigMap $configMapRefVal }}
-    {{- $name := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${1}" | trim }}
-    {{- $optional := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${2}" | trim }}
-    {{- $val := dict "name" $name "optional" $optional }}
+  {{- $isNotMap := include "base.isFromYamlError" ($configMapRefVal | fromYaml) }}
+  {{- /* 字符串 */ -}}
+  {{- if eq $isNotMap "true" }}
+    {{- if regexMatch $const.k8s.container.envFromConfigMap $configMapRefVal }}
+      {{- $name := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${1}" | trim }}
+      {{- $optional := regexReplaceAll $const.k8s.container.envFromConfigMap $configMapRefVal "${2}" | trim }}
+      {{- $val := dict "name" $name "optional" $optional }}
 
-    {{- $configMapRef := include "definitions.ConfigMapEnvSource" $val | fromYaml }}
+      {{- $configMapRef := include "definitions.ConfigMapEnvSource" $val | fromYaml }}
+      {{- if $configMapRef }}
+        {{- include "base.field" (list "configMapRef" $configMapRef "base.map") }}
+      {{- end }}
+    {{- end }}
+
+  {{- /* 原生 map */ -}}
+  {{- else }}
+    {{- $configMapRef := include "definitions.ConfigMapEnvSource" ($configMapRefVal | fromYaml) | fromYaml }}
     {{- if $configMapRef }}
       {{- include "base.field" (list "configMapRef" $configMapRef "base.map") }}
     {{- end }}
@@ -22,14 +33,25 @@
 
   {{- /* secretRef map */ -}}
   {{- $secretRefVal := include "base.getValue" (list . "secretRef") }}
-  {{- if regexMatch $const.k8s.container.envFromSecret $secretRefVal }}
-    {{- $name := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${1}" | trim }}
-    {{- $optional := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${2}" | trim }}
-    {{- $val := dict "name" $name "optional" $optional }}
+  {{- $isNotMap := include "base.isFromYamlError" ($secretRefVal | fromYaml) }}
+  {{- /* 字符串 */ -}}
+  {{- if eq $isNotMap "true" }}
+    {{- if regexMatch $const.k8s.container.envFromSecret $secretRefVal }}
+      {{- $name := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${1}" | trim }}
+      {{- $optional := regexReplaceAll $const.k8s.container.envFromSecret $secretRefVal "${2}" | trim }}
+      {{- $val := dict "name" $name "optional" $optional }}
 
-    {{- $secretRef := include "definitions.SecretEnvSource" $val | fromYaml }}
-    {{- if $secretRef }}
-      {{- include "base.field" (list "secretRef" $secretRef "base.map") }}
+      {{- $secretRef := include "definitions.SecretEnvSource" $val | fromYaml }}
+      {{- if $secretRef }}
+        {{- include "base.field" (list "secretRef" $secretRef "base.map") }}
+      {{- end }}
     {{- end }}
+
+  {{- /* 原生 map */ -}}
+  {{- else }}
+    {{- $secretRef := include "definitions.SecretEnvSource" ($secretRefVal | fromYaml) | fromYaml }}
+      {{- if $secretRef }}
+        {{- include "base.field" (list "secretRef" $secretRef "base.map") }}
+      {{- end }}
   {{- end }}
 {{- end }}

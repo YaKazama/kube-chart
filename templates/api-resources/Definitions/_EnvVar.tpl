@@ -20,22 +20,22 @@
 
     {{- $val := dict }}
 
-    {{- $_key := regexReplaceAll $const.k8s.container.envVar $valueFromVal "${1}" | trim }}
+    {{- $_key := regexReplaceAll $const.k8s.container.envVar $valueFromVal "${1}" | lower | trim }}
     {{- $_value := regexReplaceAll $const.k8s.container.envVar $valueFromVal "${2}" | trim }}
-    {{- if or (eq $_key "configMap") (eq $_key "cm") }}
-      {{- $_ := set $val "configMapKeyRef" $_value }}
+    {{- if or (eq $_key "configMap") (eq $_key "configmap") (eq $_key "cm") }}
+      {{- $val = dict "configMapKeyRef" $_value }}
 
     {{- else if eq $_key "field" }}
-      {{- $_ := set $val "fieldRef" $_value }}
+      {{- $val = dict "fieldRef" $_value }}
 
     {{- else if eq $_key "file" }}
-      {{- $_ := set $val "fileKeyRef" $_value }}
+      {{- $val = dict "fileKeyRef" $_value }}
 
     {{- else if eq $_key "resource" }}
-      {{- $_ := set $val "resourceFieldRef" $_value }}
+      {{- $val = dict "resourceFieldRef" $_value }}
 
     {{- else if eq $_key "secret" }}
-      {{- $_ := set $val "secretKeyRef" $_value }}
+      {{- $val = dict "secretKeyRef" $_value }}
     {{- end }}
 
     {{- $valueFrom := include "definitions.EnvVarSource" $val | fromYaml }}
