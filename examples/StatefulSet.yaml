@@ -1,0 +1,49 @@
+# 理论上 StatefulSet 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.StatefulSet }}`
+
+StatefulSet:
+  # 同 Deployment.service 或 Service
+  service: {}
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  minReadySeconds: int
+  ordinals: int
+  # 写法 [whenDeleted] [whenScaled]
+  persistentVolumeClaimRetentionPolicy: string
+  podManagementPolicy: string # OrderedReady | Parallel
+  replicas: int
+  revisionHistoryLimit: int
+  # 同 Deployment.selector
+  selector: {}
+  serviceName: string
+  # 写法  [type] [maxUnavailable] [partition]
+  updateStrategy: string
+  # 格式 []string 或原生(有限字段支持，见下方注释部分内容)
+  # 写法
+  #   字符串 <storageClassName> <name> [namespace] accessMode|accessModes (accessModes, ...) <requests> [limits] [volumeName] [volumeMode]
+  #     accessMode/accessModes 是固定词(介定词)
+  volumeClaimTemplates: []
+    # - sc-name claim-name default11 accessMode (ReadWriteOnce) 10Gi 20Gi pvc-aaa-bbb-ccc Filesystem
+    # - name: string
+    #   namespace: string
+    #   accessModes:
+    #     - ReadWriteOnce
+    #   # requests limits
+    #   # 同 Deployment.resources
+    #   resources:
+    #     requests:
+    #       # 只支持 storage
+    #       storage: Quantity
+    #     limits:
+    #       storage: Quantity
+    #   storageClassName: string
+    #   volumeMode: string
+    #   volumeName: string
+
+  # 以下均为 PodSpec 及其子项的字段
+  # PodSpec 相关的字段定义，参考 Deployment 53 行之后的内容

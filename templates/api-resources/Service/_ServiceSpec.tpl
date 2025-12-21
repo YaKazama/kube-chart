@@ -98,13 +98,13 @@
       {{- fail (printf "ServiceSpec: ports error. Values: %s, format: '[nodePort:]port[:targetPort][/protocol][@appProtocol][#name]'" $_ports) }}
     {{- end }}
 
-    {{- $val := dict }}
-    {{- $_ := set $val "nodePort" (regexReplaceAll $const.k8s.service.ports $_ports "${1}") }}
-    {{- $_ := set $val "port" (regexReplaceAll $const.k8s.service.ports $_ports "${2}") }}
-    {{- $_ := set $val "targetPort" (regexReplaceAll $const.k8s.service.ports $_ports "${3}") }}
-    {{- $_ := set $val "protocol" (regexReplaceAll $const.k8s.service.ports $_ports "${4}") }}
-    {{- $_ := set $val "appProtocol" (regexReplaceAll $const.k8s.service.ports $_ports "${5}") }}
-    {{- $_ := set $val "name" (regexReplaceAll $const.k8s.service.ports $_ports "${6}") }}
+    {{- $nodePort := regexReplaceAll $const.k8s.service.ports $_ports "${1}" | trim }}
+    {{- $port := regexReplaceAll $const.k8s.service.ports $_ports "${2}" | trim }}
+    {{- $targetPort := regexReplaceAll $const.k8s.service.ports $_ports "${3}" | trim }}
+    {{- $protocol := regexReplaceAll $const.k8s.service.ports $_ports "${4}" | trim }}
+    {{- $appProtocol := regexReplaceAll $const.k8s.service.ports $_ports "${5}" | trim }}
+    {{- $name := regexReplaceAll $const.k8s.service.ports $_ports "${6}" | trim }}
+    {{- $val := dict "nodePort" $nodePort "port" $port "targetPort" $targetPort "protocol" $protocol "appProtocol" $appProtocol "name" $name }}
 
     {{- $ports = append $ports (include "definitions.ServicePort" $val | fromYaml) }}
   {{- end }}

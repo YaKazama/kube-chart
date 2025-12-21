@@ -1,0 +1,87 @@
+# 理论上 PersistentVolume 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.PersistentVolume }}`
+
+PersistentVolume:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  # format: []string
+  accessModes: []
+  capacity: string
+  persistentVolumeReclaimPolicy: string # Delete | Recycle | Retain
+  storageClassName: string
+  volumeAttributesClassName: string
+  volumeMode: string # Filesystem | Block
+  claimRef:
+    apiVersion: string
+    fieldPath: string
+    kind: string
+    name: string
+    namespace: string
+    resourceVersion: string
+    uid: string
+  csi:
+    controllerExpandSecretRef:
+      name: string
+      namespace: ns-aaa
+    controllerPublishSecretRef:
+      name: string
+      namespace: string
+    driver: string
+    fsType: string # ext4 | xfs | ntfs
+    nodeExpandSecretRef:
+      name: string
+      namespace: string
+    nodePublishSecretRef:
+      name: string
+      namespace: string
+    nodeStageSecretRef:
+      name: string
+      namespace: string
+    readOnly: bool
+    volumeAttributes: {}
+    volumeHandle: string
+  fc:
+    fsType: string # ext4 | xfs | ntfs
+    lun: int
+    readOnly: bool
+    # format []string
+    targetWWNs: []
+    # format []string
+    wwids: []
+  hostPath:
+    path: string
+    type: string # DirectoryOrCreate | Directory | FileOrCreate | File | Socket | CharDevice | BlockDevice
+  iscsi:
+    chapAuthDiscovery: bool
+    chapAuthSession: bool
+    fsType: string # ext4 | xfs | ntfs
+    initiatorName: string
+    iqn: string
+    iscsiInterface: string
+    lun: int
+    # format: []string
+    portals: []
+    readOnly: bool
+    secretRef:
+      name: string
+      namespace: string
+    # 写法 ip_addr:port
+    targetPortal: string
+  local:
+    fsType: string # ext4 | xfs | ntfs
+    path: string
+  nfs:
+    path: string
+    readOnly: bool
+    server: string
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        # 同 Deployment.nodeAffinity.preferred.required
+        - matchExpressions: []
+        - matchFields: []

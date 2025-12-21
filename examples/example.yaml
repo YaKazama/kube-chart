@@ -1,0 +1,159 @@
+{{- /* Workloads */ -}}
+---
+{{- /* 生成 Deployment */ -}}
+{{- $_ := set . "Context" .Values.Deployment }}
+{{- include "workloads.Deployment" . }}
+
+---
+{{- /* 生成 CronJob */ -}}
+{{- $_ := set . "Context" .Values.CronJob }}
+{{- include "workloads.CronJob" . }}
+
+---
+{{- /* 生成 DaemonSet */ -}}
+{{- $_ := set . "Context" .Values.DaemonSet }}
+{{- include "workloads.DaemonSet" . }}
+
+---
+{{- /* 生成 Job */ -}}
+{{- $_ := set . "Context" .Values.Job }}
+{{- include "workloads.Job" . }}
+
+---
+{{- /* 生成 StatefulSet */ -}}
+{{- $_ := set . "Context" .Values.StatefulSet }}
+{{- include "workloads.StatefulSet" . }}
+
+
+{{- /* Service */ -}}
+---
+{{- /* 生成 Service */ -}}
+{{- $_ := set . "Context" .Values.Deployment.service }}
+{{- include "service.Service" . }}
+
+---
+{{- /* 生成 Service */ -}}
+{{- $_ := set . "Context" .Values.Service }}
+{{- include "service.Service" . }}
+
+---
+{{- /* 生成 Ingress */ -}}
+{{- $_ := set . "Context" .Values.Ingress }}
+{{- include "service.Ingress" . }}
+
+---
+{{- /* 生成 IngressClass */ -}}
+{{- $_ := set . "Context" .Values.IngressClass }}
+{{- include "service.IngressClass" . }}
+
+
+{{- /* Config and Storage */ -}}
+---
+{{- /* 生成 ConfigMap */ -}}
+{{- $_ := set . "Context" .Values.ConfigMap }}
+{{- include "configStorage.ConfigMap" . }}
+
+---
+{{- /* 生成 Secret */ -}}
+{{- $_ := set . "Context" .Values.Secret }}
+{{- include "configStorage.Secret" . }}
+
+---
+{{- /* 生成 StorageClass */ -}}
+{{- $_ := set . "Context" .Values.StorageClass }}
+{{- include "configStorage.StorageClass" . }}
+
+
+{{- /* Metadata */ -}}
+---
+{{- /* 生成 HorizontalPodAutoscaler */ -}}
+{{- $_ := set . "Context" .Values.HorizontalPodAutoscaler }}
+{{- include "metadata.HorizontalPodAutoscaler" . }}
+
+---
+{{- /* 生成 PodTemplate */ -}}
+{{- $_ := set . "Context" .Values.PodTemplate }}
+{{- include "metadata.PodTemplate" . }}
+
+
+{{- /* Cluster */ -}}
+---
+{{- /* 生成 Binding */ -}}
+{{- $_ := set . "Context" .Values.Binding }}
+{{- include "cluster.Binding" . }}
+
+---
+{{- /* 生成 ClusterRole */ -}}
+{{- $_ := set . "Context" .Values.ClusterRole }}
+{{- include "cluster.ClusterRole" . }}
+
+---
+{{- /* 生成 ClusterRoleBinding */ -}}
+{{- $_ := set . "Context" .Values.ClusterRoleBinding }}
+{{- include "cluster.ClusterRoleBinding" . }}
+
+---
+{{- /* 生成 Namespace */ -}}
+{{- $_ := set . "Context" .Values.Namespace }}
+{{- include "cluster.Namespace" . }}
+
+---
+{{- /* 生成 PersistentVolume */ -}}
+{{- $_ := set . "Context" .Values.PersistentVolume }}
+{{- include "cluster.PersistentVolume" . }}
+
+---
+{{- /* 生成 Role */ -}}
+{{- $_ := set . "Context" .Values.Role }}
+{{- include "cluster.Role" . }}
+
+---
+{{- /* 生成 RoleBinding */ -}}
+{{- $_ := set . "Context" .Values.RoleBinding }}
+{{- include "cluster.RoleBinding" . }}
+
+---
+{{- /* 生成 ServiceAccount */ -}}
+{{- $_ := set . "Context" .Values.ServiceAccount }}
+{{- include "cluster.ServiceAccount" . }}
+
+---
+{{- /* 生成 NetworkPolicy */ -}}
+{{- $_ := set . "Context" .Values.NetworkPolicy }}
+{{- include "cluster.NetworkPolicy" . }}
+
+
+{{- /* Cloud */ -}}
+---
+{{- /* 生成 GCP BackendConfig */ -}}
+{{- $_ := set . "Context" .Values.GCP.BackendConfig }}
+{{- include "gke.BackendConfig" . }}
+
+---
+{{- /* 生成 GCP ManagedCertificate */ -}}
+{{- $_ := set . "Context" .Values.GCP.ManagedCertificate }}
+{{- include "gke.ManagedCertificate" . }}
+
+---
+{{- /* 生成 Tencent TkeServiceConfig */ -}}
+{{- $_ := set . "Context" .Values.Tencent.TkeServiceConfig }}
+{{- include "tke.TkeServiceConfig" . }}
+
+
+{{- /* Kustomize */ -}}
+---
+{{- /* 生成 kustomize (Kustomization) */ -}}
+{{- $_ := set . "Context" .Values.Kustomization }}
+{{- include "kustomize.Kustomization" . }}
+
+
+{{- /* MetalLB */ -}}
+---
+{{- /* 生成 MetalLB IPAddressPool  */ -}}
+{{- $_ := set . "Context" .Values.IPAddressPool }}
+{{- include "metallb.IPAddressPool" . }}
+
+---
+{{- /* 生成 MetalLB L2Advertisement */ -}}
+{{- $_ := set . "Context" .Values.L2Advertisement }}
+{{- include "metallb.L2Advertisement" . }}

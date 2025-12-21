@@ -1,0 +1,7 @@
+global: {}
+
+# 添加特定的 helm 标签
+#   helm.sh/chart
+#   app.kubernetes.io/version
+#   app.kubernetes.io/managed-by
+helmLabels: bool

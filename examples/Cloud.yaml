@@ -1,0 +1,90 @@
+# 理论上 Cloud 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.GCP }}` 或 `{{- $_ := set . "Context" .Values.Tencent }}`
+
+# 有限实现。主要与负载均衡器有关
+# 支持 GCP 和 Tencent 的部分内容
+
+GCP:
+  BackendConfig:
+    timeoutSec: 40
+    connectionDraining:
+      drainingTimeoutSec: 60
+    healthCheck:
+      checkIntervalSec: 15
+      timeoutSec: 15
+      healthyThreshold: 1
+      unhealthyThreshold: 2
+      type: HTTP
+      requestPath: /account/health/
+      port: 9191
+    logging:
+      enable: true
+      sampleRate: 0.5
+  ManagedCertificate:
+    domains:
+      - "*.example.com"
+      - 2.example.com
+
+Tencent:
+  TkeServiceConfig:
+    l4Listeners: # 四层规则配置，适用于Service的监听器配置。
+      - protocol: TCP # 协议端口锚定Service的四层规则。必填，枚举值：TCP|UDP|TCP_SSL|QUIC。
+        port: 80 # 必填，可选值：1~65535。
+        deregisterTargetRst: true # 选填，布尔值。双向 RST 开关，建议非直连类型 Service 启用，非直连 Service 的连接会经过 NodePort 中转，不启用双向 RST 可能导致下线集群节点后造成业务中断。
+        session: # 会话保持相关配置。选填
+          enable: true # 是否开启会话保持。必填，布尔值
+          sessionExpireTime: 100 # 会话保持的时间。选填，默认值：30，可选值：30~3600，单位：秒。
+        healthCheck: # 健康检查相关配置。选填
+          enable: true # 是否开启健康检查。必填，布尔值
+          checkType: "TCP" # 健康检查类型。选填，枚举值：TCP|HTTP|CUSTOM（仅适用于TCP/UDP监听器，其中UDP监听器只支持CUSTOM；如果使用自定义健康检查功能，则必传）。
+          checkPort: 80 # 健康检查端口，选填。默认为后端服务的端口，除非您希望指定特定端口，否则建议留空。（仅适用于TCP/UDP监听器）。
+          intervalTime: 10 # 健康检查探测间隔时间。选填，默认值：5，可选值：5~300，单位：秒。
+          healthNum: 2 # 健康阈值，表示当连续探测几次健康则表示该转发正常。选填，默认值：3，可选值：2~10，单位：次。
+          unHealthNum: 3 # 不健康阈值，表示当连续探测几次健康则表示该转发异常。选填，默认值：3，可选值：2~10，单位：次。
+          timeout: 5 # 健康检查的响应超时时间，响应超时时间要小于检查间隔时间。选填，默认值：2，可选值：2~60，单位：秒。
+          httpCode: 31 # 健康检查状态码，选填，默认值：31，可选值：1~31。仅适用于HTTP/HTTPS转发规则、TCP监听器的HTTP健康检查方式。 1 表示探测后返回值 1xx 代表健康，2 表示返回 2xx 代表健康，4 表示返回 3xx 代表健康，8 表示返回 4xx 代表健康，16 表示返回 5xx 代表健康。若希望多种返回码都可代表健康，则将相应的值相加。
+          httpCheckPath: "/" # 健康检查路径，选填。仅适用于HTTP/HTTPS转发规则、TCP监听器的HTTP健康检查方式。
+          httpCheckDomain: "example.com" # 健康检查域名，选填，不能为空值。默认为七层规则域名（仅适用于HTTP/HTTPS转发规则、TCP监听器的HTTP健康检查方式）。
+          httpCheckMethod: "HEAD" # 健康检查方法（仅适用于HTTP/HTTPS转发规则、TCP监听器的HTTP健康检查方式），默认值：HEAD，可选值HEAD或GET。
+          httpVersion: "HTTP/1.1" # 自定义探测相关参数。健康检查协议CheckType的值取HTTP时，必传此字段，代表后端服务的HTTP版本：HTTP/1.0、HTTP/1.1；（仅适用于TCP监听器）。
+          sourceIpType: 0 # 健康检查探测来源。0(VIP为源IP) 1(100.64为源IP)。对于域名化clb默认值为1且只能为1，对于非域名化的clb默认值不一定，可在clb控制台配置页面看能否看到VIP探测方式，如能看到默认值为0，否则为1，更多详情查看 https://cloud.tencent.com/document/product/214/86666
+        scheduler: WRR # 请求转发方式配置。WRR、LEAST_CONN 分别表示按权重轮询、最小连接数。选填，枚举值：WRR|LEAST_CONN。
+        proxyProtocol:
+          enable: false # 启用 ProxyProtocol，默认关闭。
+    l7Listeners:
+      - protocol: HTTP
+        port: 80
+        snatEnable: false # 监听器透传客户端源 IP（非 snat 白名单用户，请勿声明该字段）。当 snatEnable 为 true 时，关闭透传客户端源 IP 选项。当 snatEnable 为 false 时，打开透传客户端源 IP 选项。当设置 keepaliveEnable 为 1 时，snatEnable 不能为 false。
+        domains:
+          - domain: "" # domain为空表示使用VIP作为域名
+            rules:
+              - url: "/health"
+                forwardType: HTTP # 指定后端协议为 HTTP，目前支持 HTTP/HTTPS/GRPC。
+                healthCheck:
+                  enable: false
+      - protocol: HTTPS
+        port: 443
+        defaultServer: "sample.tencent.com" # 默认域名
+        keepaliveEnable: 1 # 监听器开启长连接（非 keepalive 白名单用户，请勿声明该字段）
+        domains:
+          - domain: "sample.tencent.com"
+            http2: true # 启用 HTTP 2.0
+            rules:
+              - url: "/"
+                forwardType: HTTPS # 指定后端协议为 HTTPS，目前支持 HTTP/HTTPS/GRPC。
+                session:
+                  enable: true
+                  sessionExpireTime: 3600
+                healthCheck:
+                  enable: true
+                  intervalTime: 10 # intervalTime 要大于 timeout，否则会出错
+                  timeout: 5 # timeout 要小于 intervalTime，否则会出错
+                  healthNum: 2
+                  unHealthNum: 2
+                  httpCheckPath: "/checkHealth"
+                  httpCheckDomain: "sample.tencent.com" #注意：健康检查必须使用固定域名进行探测，如果您在.spec.loadBalancer.l7Listeners.protocol.domains.domain 里填写的是泛域名，一定要使用 httpCheckDomain 字段明确具体需要健康检查的域名，否则泛域名不支持健康检查。
+                  httpCheckMethod: HEAD
+                  httpCode: 31 # 可选值：1~31，默认 31。 1 表示探测后返回值 1xx 代表健康，2 表示返回 2xx 代表健康，4 表示返回 3xx 代表健康，8 表示返回 4xx 代表健康，16 表示返回 5xx 代表健康。若希望多种返回码都可代表健康，则将相应的值相加。
+                  sourceIpType: 0 # 可选值：0或1，设定健康检查源ip。0 表示负载均衡VIP，1 表示 100.64.0.0/10 网段ip。对于域名化clb默认值为1且只能为1，对于非域名化的clb默认值不一定，可在clb控制台配置页面看能否看到VIP探测方式，如能看到默认值为0，否则为1，更多详情查看 https://cloud.tencent.com/document/product/214/86666。
+                  checkType: "HTTPS" # 可选值：HTTP，HTTPS，TCP 或 GRPC，默认 HTTP。2024.06之后新建的集群支持改字段，存量集群如有需要可提工单升级后台组件来支持。当 forwardType 为 HTTPS 时，checkType 只能为 TCP 或 HTTPS。当 forwardType 为 GRPC 时，checkType 只能为 TCP 或 GRPC。
+                scheduler: WRR # 可选值：WRR、LEAST_CONN、IP_HASH

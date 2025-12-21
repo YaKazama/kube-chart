@@ -1,0 +1,20 @@
+# 理论上 RoleBinding 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.RoleBinding }}`
+
+RoleBinding:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  RoleBinding:
+  roleRef:
+    apiGroup: string
+    kind: string
+    name: string
+  subjects:
+    - kind: string
+      name: string
+      namespace: string

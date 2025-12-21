@@ -70,6 +70,9 @@ rm -rf <example>-${VERSION}.tgz index.yaml
   - values.yaml 中定义的如果是字符串，则在外层将这些数据单独处理后再向下传递，尽量减少认知、逻辑处理负担且保持模板定义只处理 map 类型。
 - 自定义参数：
   - `helmLabels(bool)`: true/false
+  - `name`、`fullname`: 用于定义名称。优先级 fullname > name
+  - `namespace`: 指定命名空间。默认为 default
+  - `labels`: 自定义的标签
   - `imageRef(object/map)`: 基于 map 格式管理 containers[].image 。使用多个字段拼接 `image` 镜像名称
     - `registry`: 这一般是一个域名（可以带上端口号，如 example.com:443 ）
     - `namespace`: 格式 a/b/c 或 a

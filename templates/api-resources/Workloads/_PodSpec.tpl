@@ -74,9 +74,9 @@
   {{- end }}
 
   {{- /* hostPID bool 与 shareProcessNamespace 互斥 */ -}}
-  {{- $shareProcessNamespace := include "base.getValue" (list . "shareProcessNamespace") }}
+  {{- $_shareProcessNamespace := include "base.getValue" (list . "shareProcessNamespace") }}
   {{- $hostPID := include "base.getValue" (list . "hostPID") }}
-  {{- if and $hostPID (empty $shareProcessNamespace) }}
+  {{- if and $hostPID (empty $_shareProcessNamespace) }}
     {{- include "base.field" (list "hostPID" $hostPID "base.bool") }}
   {{- end }}
 
@@ -150,8 +150,9 @@
 
   {{- /* preemptionPolicy string */ -}}
   {{- $preemptionPolicy := include "base.getValue" (list . "preemptionPolicy") }}
+  {{- $preemptionPolicyAllows := list "Never" "PreemptLowerPriority" }}
   {{- if $preemptionPolicy }}
-    {{- include "base.field" (list "preemptionPolicy" $preemptionPolicy) }}
+    {{- include "base.field" (list "preemptionPolicy" $preemptionPolicy "base.string" $preemptionPolicyAllows) }}
   {{- end }}
 
   {{- /* priority int */ -}}
@@ -234,9 +235,9 @@
   {{- end }}
 
   {{- /* shareProcessNamespace bool 与 HostPID 互斥 */ -}}
-  {{- $hostPID := include "base.getValue" (list . "hostPID") }}
+  {{- $_hostPID := include "base.getValue" (list . "hostPID") }}
   {{- $shareProcessNamespace := include "base.getValue" (list . "shareProcessNamespace") }}
-  {{- if and $shareProcessNamespace (empty $hostPID) }}
+  {{- if and $shareProcessNamespace (empty $_hostPID) }}
     {{- include "base.field" (list "shareProcessNamespace" $shareProcessNamespace "base.bool") }}
   {{- end }}
 

@@ -24,7 +24,7 @@
 
   {{- /* tolerationSeconds int */ -}}
   {{- if eq $effect "NoExecute" }}
-    {{- $tolerationSeconds := include "base.getValue" (list . "tolerationSeconds") }}
+    {{- $tolerationSeconds := include "base.getValue" (list . "tolerationSeconds" "toString") }}
     {{- if or $tolerationSeconds (eq (int $tolerationSeconds) 0) }}
       {{- include "base.field" (list "tolerationSeconds" $tolerationSeconds "base.int") }}
     {{- end }}

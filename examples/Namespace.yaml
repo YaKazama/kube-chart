@@ -1,0 +1,11 @@
+# 理论上 Namespace 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Namespace }}`
+
+Namespace:
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 此处的 name fullname 定义会作为命名空间的名
+  # 优先级 namespace > fullname > name
+  name: string
+  fullname: string
+  namespace: string

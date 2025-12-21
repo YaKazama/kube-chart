@@ -1,0 +1,385 @@
+# 理论上 Deployment 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Deployment }}`
+
+Deployment:
+  service:
+    # 如果不定义 name fullname namespace 会复用 Deployment 中的定义
+    name: string
+    fullname: string
+    namespace: string
+    allocateLoadBalancerNodePorts: bool
+    clusterIP: string
+    clusterIPs: []
+    externalIPs: []
+    externalName: string
+    externalTrafficPolicy: string # Cluster | Local
+    healthCheckNodePort: int
+    internalTrafficPolicy: string
+    ipFamilies: [] # IPv4 | IPv6
+    ipFamilyPolicy: string # SingleStack | PreferDualStack | RequireDualStack
+    loadBalancerClass: string
+    # Deprecated
+    loadBalancerIP: string
+    loadBalancerSourceRanges: []
+    # 格式 [nodePort:]port[:targetPort][/protocol][@appProtocol][#name]
+    ports: []
+    publishNotReadyAddresses: bool
+    selector: {}
+    sessionAffinity: string # ClientIP | None
+    sessionAffinityConfig: int
+    trafficDistribution: string # PreferClose | PreferSameZone | PreferSameNode
+    type: string # ExternalName | ClusterIP | NodePort | LoadBalancer
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  minReadySeconds: int
+  progressDeadlineSeconds: int
+  replicas: int
+  revisionHistoryLimit: int
+  # 此处 labels helmLabels 会生效，内容会追加到 matchLabels 中
+  selector:
+    # 可以适配以下格式
+    #   基于等值 / 不等值: = | !=
+    #   基于集合: in | notin
+    #   基于原生字典: map[key operator [values ...]]
+    matchExpressions: []
+    matchLabels: {}
+  # 写法 [type] [maxSurge] [maxUnavailable]
+  strategy: string
+  # 以下均为 PodSpec 及其子项的字段
+  activeDeadlineSeconds: int
+  nodeAffinity:
+    preferred:
+      - weight: int
+        # 可以适配以下格式
+        #   基于等值 / 不等值: = | != | > | <
+        #   基于集合: in | notin | exists | doesnotexist | gt | and lt
+        #   基于原生字典
+        matchExpressions: []
+        # 同上
+        matchFields: []
+    required:
+      # 同上
+      - matchExpressions: []
+        matchFields: []
+  podAffinity:
+    preferred:
+      - weight: int # 必填
+        labelSelector:
+          # 同 selector
+          matchExpressions: []
+          matchLabels: {}
+        matchLabelKeys: []
+        # 同 labelSelector
+        namespaceSelector:
+          matchExpressions: []
+          matchLabels: {}
+        namespaces: []
+        topologyKey: string # 必填
+    required:
+      - labelSelector:
+          # 同 selector
+          matchExpressions: []
+          matchLabels: {}
+        matchLabelKeys: []
+        # 同 labelSelector
+        namespaceSelector:
+          matchExpressions: []
+          matchLabels: {}
+        namespaces: []
+        topologyKey: string # 必填
+  # 同 podAffinity
+  podAntiAffinity: {}
+  automountServiceAccountToken: bool
+  dnsPolicy: string # ClusterFirst | ClusterFirstWithHostNet | Default | None
+  # 格式 []string
+  # 写法(参考 /etc/hosts) ip hostname1 hostname2 ...
+  hostAliases: []
+    # - 192.160.1.11 example.com 1.example.com
+  hostNetwork: bool
+  # hostPID shareProcessNamespace 互斥
+  hostPID: bool
+  shareProcessNamespace: bool
+  hostUsers: bool
+  hostname: string
+  hostnameOverride: string
+  # 格式 []string
+  imagePullSecrets: []
+  nodeName: string
+  nodeSelector: {}
+  os: string # linux | windows
+  preemptionPolicy: string # Never | PreemptLowerPriority
+  priority: int
+  priorityClassName: string # system-node-critical | system-cluster-critical
+  # 格式 []string
+  readinessGates: []
+  # 只取 limits requests 定义
+  resources:
+    # 格式
+    #   四段式字符串 cpu memory hugepages-size hugepages-max
+    #   原生字典 -> 只取 cpu memory hugepages-<size> 定义
+    limits: string
+    # 同 limits
+    requets:
+      cpu: int / float64
+      # Quantity 参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
+      memory: Quantity
+  restartPolicy: string # Always | Never | OnFailure
+  schedulerName: string
+  # 格式 []string
+  schedulingGates: []
+  securityContext:
+    appArmorProfile:
+      localhostProfile: string
+      type: string # Localhost | RuntimeDefault | Unconfined
+    fsGroup: int
+    fsGroupChangePolicy: string # OnRootMismatch | Always
+    runAsGroup: int
+    runAsNonRoot: bool
+    runAsUser: string
+    seLinuxChangePolicy: string
+    seLinuxOptions:
+      level: string
+      role: string
+      type: string
+      user: string
+    seccompProfile:
+      localhostProfile: string
+      type: string # Localhost | RuntimeDefault | Unconfined
+    # 格式 []int
+    supplementalGroups: []
+    supplementalGroupsPolicy: string # Merge | Strict
+    sysctls:
+      - name: string
+        value: string
+    windowsOptions:
+      gmsaCredentialSpec: string
+      gmsaCredentialSpecName: string
+      hostProcess: bool
+      runAsUserName: string
+  serviceAccountName: string
+  subdomain: bool
+  terminationGracePeriodSeconds: int
+  tolerations:
+    - effect: string # NoExecute | NoSchedule | PreferNoSchedule
+      key: string
+      operator: string # Equal | Exists
+      tolerationSeconds: int
+      value: string
+  topologySpreadConstraints:
+    - labelSelector:
+        # 同 selector
+        matchExpressions: []
+        matchLabels: {}
+      # 格式 []string
+      matchLabelKeys: []
+      # 指定 0 则需要加引号
+      maxSkew: int
+      minDomains: int
+      nodeAffinityPolicy: string # Honor | Ignore
+      nodeTaintsPolicy: string # Honor | Ignore
+      topologyKey: string
+      whenUnsatisfiable: string # DoNotSchedule | ScheduleAnyway
+  # 格式 []string
+  # 写法(根据类型(volumeType)不同，写法不同)
+  #   cm|configMap => volumeType volumeName name [optional] [defaultMode] [items (key path [mode], key path [mode])]
+  #   emptyDir => volumeType volumeName [medium] [sizeLimit]
+  #   fc => volumeType volumeName targetWWNs (wwn1, wwn2) lun fsType [readOnly]
+  #   fc => volumeType volumeName wwids (wid1, wid2) fsType [readOnly]
+  #   image => volumeType volumeName reference [pullPolicy]
+  #   hostPath => volumeType volumeName path [type]
+  #   iscsi => volumeType volumeName targetPortal iqn lun fsType [readOnly] [iscsiInterface] [initiatorName] [chap (chapAuthDiscovery, chapAuthSession)] [portals (ip, ip)] [secretRef]
+  #   nfs => volumeType volumeName server path [readOnly]
+  #   pvc|persistentVolumeClaim => volumeType volumeName claimName [readOnly]
+  #   secret => volumeType volumeName secretName [optional] [defaultMode] [items (key path [mode], key path [mode])]
+  #   local => volumeType volumeName
+  volumes: []
+    # - cm vol-cm aaa true items (key path, key1 path1)
+    # - emptyDir vol-a
+    # - emptyDir vol-b 500Mi
+    # - fc vol-fc1 targetWWNs (wwn1, wwn2) 0 ext4 true
+    # - fc vol-fc2 wwids (wid1, wid2) ext4 true
+    # - image vol-ssss x.x.xom/path/aa:v2 Never
+    # - hostPath vol-ccc /config/xxx/ Directory
+    # - iscsi vol-eee targetPortal iqn 0 ext4 true iscsiInterface initiatorName chap(true, true) portals (10.10.2.22, 2.2.2.2) secret-ref
+    # - nfs vol-nfs x.xom /config/xx true
+    # - pvc vol-ggg claimName true
+    # - secret vol-hhh secretName true 0755 items(key path 0650, key1 path1)
+    # - local vol-local /config/aaa
+  containers:
+    # args 和 command 均是 []string 配合使用可替换镜像中的 entrypoint
+    - args: []
+      command: []
+      env:
+        - name: string
+          value: string
+        - name: string
+          # 写法(根据类型(volumeType)不同，写法不同
+          #   cm|configMap => type name key [optional]
+          #   field => type fieldPath apiVersion
+          #   file => type volumeName path key [optional]
+          #   resource => type resource(e.g. limits.memory) containerName divisor(Quantity)
+          #   secret => type name key [optional]
+          valueFrom: string
+      # 使用外部文件管理 env
+      # 优先级 envFileRefs > env
+      # 格式与 env 需保持一致
+      # fieldPaths 为空时，会读取整个文件的内容
+      envFileRefs:
+        - filePath: string
+          # 格式 []string
+          # 写法 a.b.c
+          fieldPaths: []
+      # 格式 []string 或原生格式
+      # 写法
+      #   字符串
+      #     cm|configMap => sourceType sourceName [prefix] [optional]
+      #     secret => sourceType sourceName [prefix] [optional]
+      #   原生字典
+      envFrom: []
+        # - sourceType sourceName [prefix] [optional]
+        # - configMapRef:
+        #     name: string
+        #     optional: bool
+        #   prefix: string
+        # - secretRef:
+        #     name: string
+        #     optional: bool
+        #   prefix: string
+      # 使用外部文件管理 envFrom
+      # 优先级 envFromFileRefs > envFrom
+      # 格式与 envFrom 需保持一致
+      # fieldPaths 为空时，会读取整个文件的内容
+      # 同 envFileRefs
+      envFromFileRefs: []
+      # 写法 [registry]/[namespace]/[repository]:[tag]@[digest]
+      image: string # 必填
+      # 使用字典格式设置 image
+      # 优先级 imageRef > image
+      imageRef:
+        # 这一般是一个域名（可以带上端口号，如 example.com:443 ）默认值 docker.io
+        registry: string
+        # 格式 a/b/c 或 a 默认值 library
+        namespace: string
+        # 【必填】镜像名
+        repository: string
+        # 镜像标签 默认值 latest
+        tag: string
+        # 镜像摘要 以 'sha256:' 开头
+        digest: string
+      # 使用外部文件管理 image、imageRef
+      # 优先级 imageFileRefs > imageRef > image
+      # 格式与 image、imageRef 需保持一致
+      # fieldPaths 为空时，会读取整个文件的内容
+      # 同 envFileRefs
+      imageFileRefs: []
+      imagePullPolicy: string # Always | Never | IfNotPresent
+      lifecycle:
+        postStart:
+          # 需要执行的命令 参考 command
+          # 格式 []string
+          exec: []
+          # 写法
+          #   [scheme] [host] [port] path <<header>> (name value, ...)
+          #     header 是固定词(介定词)
+          httpGet: string
+          sleep: int
+          # 写法
+          #   host port
+          tcpSocket: string
+        # 同 postStart
+        preStop: {}
+        stopSignal: string # SIGABRT | SIGALRM | SIGBUS | SIGCHLD | SIGCLD | SIGCONT | SIGFPE | SIGHUP | SIGILL | SIGINT | SIGIO | SIGIOT | SIGKILL | SIGPIPE | SIGPOLL | SIGPROF | SIGPWR | SIGQUIT | SIGRTMAX | SIGRTMAX-1 | SIGRTMAX-10 | SIGRTMAX-11 | SIGRTMAX-12 | SIGRTMAX-13 | SIGRTMAX-14 | SIGRTMAX-2 | SIGRTMAX-3 | SIGRTMAX-4 | SIGRTMAX-5 | SIGRTMAX-6 | SIGRTMAX-7 | SIGRTMAX-8 | SIGRTMAX-9 | SIGRTMIN | SIGRTMIN+1 | SIGRTMIN+10 | SIGRTMIN+11 | SIGRTMIN+12 | SIGRTMIN+13 | SIGRTMIN+14 | SIGRTMIN+15 | SIGRTMIN+2 | SIGRTMIN+3 | SIGRTMIN+4 | SIGRTMIN+5 | SIGRTMIN+6 | SIGRTMIN+7 | SIGRTMIN+8 | SIGRTMIN+9 | SIGSEGV | SIGSTKFLT | SIGSTOP | SIGSYS | SIGTERM | SIGTRAP | SIGTSTP | SIGTTIN | SIGTTOU | SIGURG | SIGUSR1 | SIGUSR2 | SIGVTALRM | SIGWINCH | SIGXCPU | SIGXFSZ
+      livenessProbe:
+        # 同 lifecycle.postStart.exec
+        exec: []
+        failureThreshold: int
+        # 写法
+        #   service port
+        grpc: string
+        # 同 lifecycle.postStart.httpGet
+        httpGet: string
+        initialDelaySeconds: int
+        periodSeconds: int
+        successThreshold: int
+        # 同 lifecycle.postStart.tcpSocket
+        tcpSocket: string
+        terminationGracePeriodSeconds: int
+        timeoutSeconds: int
+      name: string # 必填
+      # 格式 []string
+      # 写法
+      #   [hostIP:][hostPort:]containerPort[/protocol][#name]
+      # 如果只有 containerPort 此时 int 类型是允许的
+      ports: []
+      # 同 livenessProbe
+      readinessProbe: {}
+      # 格式 []string
+      # 写法
+      #   resourceName [restartPolicy]
+      resizePolicy: []
+      # 同 resources
+      resources: {}
+      # 使用外部文件管理 resources
+      # 优先级 resourcesFileRefs > resource
+      # 格式与 resources 需保持一致
+      # fieldPaths 为空时，会读取整个文件的内容
+      # 同 envFileRefs
+      resourcesFileRefs: []
+      restartPolicy: string # Always | Never | OnFailure
+      # 格式 []string
+      # 写法  action operator (values, ...)
+      restartPolicyRules: []
+        # - restart in (1, 2)
+        # - restart notin (22,3, 6)
+      securityContext:
+        allowPrivilegeEscalation: bool
+        appArmorProfile:
+          localhostProfile: string
+          type: string
+        capabilities:
+          # 格式 []string
+          add: []
+          # 同上
+          drop: []
+        privileged: bool
+        procMount: string # Default | Unmasked
+        readOnlyRootFilesystem: bool
+        runAsGroup: int
+        runAsNonRoot: bool
+        runAsUser: int
+        seLinuxOptions:
+          level: string
+          role: string
+          type: string
+          user: string
+        seccompProfile:
+          localhostProfile: string
+          type: string
+        windowsOptions:
+          gmsaCredentialSpec: string
+          gmsaCredentialSpecName: string
+          hostProcess: bool
+          runAsUserName: string
+      # 同 livenessProbe
+      startupProbe: {}
+      stdin: bool
+      stdinOnce: bool
+      terminationMessagePath: string
+      terminationMessagePolicy: string # FallbackToLogsOnError | File
+      tty: bool
+      # 格式 []string
+      # 写法  name devicePath
+      volumeDevices: []
+      # 格式 []string
+      # 写法
+      #   name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]
+      volumeMounts: []
+      # 只能是绝对路径
+      workingDir: string
+  # 同 containers
+  initContainer: []

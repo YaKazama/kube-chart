@@ -14,7 +14,7 @@
   {{- $toVal := include "base.getValue" (list . "to") | fromYamlArray }}
   {{- $to := list }}
   {{- range $toVal }}
-    {{- $to = append $to (include "definitions.NetworkPolicyPort" . | fromYaml) }}
+    {{- $to = append $to (include "definitions.NetworkPolicyPeer" . | fromYaml) }}
   {{- end }}
   {{- $to = $to | mustUniq | mustCompact }}
   {{- if $to }}

@@ -1,4 +1,0 @@
-{{- /*
-{{- $_ := set . "Context" .Values.Deployment }}
-{{- include "workloads.Deployment" . }}
-*/ -}}

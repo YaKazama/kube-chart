@@ -15,7 +15,7 @@
 
   {{- /* fsGroup int */ -}}
   {{- if not (eq $os "windows") }}
-    {{- $fsGroup := include "base.getValue" (list . "fsGroup") }}
+    {{- $fsGroup := include "base.getValue" (list . "fsGroup" "toString") }}
     {{- if $fsGroup }}
       {{- include "base.field" (list "fsGroup" $fsGroup "base.int") }}
     {{- end }}
@@ -32,7 +32,7 @@
 
   {{- /* runAsGroup int */ -}}
   {{- if not (eq $os "windows") }}
-    {{- $runAsGroup := include "base.getValue" (list . "runAsGroup") }}
+    {{- $runAsGroup := include "base.getValue" (list . "runAsGroup" "toString") }}
     {{- if $runAsGroup }}
       {{- include "base.field" (list "runAsGroup" $runAsGroup "base.int") }}
     {{- end }}
@@ -46,7 +46,7 @@
 
   {{- /* runAsUser int */ -}}
   {{- if not (eq $os "windows") }}
-    {{- $runAsUser := include "base.getValue" (list . "runAsUser") }}
+    {{- $runAsUser := include "base.getValue" (list . "runAsUser" "toString") }}
     {{- if $runAsUser }}
       {{- include "base.field" (list "runAsUser" $runAsUser "base.int") }}
     {{- end }}

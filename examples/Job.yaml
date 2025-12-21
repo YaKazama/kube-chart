@@ -1,0 +1,47 @@
+# 理论上 Job 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Job }}`
+
+# 基本用不到 service 所以此处没有注明，若需要，可参考 Deployment.service 或 Service
+
+Job:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  activeDeadlineSeconds: int
+  backoffLimit: int
+  backoffLimitPerIndex: int
+  completionMode: string # NonIndexed | Indexed
+  completions: int
+  managedBy: string
+  manualSelector: bool
+  maxFailedIndexes: int
+  parallelism: int
+  # 格式 []string
+  # 写法
+  #   onExitCodes format: action [containerName] operator (values, ...)
+  #   onPodConditions format: action (type [status], ...)
+  podFailurePolicy: []
+    # - FailJob cn-name in (1, 2)
+    # - Ignore (DisruptionTarget True, IgnoreXXX)
+  podReplacementPolicy: string # Failed | TerminatingOrFailed
+  # 同 Deployment.selector
+  selector: {}
+  # 格式 []string、原生
+  # 写法
+  #   字符串 succeededCount[<空格>succeededIndexes]
+  #   原生字典，包括 succeededCount succeededIndexes
+  successPolicy: []
+    # - 1 1-3, 5, 7
+    # - 3
+    # - succeededCount: 1
+    #   succeededIndexes: 2, 3
+  suspend: bool
+  ttlSecondsAfterFinished: int
+  # template 下的内容定义，参考 Deployment 53 行之后的内容
+  template: {}
+    # 以下均为 PodSpec 及其子项的字段
+    # PodSpec 相关的字段定义，也参考 Deployment 53 行之后的内容

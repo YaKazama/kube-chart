@@ -1,0 +1,61 @@
+# 理论上 NetworkPolicy 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.NetworkPolicy }}`
+
+NetworkPolicy:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  egress:
+    - ports:
+        - endPort: int
+          port: int
+          protocol: string # TCP | UDP | SCTP
+      to:
+        - ipBlock:
+            # IP 地址
+            cidr: string
+            # format: []string
+            # IP 地址
+            except: []
+              # - 192.168.2.0/24
+          namespaceSelector:
+            # 同 Deployment.selector
+            matchExpressions: []
+            matchLabels: {}
+          podSelector:
+            # 同 Deployment.selector
+            matchExpressions: []
+            matchLabels: {}
+  ingress:
+    - from:
+        - ipBlock:
+            # IP 地址
+            cidr: string
+            # format: []string
+            # IP 地址
+            except: []
+              # - 192.168.2.0/24
+          namespaceSelector:
+            # 同 Deployment.selector
+            matchExpressions: []
+            matchLabels: {}
+          podSelector:
+            # 同 Deployment.selector
+            matchExpressions: []
+            matchLabels: {}
+      ports:
+        - endPort: int
+          port: string
+          protocol: string # TCP | UDP | SCTP
+  podSelector:
+    # 同 Deployment.selector
+    matchExpressions: []
+    matchLabels: {}
+  # format: []string
+  policyTypes: [] # Ingress | Egress
+    # - Ingress
+    # - Egress

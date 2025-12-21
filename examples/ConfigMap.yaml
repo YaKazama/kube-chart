@@ -1,0 +1,29 @@
+# 理论上 ConfigMap 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.ConfigMap }}`
+
+ConfigMap:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  # 使用外部文件管理 binaryData
+  # 优先级 binaryDataFileRefs > binaryData
+  # 格式与 binaryData 需保持一致
+  # key 为空时，使用 filePath 定义的文件的文件名作为 key
+  binaryDataFileRefs:
+    - filePath: string
+      key: string
+  # map 值会进行 base64 编码
+  binaryData: {}
+  # 使用外部文件管理 data
+  # 优先级 dataFileRefs > data
+  # 格式与 data 需保持一致
+  # key 为空时，使用 filePath 定义的文件的文件名作为 key
+  # 同 binaryDataFileRefs
+  dataFileRefs: []
+  # 明文存储
+  data: {}
+  immutable: bool

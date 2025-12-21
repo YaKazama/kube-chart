@@ -1,0 +1,31 @@
+Service:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  allocateLoadBalancerNodePorts: bool
+  clusterIP: string
+  clusterIPs: []
+  externalIPs: []
+  externalName: string
+  externalTrafficPolicy: string # Cluster | Local
+  healthCheckNodePort: int
+  internalTrafficPolicy: string
+  ipFamilies: [] # IPv4 | IPv6
+  ipFamilyPolicy: string # SingleStack | PreferDualStack | RequireDualStack
+  loadBalancerClass: string
+  # Deprecated
+  loadBalancerIP: string
+  loadBalancerSourceRanges: []
+  # 格式
+  #   [nodePort:]port[:targetPort][/protocol][@appProtocol][#name]
+  ports: []
+  publishNotReadyAddresses: bool
+  selector: {}
+  sessionAffinity: string # ClientIP | None
+  sessionAffinityConfig: int
+  trafficDistribution: string # PreferClose | PreferSameZone | PreferSameNode
+  type: string # ExternalName | ClusterIP | NodePort | LoadBalancer

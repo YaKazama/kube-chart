@@ -1,0 +1,20 @@
+# 理论上 ClusterRoleBinding 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.ClusterRoleBinding }}`
+
+ClusterRoleBinding:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  # format: []map[string]string
+  roleRef:
+    - apiGroup: string
+      kind: string
+      name: string
+  # format: []map[string]string
+  subjects:
+    - name: string
+      namespace: string
+      kind: string

@@ -76,7 +76,7 @@ k8s:
     pvc: "^(\\S+)(?:\\s+(true|false))?$"
     secret: "^([a-z]\\w+)(?:\\s+(true|false))?(?:\\s+(\\d+))?(?:\\s+(?:items\\s*\\((.*?)\\)))?$"
     local: "^(\\S+)(?:\\s+(ext4|xfs|ntfs))?$"
-    claimTemplates: "^(\\S+)\\s+(\\S+)(?:\\s+(\\S+))?\\s+(accessModes?)\\s*\\(\\s*([^)]+?)\\s*\\)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(Filesystem|filesystem|Block|block))?$"
+    claimTemplates: "^(\\S+)\\s+(\\S+)(?:\\s+(\\S+))?\\s+(accessMode[s]?)\\s*\\(\\s*([^)]+?)\\s*\\)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(Filesystem|filesystem|Block|block))?$"
   strategy:
     deployment: "^(Recreate|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s+(\\d+\\%?))?$"
     deamonset: "^(OnDelete|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s+(\\d+\\%?))?$"

@@ -1,0 +1,36 @@
+# 理论上 MetalLB 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.IPAddressPool }}` 或 `{{- $_ := set . "Context" .Values.L2Advertisement }}`
+
+# 这是一个简单实现的内容，仅有限的几个字段，但分两部分 IPAddressPool、L2Advertisement
+# 参考: https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/
+
+IPAddressPool:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  # 默认情况下，它应该设置为 metallb-system
+  namespace: string
+  # 可以分配给 LoadBalancer 的 IP 地址池
+  # format: []string
+  # 写法
+  # IP 或 IP 段
+  #   x.x.x.x/32
+  #   x.x.x.x - y.y.y.y
+  address: []
+    # - 10.10.10.1/32
+
+L2Advertisement:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  # 默认情况下，它应该设置为 metallb-system
+  namespace: string
+  # format: []string
+  # 此处的值，应该属于定义的 IPAddressPool 资源，通过 name 进行选择
+  ipAddressPools: []

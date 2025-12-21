@@ -1,0 +1,33 @@
+# 理论上 Ingress 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Ingress }}`
+
+Ingress:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  # 写法
+  #  resource 和 service 是介定词，属于固定词缀
+  #   resource name kind [apiGroup]
+  #   service name port.name|port.number
+  defaultBackend: string
+  ingressClassName: string
+  # 格式 map[string][]string
+  # host 值作为 map 键
+  # paths 抽象字符串作为 map 值
+  # 写法(map 值)
+  #  resource 和 service 是介定词，属于固定词缀
+  #   path [pathType] resource name kind [apiGroup]
+  #   path [pathType] service name port.name|port.number
+  rules: {}
+    # 1.example.com:
+    #   - /api/health service svc-name 80
+  # 格式 []string
+  # 写法
+  #   secretName hosts [hosts ...]
+  #     hosts 是域名，理论上可以有无限个
+  tls: []
+    # - secret-name 1.e.com *.e.com

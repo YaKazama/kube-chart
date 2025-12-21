@@ -1,12 +1,12 @@
 {{- define "definitions.AppArmorProfile" -}}
-  {{- /* type */ -}}
+  {{- /* type string */ -}}
   {{- $type := include "base.getValue" (list . "type") }}
   {{- $typeAllows := list "Localhost" "RuntimeDefault" "Unconfined" }}
   {{- if $type }}
     {{- include "base.field" (list "type" $type "base.string" $typeAllows) }}
   {{- end }}
 
-  {{- /* localhostProfile */ -}}
+  {{- /* localhostProfile string */ -}}
   {{- if eq $type "Localhost" }}
     {{- $localhostProfile := include "base.getValue" (list . "localhostProfile") }}
     {{- if empty $localhostProfile }}

@@ -4,6 +4,12 @@
   {{- include "base.field" (list "apiVersion" "storage.k8s.io/v1") }}
   {{- include "base.field" (list "kind" "StorageClass") }}
 
+  {{- /* metadata map */ -}}
+  {{- $metadata := include "definitions.ObjectMeta" . | fromYaml }}
+  {{- if $metadata }}
+    {{- include "base.field" (list "metadata" $metadata "base.map") }}
+  {{- end }}
+
   {{- /* allowVolumeExpansion bool */ -}}
   {{- $allowVolumeExpansion := include "base.getValue" (list . "allowVolumeExpansion") }}
   {{- if $allowVolumeExpansion }}
@@ -52,11 +58,5 @@
   {{- $volumeBindingModeAllows := list "Immediate" "WaitForFirstConsumer" }}
   {{- if $volumeBindingMode }}
     {{- include "base.field" (list "volumeBindingMode" $volumeBindingMode "base.string" $volumeBindingModeAllows) }}
-  {{- end }}
-
-  {{- /* metadata map */ -}}
-  {{- $metadata := include "definitions.ObjectMeta" . | fromYaml }}
-  {{- if $metadata }}
-    {{- include "base.field" (list "metadata" $metadata "base.map") }}
   {{- end }}
 {{- end }}

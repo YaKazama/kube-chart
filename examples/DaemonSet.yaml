@@ -1,0 +1,22 @@
+# 理论上 DaemonSet 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.DaemonSet }}`
+
+DaemonSet:
+  # 同 Deployment.service 或 Service
+  service: {}
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  minReadySeconds: int
+  revisionHistoryLimit: int
+  # 同 Deployment.selector
+  selector: {}
+  # 写法  [type] [maxSurge] [maxUnavailable]
+  updateStrategy: string
+
+  # 以下均为 PodSpec 及其子项的字段
+  # PodSpec 相关的字段定义，参考 Deployment 53 行之后的内容

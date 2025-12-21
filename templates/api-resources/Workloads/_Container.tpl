@@ -42,7 +42,9 @@
       {{- $isNotSlice := include "base.isFromYamlArrayError" $contentFormat }}
       {{- /* 文件中的数据是 list 才追加 */ -}}
       {{- if eq $isNotSlice "false" }}
-        {{- $env = concat $env $contentFormat }}
+        {{- range $contentFormat }}
+          {{- $env = append $env (include "definitions.EnvVar" . | fromYaml) }}
+        {{- end }}
       {{- end }}
 
     {{- /* 通过 fieldPaths 取值 */ -}}
@@ -56,7 +58,9 @@
           {{- $isNotSlice := include "base.isFromYamlArrayError" $val }}
           {{- /* 文件中的数据是 list 才追加 */ -}}
           {{- if eq $isNotSlice "false" }}
-            {{- $env = concat $env $val }}
+            {{- range $val }}
+              {{- $env = concat $env (include "definitions.EnvVar" . | fromYaml) }}
+            {{- end }}
           {{- end }}
         {{- end }}
       {{- end }}

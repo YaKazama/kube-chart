@@ -18,7 +18,6 @@
     {{- if $aggregationRule }}
       {{- include "base.field" (list "aggregationRule" $aggregationRule "base.map") }}
     {{- end }}
-
   {{- end }}
 
   {{- /* rules array */ -}}

@@ -1,0 +1,243 @@
+# 理论上 Kustomization 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Kustomization }}`
+
+# 内容比较多，因为都是从官网拷贝的示例，故不修改了
+# 参考: https://kubectl.docs.kubernetes.io/references/kustomize/kustomization/
+
+Kustomization:
+  buildMetadata:
+    - managedByLabel
+    - originAnnotations
+    - transformerAnnotations
+  commonAnnotations:
+    oncallPager: 800-555-1212
+  commonLabels:
+    someName: someValue
+    owner: alice
+    app: bingo
+  components:
+    - ../../aaa/bbb
+    - ../../aaa/bbb/ccc
+  configMapGenerator:
+    - name: my-java-server-props
+      namespace: ns-111
+      behavior: merge
+      files:
+        - application.properties
+        - more.properties
+    - name: my-java-server-env-file-vars
+      namespace: ns-222
+      envs:
+        - my-server-env.properties
+        - more-server-props.env
+    - name: my-java-server-env-vars
+      namespace: ns-333
+      literals:
+        - JAVA_HOME=/opt/java/jdk
+        - JAVA_TOOL_OPTIONS=-agentlib:hprof
+      options:
+        disableNameSuffixHash: true
+        labels:
+          pet: dog
+    - name: dashboards
+      namespace: ns-444
+      files:
+        - mydashboard.json
+      options:
+        annotations:
+          dashboard: "1"
+        labels:
+          app.kubernetes.io/name: "app1"
+  crds:
+    - crds/typeA.yaml
+    - crds/typeB.yaml
+  generatorOptions:
+    # labels to add to all generated resources
+    labels:
+      kustomize.generated.resources: somevalue
+    # annotations to add to all generated resources
+    annotations:
+      kustomize.generated.resource: somevalue
+    # disableNameSuffixHash is true disables the default behavior of adding a
+    # suffix to the names of generated resources that is a hash of
+    # the resource contents.
+    disableNameSuffixHash: true
+    # if set to true, the immutable property is added to generated resources
+    immutable: true
+  helmCharts:
+    - name: minecraft
+      repo: https://kubernetes-charts.storage.googleapis.com
+      version: v1.2.0
+      releaseName: test
+      namespace: testNamespace
+      valuesFile: values.yaml
+      additionalValuesFiles:
+        - values-file-1.yml
+        - values-file-2.yml
+  helmGlobals:
+    chartHome: my-charts-dir
+    configHome: my-config-dir
+  images:
+    - name: postgres
+      newName: my-registry/my-postgres
+      newTag: v1
+    - name: nginx
+      newTag: "1.8.0"
+    - name: my-demo-app
+      newName: my-app
+    - name: alpine
+      digest: sha256:24a0c4b4a4c0eb97a1aabb8e29f18e917d05abfe1b7a7c07857230879ce7d3d3
+  labels:
+    - pairs:
+        someName: someValue
+        owner: alice
+        app: bingo
+      includeSelectors: true # <-- false by default
+      includeTemplates: true # <-- false by default
+  namePrefix: aaa-
+  namespace: ns-xxx
+  nameSuffix: -bbb
+  openapi:
+    path: my_schema.json
+    version: v1.20.4
+  patches:
+    - path: patch.yaml
+      target:
+        group: apps
+        version: v1
+        kind: Deployment
+        name: deploy.*
+        labelSelector: "env=dev"
+        annotationSelector: "zone=west"
+    - patch: |-
+        - op: replace
+          path: /some/existing/path
+          value: new value
+      target:
+        kind: MyKind
+        labelSelector: "env=dev"
+      options:
+        allowNameChange: true
+        allowKindChange: true
+    - patch: |-
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: not-used
+        spec:
+          template:
+            spec:
+              containers:
+                - name: nginx
+                  image: nginx:1.21.0
+  replacements:
+    - source:
+        group: string
+        version: string
+        kind: string
+        name: string
+        namespace: string
+        fieldPath: string
+        options:
+          delimiter: string
+          index: 1
+          create: false
+      sourceValue: string
+      targets:
+        - select:
+            group: string
+            version: string
+            kind: string
+            name: string
+            namespace: string
+            annotationSelector: string
+            labelSelector: string
+          reject:
+            - group: string
+              version: string
+              kind: string
+              name: string
+              namespace: string
+              annotationSelector: string
+              labelSelector: string
+          fieldPaths:
+            - string
+          options:
+            delimiter: string
+            index: 0
+            create: true
+  replicas:
+    - name: deployment-name
+      count: 5
+    - name: deployment-name11
+      count: 10
+  resources:
+    # Local files
+    - myNamespace.yaml
+    - deployment.yaml
+    - sub-dir/some-deployment.yaml
+
+    # Local directories
+    - ../../commonbase
+
+    # Remote URLs
+    - https://github.com/kubernetes-sigs/kustomize//examples/multibases/?timeout=120&ref=v3.3.1
+
+    # Legacy hashicorp/go-getter format
+    - github.com/kubernets-sigs/kustomize/examples/helloWorld?ref=test-branch
+  secretGenerator:
+    - name: app-tls
+      files:
+        - secret/tls.crt
+        - secret/tls.key
+      type: "kubernetes.io/tls"
+    - name: app-tls-namespaced
+      # you can define a namespace to generate
+      # a secret in, defaults to: "default"
+      namespace: apps
+      files:
+        - tls.crt=catsecret/tls.crt
+        - tls.key=secret/tls.key
+      type: "kubernetes.io/tls"
+    - name: env-file-secret
+      envs:
+        - env.txt
+      type: Opaque
+    - name: secret-with-annotation
+      files:
+        - app-config.yaml
+      type: Opaque
+      options:
+        annotations:
+          app_config: "true"
+        labels:
+          app.kubernetes.io/name: "app2"
+  sortOptions:
+    order: legacy
+    legacySortOptions:
+      orderFirst:
+        - Namespace
+        - ResourceQuota
+        - StorageClass
+        - CustomResourceDefinition
+        - ServiceAccount
+        - PodSecurityPolicy
+        - Role
+        - ClusterRole
+        - RoleBinding
+        - ClusterRoleBinding
+        - ConfigMap
+        - Secret
+        - Endpoints
+        - Service
+        - LimitRange
+        - PriorityClass
+        - PersistentVolume
+        - PersistentVolumeClaim
+        - Deployment
+        - StatefulSet
+        - CronJob
+        - PodDisruptionBudget
+      orderLast:
+        - MutatingWebhookConfiguration
+        - ValidatingWebhookConfiguration

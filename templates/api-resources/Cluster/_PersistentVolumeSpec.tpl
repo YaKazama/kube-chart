@@ -81,7 +81,6 @@
     {{- if $nodeAffinity }}
       {{- include "base.field" (list "nodeAffinity" $nodeAffinity "base.map") }}
     {{- end }}
-
   {{- end }}
 
   {{- /* mountOptions string array */ -}}
