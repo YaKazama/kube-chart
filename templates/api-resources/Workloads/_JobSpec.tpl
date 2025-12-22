@@ -73,7 +73,7 @@
 
   {{- /* selector map */ -}}
   {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-  {{- $labels := include "base.getValue" . | fromYaml }}
+  {{- $labels := include "base.labels" . | fromYaml }}
   {{- $_matchLabels := get $selectorVal "matchLabels" }}
   {{- if kindIs "map" $_matchLabels }}
     {{- $_matchLabels = mustMerge $_matchLabels $labels }}

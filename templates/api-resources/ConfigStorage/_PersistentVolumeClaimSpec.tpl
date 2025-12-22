@@ -39,7 +39,7 @@
   {{- /* selector map */ -}}
   {{- /* 理论上，基于 StatefulSet.volumeClaimTemplates 定义的内容，不会有此字段 */ -}}
   {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-  {{- $labels := include "base.getValue" . | fromYaml }}
+  {{- $labels := include "base.labels" . | fromYaml }}
   {{- $_matchLabels := get $selectorVal "matchLabels" }}
   {{- if kindIs "map" $_matchLabels }}
     {{- $_matchLabels = mustMerge $_matchLabels $labels }}

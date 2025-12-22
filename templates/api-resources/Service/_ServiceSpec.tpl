@@ -124,7 +124,7 @@
   {{- $_selectorAllows := list "ClusterIP" "NodePort" "LoadBalancer" }}
   {{- if mustHas $_type $_selectorAllows }}
     {{- $selector := include "base.getValue" (list . "selector") | fromYaml }}
-    {{- $labels := include "base.getValue" . | fromYaml }}
+    {{- $labels := include "base.labels" . | fromYaml }}
     {{- $selector = merge $selector $labels }}
     {{- if $selector }}
       {{- include "base.field" (list "selector" $selector "base.map") }}

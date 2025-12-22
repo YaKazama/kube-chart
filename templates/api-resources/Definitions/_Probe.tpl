@@ -47,8 +47,8 @@
     {{- $host := regexReplaceAll $const.k8s.container.httpGet $httpGetVal "${2}" | trim }}
     {{- $port := regexReplaceAll $const.k8s.container.httpGet $httpGetVal "${3}" | trim }}
     {{- $path := regexReplaceAll $const.k8s.container.httpGet $httpGetVal "${4}" | trim }}
-    {{- $httpHeaders := regexReplaceAll $const.k8s.container.httpGet $httpGetVal "${6}" }}
-    {{- $val := dict "scheme" $scheme "host" $host "port" $port "httpHeaders" $httpHeaders }}
+    {{- $httpHeaders := regexReplaceAll $const.k8s.container.httpGet $httpGetVal "${5}" }}
+    {{- $val := dict "scheme" $scheme "host" $host "port" $port "path" $path "httpHeaders" $httpHeaders }}
 
     {{- $httpGet := include "definitions.HTTPGetAction" $val | fromYaml }}
     {{- if $httpGet }}

@@ -514,15 +514,15 @@
     {{- end }}
   {{- end }}
 
-  {{- /* 获取内部 image 原始值 */ -}}
-  {{- $image := include "base.getValue" (list . "image") }}
-
   {{- /* 解析内部 imageRef 并拼接 */ -}}
   {{- $imageRefVal := include "base.getValue" (list . "imageRef") | fromYaml }}
   {{- $imageRef := "" }}
   {{- if $imageRefVal }}
     {{- $imageRef = include "workloads.Container.imageRef" $imageRefVal }}
   {{- end }}
+
+  {{- /* 获取内部 image 原始值 */ -}}
+  {{- $image := include "base.getValue" (list . "image") }}
 
   {{- /* 按优先级取非空值 */ -}}
   {{- $fullImage := coalesce $extImage $imageRef $image }}

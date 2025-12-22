@@ -13,7 +13,7 @@
   {{- if or (eq $volumeType "configMap") (eq $volumeType "cm") }}
     {{- $match := regexFindAll $const.k8s.volume.configMap $volumeData -1 }}
     {{- if not $match }}
-      {{- fail (printf "configStorage.Volume: configMap: invalid. Values: %s, format: 'name [optional] [defaultMode] [items (key path [mode], ...)]'" $volumeData) }}
+      {{- fail (printf "configStorage.Volume: configMap: invalid. Values: '%s', format: 'name [optional] [defaultMode] [items (key path [mode], ...)]'" $volumeData) }}
     {{- end }}
 
     {{- /* 组装 dict */ -}}

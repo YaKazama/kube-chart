@@ -568,3 +568,36 @@
     {{- false }}
   {{- end }}
 {{- end }}
+
+
+{{- /*
+  校验是否为 uri
+
+  variables: slice
+    - value(string)
+    - hasSuffix(bool)
+
+  - 路径开始的 '../' 会移除
+  - 路径中的 '../' 会使用 clean 清洗
+  - 若最后没有以 '/' 结尾，则会添加
+*/ -}}
+{{- define "base.uriPath" -}}
+  {{- if ne (len .) 2 }}
+    {{- fail (printf "base.uriPath: must be list/slice. Values: '%v', Type: '%s'" . (kindOf .)) }}
+  {{- end }}
+
+  {{- $uri := index . 0 }}
+  {{- $hasSuffix := default false (index . 1) }}
+
+  {{- $path := regexReplaceAll "^(\\.\\.\\/)*" (include "base.string" $uri | clean) "" }}
+  {{- if isAbs $path }}
+    {{- $path = $path | trim }}
+    {{- if $hasSuffix }}
+      {{- printf "%s/" $path }}
+    {{- else }}
+      {{- $path }}
+    {{- end }}
+  {{- else }}
+    {{- fail (printf "base.uriPath: invalid. Values: '%s'(%s), '%s'(%s)" . (kindOf .) $path (kindOf $path)) }}
+  {{- end }}
+{{- end }}

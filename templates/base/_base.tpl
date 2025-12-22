@@ -19,7 +19,7 @@
 */ -}}
 {{- define "base.getValue" -}}
   {{- if or (not (kindIs "slice" .)) (lt (len .) 2) }}
-    {{- fail (printf "base.getValue: Must be a slice and requires 2-3 parameters. format: '[]any{ctx(any) key(string) type(string, choices: int|int64|float64|atoi|toString|toStrings|toDecimal)}', values: '%s'" .) }}
+    {{- fail (printf "base.getValue: Must be a slice and requires 2-3 parameters. format: '[]any{ctx(any) key(string) type(string, choices: int|int64|float64|atoi|toString|toStrings|toDecimal)}', len: '%d', type: '%s', values: '%s'" (len .) (kindOf .) .) }}
   {{- end }}
 
   {{- $root := index . 0 }}

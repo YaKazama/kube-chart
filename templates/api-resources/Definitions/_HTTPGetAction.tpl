@@ -28,7 +28,7 @@
   {{- /* path string */ -}}
   {{- $path := include "base.getValue" (list . "path") }}
   {{- if $path }}
-    {{- include "base.field" (list "path" $path "base.absPath") }}
+    {{- include "base.field" (list "path" (list $path true) "base.uriPath") }}
   {{- end }}
 
   {{- /* port string */ -}}

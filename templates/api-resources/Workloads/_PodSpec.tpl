@@ -25,14 +25,31 @@
   {{- end }}
 
   {{- /* containers array */ -}}
-  {{- $containersVal := include "base.getValue" (list . "containers") | fromYamlArray }}
+  {{- /*
+    兼容 slice 和 map
+    如果使用 slice 定义 containers 则无法通过其他 values.yaml 文件修改其中的属性。这是默认行为。 map 可以解决这个问题
+  */ -}}
+  {{- $containersVal := include "base.getValue" (list . "containers") }}
   {{- $_os := include "base.getValue" (list . "os") }}
   {{- $containers := list }}
-  {{- range $containersVal }}
-    {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
-    {{- $_ := set . "Files" $.Files }}
-    {{- $_ := set . "Values" $.Values }}
-    {{- $containers = append $containers (include "workloads.Container" . | fromYaml) }}
+  {{- $isNotMap := include "base.isFromYamlError" ($containersVal | fromYaml) }}
+  {{- $isNotSlice := include "base.isFromYamlError" ($containersVal | fromYamlArray) }}
+  {{- if eq $isNotMap "false" }}
+    {{- range $_, $container := ($containersVal | fromYaml) }}
+      {{- $_ := set $container "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+      {{- $_ := set $container "Files" $.Files }}
+      {{- $_ := set $container "Values" $.Values }}
+      {{- $_ := set $container "Context" $.Context }}
+      {{- $containers = append $containers (include "workloads.Container" $container | fromYaml) }}
+    {{- end }}
+  {{- else if eq $isNotSlice "false" }}
+    {{- range ($containersVal | fromYamlArray) }}
+      {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+      {{- $_ := set . "Files" $.Files }}
+      {{- $_ := set . "Values" $.Values }}
+      {{- $_ := set . "Context" $.Context }}
+      {{- $containers = append $containers (include "workloads.Container" . | fromYaml) }}
+    {{- end }}
   {{- end }}
   {{- $containers = $containers | mustUniq | mustCompact }}
   {{- if $containers }}
@@ -112,14 +129,28 @@
   {{- end }}
 
   {{- /* initContainers array */ -}}
-  {{- $initContainersVal := include "base.getValue" (list . "initContainers") | fromYamlArray }}
+  {{- /* 兼容 slice 和 map */ -}}
+  {{- $initContainersVal := include "base.getValue" (list . "initContainers") }}
   {{- $_os := include "base.getValue" (list . "os") }}
   {{- $initContainers := list }}
-  {{- range $initContainersVal }}
-    {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
-    {{- $_ := set . "Files" $.Files }}
-    {{- $_ := set . "Values" $.Values }}
-    {{- $initContainers = append $initContainers (include "workloads.Container" . | fromYaml) }}
+  {{- $isNotMap := include "base.isFromYamlError" ($initContainersVal | fromYaml) }}
+  {{- $isNotSlice := include "base.isFromYamlError" ($initContainersVal | fromYamlArray) }}
+  {{- if eq $isNotMap "false" }}
+    {{- range $_, $container := ($initContainersVal | fromYaml) }}
+      {{- $_ := set $container "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+      {{- $_ := set $container "Files" $.Files }}
+      {{- $_ := set $container "Values" $.Values }}
+      {{- $_ := set $container "Context" $.Context }}
+      {{- $initContainers = append $initContainers (include "workloads.Container" $container | fromYaml) }}
+    {{- end }}
+  {{- else if eq $isNotSlice "false" }}
+    {{- range ($initContainersVal | fromYamlArray) }}
+      {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
+      {{- $_ := set . "Files" $.Files }}
+      {{- $_ := set . "Values" $.Values }}
+      {{- $_ := set . "Context" $.Context }}
+      {{- $initContainers = append $initContainers (include "workloads.Container" . | fromYaml) }}
+    {{- end }}
   {{- end }}
   {{- $initContainers = $initContainers | mustUniq | mustCompact }}
   {{- if $initContainers }}

@@ -61,18 +61,18 @@
 
     {{- $cpu := index $val 0 | trim }}
     {{- if $cpu }}
-      {{- $_ := set $limits "cpu" $cpu }}
+      {{- $_ := set $requests "cpu" $cpu }}
       {{- if regexMatch "^\\d+$" $cpu }}
-        {{- $_ := set $limits "cpu" ($cpu | int) }}
+        {{- $_ := set $requests "cpu" ($cpu | int) }}
       {{- else if regexMatch "^(?:0)?\\.\\d+$" $cpu }}
-        {{- $_ := set $limits "cpu" ($cpu | float64) }}
+        {{- $_ := set $requests "cpu" ($cpu | float64) }}
       {{- end }}
     {{- end }}
 
     {{- if or (eq $len 2) (ge $len 4) }}
       {{- $memory := index $val 1 | trim }}
       {{- if $memory }}
-        {{- $_ := set $limits "memory" $memory }}
+        {{- $_ := set $requests "memory" $memory }}
       {{- end }}
     {{- end }}
 
