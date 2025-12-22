@@ -1,0 +1,50 @@
+# 理论上 VerticalPodAutoscaler 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.VerticalPodAutoscaler }}`
+
+# 不是很好抽象、简化，直接使用原生格式
+
+VerticalPodAutoscaler:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  # format: []string
+  recommenders: []
+    # - name: string
+  resourcePolicy:
+    containerPolicies:
+      - containerName: string
+        # format: []string
+        controlledResources: []
+          # - items: string
+        controlledValues: string # RequestsAndLimits | RequestsOnly
+        # maxAllowed 和 minAllowed 中的值应该符合 Quantity
+        # 支持 cpu、memory 两个属性
+        maxAllowed: {}
+        minAllowed: {}
+        mode: string # Auto | Off
+        oomBumpUpRatio: Quantity
+        oomMinBumpUp: Quantity
+  targetRef:
+    apiVersion: string
+    kind: string
+    name: string
+  updatePolicy:
+    # 这里将 items 中的子项提升
+    evictionRequirements:
+      - changeRequirement: string # TargetHigherThanRequests | TargetLowerThanRequests
+        # format: []string
+        # 这里猜测的可用值 cpu memory
+        resources: []
+          # - items: string # cpu | memeory
+      # # CRD 中的默认定义，参考
+      # - items:
+      #     changeRequirement: string # TargetHigherThanRequests | TargetLowerThanRequests
+      #     # format: []string
+      #     resources: []
+      #       # - items: string
+    minReplicas: int
+    updateMode: string # Off | Initial | Recreate | InPlaceOrRecreate | Auto

@@ -1243,3 +1243,142 @@ TkeServiceConfig:
                 sourceIpType: 0 # 可选值：0或1，设定健康检查源ip。0 表示负载均衡VIP，1 表示 100.64.0.0/10 网段ip。对于域名化clb默认值为1且只能为1，对于非域名化的clb默认值不一定，可在clb控制台配置页面看能否看到VIP探测方式，如能看到默认值为0，否则为1，更多详情查看 https://cloud.tencent.com/document/product/214/86666。
                 checkType: "HTTPS" # 可选值：HTTP，HTTPS，TCP 或 GRPC，默认 HTTP。2024.06之后新建的集群支持改字段，存量集群如有需要可提工单升级后台组件来支持。当 forwardType 为 HTTPS 时，checkType 只能为 TCP 或 HTTPS。当 forwardType 为 GRPC 时，checkType 只能为 TCP 或 GRPC。
               scheduler: WRR # 可选值：WRR、LEAST_CONN、IP_HASH
+
+HorizontalPodAutoscaler:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: hpv-name
+  namespace: string
+
+  behavior:
+    scaleDown:
+      policies:
+        - periodSeconds: 11
+          type: string
+          value: 11
+      selectPolicy: string
+      # 可用值范围 0 - 3600 秒
+      stabilizationWindowSeconds: 600
+      tolerance: 1Gi
+    scaleUp:
+      policies:
+        - periodSeconds: 22
+          type: string
+          value: 22
+      selectPolicy: string
+      # 可用值范围 0 - 3600 秒
+      stabilizationWindowSeconds: 11
+      tolerance: 110Mi
+  maxReplicas: 2
+  metrics:
+    - containerResource:
+        container: string
+        name: string
+        target:
+          averageUtilization: 1
+          averageValue: 100Mi
+          type: Utilization # Utilization | Value | AverageValue
+          value: 100Mi
+      external:
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: 2
+          averageValue: 200Mi
+          type: Value # Utilization | Value | AverageValue
+          value: 200Mi
+      object:
+        describedObject:
+          apiVersion: string
+          kind: string
+          name: string
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: 3
+          averageValue: 300Mi
+          type: AverageValue # Utilization | Value | AverageValue
+          value: 300Mi
+      pods:
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: 4
+          averageValue: 400Mi
+          type: Utilization # Utilization | Value | AverageValue
+          value: 400Mi
+      resource:
+        name: string
+        target:
+          averageUtilization: 5
+          averageValue: 500Mi
+          type: Value # Utilization | Value | AverageValue
+          value: 500Mi
+      type: string # ContainerResource | External | Object | Pods | Resource
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: string
+    kind: string
+    name: string
+
+VerticalPodAutoscaler:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string-name
+  namespace: string-aaa
+  # format: []string
+  recommenders:
+    - aaaaaaa
+    # - name: string
+  resourcePolicy:
+    containerPolicies:
+      - containerName: string
+        # format: []string
+        controlledResources:
+          - cpu
+          - memory
+          # - items: string
+        controlledValues: RequestsOnly # RequestsAndLimits | RequestsOnly
+        # maxAllowed 和 minAllowed 中的值应该符合 Quantity
+        # 支持 cpu、memory 两个属性
+        maxAllowed: {}
+        minAllowed: {}
+        mode: Auto # Auto | Off
+        oomBumpUpRatio: 100Mi
+        oomMinBumpUp: 200Mi
+  targetRef:
+    apiVersion: string
+    kind: string
+    name: string
+  updatePolicy:
+    # 这里将 items 中的子项提升
+    evictionRequirements:
+      - changeRequirement: TargetLowerThanRequests # TargetHigherThanRequests | TargetLowerThanRequests
+        # format: []string
+        # 这里猜测的可用值 cpu memory
+        resources:
+          - cpu
+          - memory
+          # - items: string # cpu | memeory
+      # # CRD 中的默认定义，参考
+      # - items:
+      #     changeRequirement: string # TargetHigherThanRequests | TargetLowerThanRequests
+      #     # format: []string
+      #     resources: []
+      #       # - items: string
+    minReplicas: 2
+    updateMode: Recreate # Off | Initial | Recreate | InPlaceOrRecreate | Auto

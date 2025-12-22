@@ -1,0 +1,93 @@
+# 理论上 HorizontalPodAutoscaler 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.HorizontalPodAutoscaler }}`
+
+# 不是很好抽象、简化，直接使用原生格式
+
+HorizontalPodAutoscaler:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+
+  behavior:
+    scaleDown:
+      policies:
+        - periodSeconds: int
+          type: string
+          value: int
+      selectPolicy: string
+      # 可用值范围 0 - 3600 秒
+      stabilizationWindowSeconds: int
+      tolerance: Quantity
+    scaleUp:
+      policies:
+        - periodSeconds: int
+          type: string
+          value: int
+      selectPolicy: string
+      # 可用值范围 0 - 3600 秒
+      stabilizationWindowSeconds: int
+      tolerance: Quantity
+  maxReplicas: int
+  metrics:
+    - containerResource:
+        container: string
+        name: string
+        target:
+          averageUtilization: int
+          averageValue: Quantity
+          type: string # Utilization | Value | AverageValue
+          value: Quantity
+      external:
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: int
+          averageValue: Quantity
+          type: string # Utilization | Value | AverageValue
+          value: Quantity
+      object:
+        describedObject:
+          apiVersion: string
+          kind: string
+          name: string
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: int
+          averageValue: Quantity
+          type: string # Utilization | Value | AverageValue
+          value: Quantity
+      pods:
+        metric:
+          name: string
+          selector:
+            matchExpressions: []
+            matchLabels: {}
+        target:
+          averageUtilization: int
+          averageValue: Quantity
+          type: string # Utilization | Value | AverageValue
+          value: Quantity
+      resource:
+        name: string
+        target:
+          averageUtilization: int
+          averageValue: Quantity
+          type: string # Utilization | Value | AverageValue
+          value: Quantity
+      type: string # ContainerResource | External | Object | Pods | Resource
+  minReplicas: int
+  scaleTargetRef:
+    apiVersion: string
+    kind: string
+    name: string
