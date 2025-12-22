@@ -75,6 +75,10 @@
 {{- $_ := set . "Context" .Values.PodTemplate }}
 {{- include "metadata.PodTemplate" . }}
 
+---
+{{- /* 如果要使用 VerticalPodAutoscaler */ -}}
+{{- $_ := set . "Context" .Values.VerticalPodAutoscaler }}
+{{- include "metadata.VerticalPodAutoscaler" . }}
 
 {{- /* Cluster */ -}}
 ---

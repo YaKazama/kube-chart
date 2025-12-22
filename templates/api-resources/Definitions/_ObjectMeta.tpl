@@ -13,11 +13,7 @@
 
   {{- /* labels map */ -}}
   {{- if not (or (eq $_kind "StatefulSetSpec")) }}
-    {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
-    {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
-    {{- if $isHelmLabels }}
-      {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
-    {{- end }}
+    {{- $labels := include "base.labels" . | fromYaml }}
     {{- if $labels }}
       {{- include "base.field" (list "labels" $labels "base.map") }}
     {{- end }}

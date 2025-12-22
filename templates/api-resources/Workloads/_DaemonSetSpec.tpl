@@ -15,12 +15,7 @@
 
   {{- /* selector map */ -}}
   {{- $selectorVal := include "base.getValue" (list . "selector") | fromYaml }}
-  {{- /* 将 labels helmLabels 追加到 selector 中一并传入 参考 definitions.ObjectMeta 中的 labels */ -}}
-  {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
-  {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
-  {{- if $isHelmLabels }}
-    {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
-  {{- end }}
+  {{- $labels := include "base.getValue" . | fromYaml }}
   {{- $_matchLabels := get $selectorVal "matchLabels" }}
   {{- if kindIs "map" $_matchLabels }}
     {{- $_matchLabels = mustMerge $_matchLabels $labels }}

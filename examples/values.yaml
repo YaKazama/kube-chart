@@ -5,3 +5,6 @@ global: {}
 #   app.kubernetes.io/version
 #   app.kubernetes.io/managed-by
 helmLabels: bool
+# labels 只使用 name 作为标签
+#   基于 base.name 模板定义进行取值
+justNameLabel: bool

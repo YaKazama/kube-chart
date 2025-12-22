@@ -30,6 +30,35 @@
 
 
 {{- /*
+  labels 统一处理: labels(object)、helmLabels(bool)、justNameLabel(bool)
+
+  justNameLabel 与 labels 和 helmLabels 互斥
+*/ -}}
+{{- define "base.labels" -}}
+  {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
+  {{- $isJustNameLabel := include "base.getValue" (list . "justNameLabel") }}
+
+  {{- $labels := dict }}
+  {{- if $isJustNameLabel }}
+    {{- $name := include "base.name" . }}
+    {{- $labels = dict "name" $name }}
+
+  {{- else }}
+    {{- $_labels := include "base.getValue" (list . "labels") | fromYaml }}
+    {{- $labels = mustMerge $labels $_labels }}
+    {{- if $isHelmLabels }}
+      {{- $helmLabels := include "base.helmLabels" . | fromYaml }}
+      {{- $labels = mustMerge $labels $helmLabels }}
+    {{- end }}
+  {{- end }}
+
+  {{- if $labels }}
+    {{- toYamlPretty $labels }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
   使用正则表达式检查 Quantity 是否合法
   参考：https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
 

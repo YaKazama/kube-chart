@@ -124,12 +124,7 @@
   {{- $_selectorAllows := list "ClusterIP" "NodePort" "LoadBalancer" }}
   {{- if mustHas $_type $_selectorAllows }}
     {{- $selector := include "base.getValue" (list . "selector") | fromYaml }}
-    {{- /* 将 labels helmLabels 追加到 selector 中 */ -}}
-    {{- $labels := include "base.getValue" (list . "labels") | fromYaml }}
-    {{- $isHelmLabels := include "base.getValue" (list . "helmLabels") }}
-    {{- if $isHelmLabels }}
-      {{- $labels = mustMerge $labels (include "base.helmLabels" . | fromYaml) }}
-    {{- end }}
+    {{- $labels := include "base.getValue" . | fromYaml }}
     {{- $selector = merge $selector $labels }}
     {{- if $selector }}
       {{- include "base.field" (list "selector" $selector "base.map") }}
