@@ -60,7 +60,7 @@
 
 {{- /*
   使用正则表达式检查 Quantity 是否合法
-  参考：https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
+  参考: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
 
   return: string / number
 */ -}}
