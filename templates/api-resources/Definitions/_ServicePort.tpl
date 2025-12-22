@@ -28,7 +28,7 @@
   {{- $protocol := include "base.getValue" (list . "protocol") | upper }}
   {{- $protocolAllows := list "TCP" "UDP" "SCTP" }}
   {{- if $protocol }}
-    {{- include "base.field" (list "protocol" $protocol "base.string" $protocolAllows) }}
+    {{- include "base.field" (list "protocol" ($protocol | upper) "base.string" $protocolAllows) }}
   {{- end }}
 
   {{- /* targetPort int or string */ -}}
