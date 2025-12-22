@@ -210,6 +210,14 @@ Deployment:
     # - pvc vol-ggg claimName true
     # - secret vol-hhh secretName true 0755 items(key path 0650, key1 path1)
     # - local vol-local /config/aaa
+  # containers 可以支持 list 和 map
+  #   map 示例
+  #   containers:
+  #     key:
+  #       name: string
+  #       image: string
+  #       args: []
+  #       ...
   containers:
     # args 和 command 均是 []string 配合使用可替换镜像中的 entrypoint
     - args: []
