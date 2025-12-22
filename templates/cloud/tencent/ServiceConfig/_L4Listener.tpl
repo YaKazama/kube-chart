@@ -40,7 +40,7 @@
   {{- $scheduler := include "base.getValue" (list . "scheduler") }}
   {{- $schedulerAllows := list "WRR" "LEAST_CONN" }}
   {{- if $scheduler }}
-    {{- include "base.field" (list "scheduler" $scheduler "base.string" $schedulerAllows) }}
+    {{- include "base.field" (list "scheduler" ($scheduler | upper) "base.string" $schedulerAllows) }}
   {{- end }}
 
   {{- /* proxyProtocol map */ -}}
