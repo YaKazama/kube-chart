@@ -31,6 +31,11 @@
 {{- $_ := set . "Context" .Values.Deployment.service }}
 {{- include "service.Service" . }}
 
+{{- /* 也可以使用这种形式 */ -}}
+{{- /* 如果需要共享 .Values.Deployment 下的属性定义，强烈推荐 */ -}}
+{{- $_ := set . "Context" .Values.Deployment }}
+{{- include "service.Service" . }}
+
 ---
 {{- /* 生成 Service */ -}}
 {{- $_ := set . "Context" .Values.Service }}
