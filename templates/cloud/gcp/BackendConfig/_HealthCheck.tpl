@@ -27,7 +27,7 @@
   {{- $type := include "base.getValue" (list . "type") }}
   {{- $typeAllows := list "HTTP" "HTTPS" "HTTP2" }}
   {{- if $type }}
-    {{- include "base.field" (list "type" $type "base.string" $typeAllows) }}
+    {{- include "base.field" (list "type" ($type | upper) "base.string" $typeAllows) }}
   {{- end }}
 
   {{- /* requestPath string */ -}}
