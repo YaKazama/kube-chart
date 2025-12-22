@@ -41,6 +41,6 @@
   {{- $scheme := include "base.getValue" (list . "scheme") }}
   {{- $schemeAllows := list "HTTP" "HTTPS" }}
   {{- if $scheme }}
-    {{- include "base.field" (list "scheme" $scheme "base.string" $schemeAllows) }}
+    {{- include "base.field" (list "scheme" ($scheme | upper) "base.string" $schemeAllows) }}
   {{- end }}
 {{- end }}
