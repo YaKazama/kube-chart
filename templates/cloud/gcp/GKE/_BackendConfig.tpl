@@ -1,7 +1,7 @@
 {{- define "gke.BackendConfig" -}}
   {{- $_ := set . "_kind" "BackendConfig" }}
 
-  {{- include "base.field" (list "apiVersion" "networking.gke.io/v1") }}
+  {{- include "base.field" (list "apiVersion" "cloud.google.com/v1") }}
   {{- include "base.field" (list "kind" "BackendConfig") }}
 
   {{- /* metadata map */ -}}
