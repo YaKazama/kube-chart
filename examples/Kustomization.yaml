@@ -25,6 +25,7 @@ Kustomization:
       files:
         - application.properties
         - more.properties
+        - myFileName.ini=whatever.ini
     - name: my-java-server-env-file-vars
       namespace: ns-222
       envs:
