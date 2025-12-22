@@ -12,6 +12,6 @@
   {{- $type := include "base.getValue" (list . "type") }}
   {{- $typeAllows := list "OnDelete" "RollingUpdate" }}
   {{- if $type }}
-    {{- include "base.field" (list "type" $type) }}
+    {{- include "base.field" (list "type" $type "base.string" $typeAllows) }}
   {{- end }}
 {{- end }}
