@@ -10,6 +10,15 @@ Role:
   fullname: string
   namespace: string
   rules:
+    # apiGroups 可以使用空字符串("")或星号("*")
+    # 所有字段，格式均为 []string
+    # 另一种写法是将 列表 改为以空格或逗号分隔的字符串
     - apiGroups: []
       resources: []
       verbs: []
+    # 字符串格式写法参考
+    # - apiGoups: " * a b" # 有星号或想使用空值时需要加引号。此示例解析后会为 `- ""\n- '*'`
+    #   nonResourceURLs: a b
+    #   resourceNames: a b c
+    #   resources: a b c d
+    #   verbs: a, b c d, e

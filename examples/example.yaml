@@ -87,6 +87,11 @@
 
 {{- /* Cluster */ -}}
 ---
+{{- /* 生成 rbac 包括 ServiceAccount Role/ClusterRole RoleBinding/ClusterRoleBinding */ -}}
+{{- $_ := set . "Context" .Values.RBAC }}
+{{- include "cluster.RBAC" . }}
+
+---
 {{- /* 生成 Binding */ -}}
 {{- $_ := set . "Context" .Values.Binding }}
 {{- include "cluster.Binding" . }}

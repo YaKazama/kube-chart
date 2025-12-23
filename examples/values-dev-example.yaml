@@ -1382,3 +1382,48 @@ VerticalPodAutoscaler:
       #       # - items: string
     minReplicas: 2
     updateMode: Recreate # Off | Initial | Recreate | InPlaceOrRecreate | Auto
+
+RBAC:
+  isCluster: false
+  annotations: {}
+  labels: {}
+  # fullname > name 且作为 role.name
+  name: role-name
+  fullname:
+  namespace: ns-rbac
+  role:
+    # clusterRole 支持
+    aggregationRule:
+      clusterRoleSelectors:
+        - matchExpressions:
+            - a in (a, b)
+          matchLabels:
+            xxx: aaa
+    rules:
+      # 空格分隔的字符串
+      - apiGroups: [""]
+        resources: ["serviceaccounts/token"]
+        resourceNames: ["cert-manager"]
+        nonResourceURLs: ["xxxx"]
+        verbs: ["create"]
+  roleBinding:
+    subjects:
+      - name: sa-name
+        kind: ServiceAccount
+        namespace: ns-rbac
+      - name: user:xxx
+        kind: User
+  serviceAccount:
+    name: sa-name # 为空则跳过 ServiceAccount 生成
+    automountServiceAccountToken: true
+    imagePullSecrets:
+      - aaa
+      - bbb
+    secrets:
+      - apiVersion: string
+        fieldPath: string
+        kind: string
+        name: string
+        namespace: string
+        resourceVersion: string
+        uid: string

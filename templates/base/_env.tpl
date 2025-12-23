@@ -7,9 +7,10 @@
 emptyStr: ""
 # 常用分隔符
 split:
-  all: "\\s*[,\\:\\.\\|\\/\\*\\^@#\\s]+\\s*"
+  all: "\\s*[\\s\\:\\.\\|\\/\\*\\^@#,]+\\s*"
   space: "\\s+"
   comma: ",\\s*"
+  commaOrSpace: ",\\s*|\\s+"
   equal: "=+"
 # 类型相关
 types:
@@ -21,9 +22,13 @@ types:
 rfc:
   RFC1035: "^([a-z]{1,63}|[a-z][a-z0-9-]{0,61}[a-z0-9]?)$"
   RFC1123: "^([a-z0-9]{1,63}|[a-z0-9][a-z0-9-]{0,61}[a-z0-9]?)$"
-  RFC1035RBAC: ^([a-z]{1,63}|[a-z][a-z0-9-\\:]{0,61}[a-z0-9]?)$"
+  RFC1035RBAC: "^([a-z]{1,63}|[a-z][a-z0-9-\\:]{0,61}[a-z0-9]?)$"
   APIService: "^[a-z]([-a-z0-9]*[a-z0-9])?(\\.[a-z]([-a-z0-9]*[a-z0-9])?)*$"
 k8s:
+  rbac:
+    subject: "^(User|Group|ServiceAccount)(?:\\s+(\\S+))(?:\\s+(\\S+))?$"
+    # 未使用，作为 RoleBinding 或 ClusterRoleBinding 下的 roleRef 的参考
+    role: "^(.*?)(?:\\s(.*?))?(?:\\s(.*?))?$"
   reservedNamespace: "^(default|kube-.*)$"
   quantity: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
   resources: "^([+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?\\s*){1,4}$"

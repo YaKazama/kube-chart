@@ -1,0 +1,51 @@
+# 理论上 RBAC 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.RBAC }}`
+
+RBAC:
+  # isCluster=true 生成 ClusterRole / ClusterRoleBinding，此时不能设置 namespace
+  # isCluster=false 生成 Role / RoleBinding
+  isCluster: bool
+  # annotations: ServiceAccount Role/ClusterRole RoleBinding/ClusterRoleBinding 共享
+  annotations: {}
+  # labels: ServiceAccount Role/ClusterRole RoleBinding/ClusterRoleBinding 共享
+  labels: {}
+  # fullname, name: ServiceAccount Role/ClusterRole RoleBinding/ClusterRoleBinding 共享
+  # fullname > name 且作为 role.name
+  name: string
+  fullname:
+  # namespace: ServiceAccount Role/ClusterRole RoleBinding/ClusterRoleBinding 共享
+  # isCluster=true 时无效
+  namespace: string
+  role:
+    # clusterRole 支持
+    aggregationRule:
+      # 同 Deployment.selector 但不注入 labels 和 helmLabels
+      clusterRoleSelectors: []
+        # - matchExpressions: []
+        #   matchLabels: {}
+    # 同 RoleBinding.rules
+    rules:
+      # 空格分隔的字符串
+      - apiGroups: []
+        resources: []
+        resourceNames: []
+        nonResourceURLs: []
+        verbs: []
+  roleBinding:
+    # 同 RoleBinding.subjects
+    subjects: []
+      # - name: string
+      #   kind: string # ServiceAccount | User | Group
+      #   namespace: string
+  serviceAccount: # 为空则跳过 ServiceAccount 生成
+    name: string
+    automountServiceAccountToken: bool
+    imagePullSecrets: []
+    secrets:
+      - apiVersion: string
+        fieldPath: string
+        kind: string
+        name: string
+        namespace: string
+        resourceVersion: string
+        uid: string
