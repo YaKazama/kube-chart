@@ -35,7 +35,7 @@
   {{- end }}
 
   {{- /* namespace string */ -}}
-  {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "Namespace")) }}
+  {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "Namespace") (eq $_kind "ClusterRole") (eq $_kind "ClusterRoleBinding")) }}
     {{- $namespace := include "base.namespace" . }}
     {{- if $namespace }}
       {{- include "base.field" (list "namespace" $namespace) }}
