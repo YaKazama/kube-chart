@@ -59,7 +59,7 @@
           {{- /* 文件中的数据是 list 才追加 */ -}}
           {{- if eq $isNotSlice "false" }}
             {{- range $val }}
-              {{- $env = concat $env (include "definitions.EnvVar" . | fromYaml) }}
+              {{- $env = append $env (include "definitions.EnvVar" . | fromYaml) }}
             {{- end }}
           {{- end }}
         {{- end }}
