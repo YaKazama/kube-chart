@@ -39,7 +39,6 @@
       {{- $_ := set $container "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
       {{- $_ := set $container "Files" $.Files }}
       {{- $_ := set $container "Values" $.Values }}
-      {{- $_ := set $container "Context" $.Context }}
       {{- $containers = append $containers (include "workloads.Container" $container | fromYaml) }}
     {{- end }}
   {{- else if eq $isNotSlice "false" }}
@@ -47,7 +46,6 @@
       {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
       {{- $_ := set . "Files" $.Files }}
       {{- $_ := set . "Values" $.Values }}
-      {{- $_ := set . "Context" $.Context }}
       {{- $containers = append $containers (include "workloads.Container" . | fromYaml) }}
     {{- end }}
   {{- end }}
@@ -140,7 +138,6 @@
       {{- $_ := set $container "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
       {{- $_ := set $container "Files" $.Files }}
       {{- $_ := set $container "Values" $.Values }}
-      {{- $_ := set $container "Context" $.Context }}
       {{- $initContainers = append $initContainers (include "workloads.Container" $container | fromYaml) }}
     {{- end }}
   {{- else if eq $isNotSlice "false" }}
@@ -148,7 +145,6 @@
       {{- $_ := set . "os" $_os }}  {{- /* securityContext 需要用到它 */ -}}
       {{- $_ := set . "Files" $.Files }}
       {{- $_ := set . "Values" $.Values }}
-      {{- $_ := set . "Context" $.Context }}
       {{- $initContainers = append $initContainers (include "workloads.Container" . | fromYaml) }}
     {{- end }}
   {{- end }}
