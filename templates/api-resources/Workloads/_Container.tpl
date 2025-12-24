@@ -412,8 +412,10 @@
     {{- /* subPath subPathExpr 不能为 true|false */ -}}
     {{- if and (or (eq $subPath "true") (eq $subPath "false") (empty $subPathExpr)) }}
       {{- $readOnly = $subPath }}
+      {{- $subPath = "" }}
     {{- else if or (eq $subPathExpr "true") (eq $subPathExpr "false") }}
       {{- $readOnly = $subPathExpr }}
+      {{- $subPathExpr = "" }}
     {{- end }}
 
     {{- $val := dict "name" $name "mountPath" $mountPath "subPath" $subPath "subPathExpr" $subPathExpr "readOnly" $readOnly "recursiveReadOnly" $recursiveReadOnly "mountPropagation" $mountPropagation }}
