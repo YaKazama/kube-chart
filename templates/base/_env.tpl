@@ -68,9 +68,9 @@ k8s:
     # name devicePath
     device: "^(\\S+)\\s+(\\S+)$"
     # name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]
-    mount: "^(\\S+)\\s+(\\S+)\\s*(\\S+)?\\s*(\\S+)?\\s*(true|false)?\\s*(Disabled|IfPossible|Enabled)?\\s*(Bidirectional|HostToContainer|None)?$"
+    mount: "^(\\S+)(?:\\s+(\\S+))(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(true|false))?(?:\\s+(Disabled|IfPossible|Enabled))?(?:\\s+(Bidirectional|HostToContainer|None))?$"
     volumes: "^(cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi|local)(?:\\s+(.*?))(?:\\s+(.*?))?$"
-    configMap: "^([a-z][a-z0-9-]+)(:?\\s+(true|false))?(?:\\s+(\\d+))?(?:\\s+items\\s*\\((.*?)\\))?$"
+    configMap: "^([a-z][a-z0-9-]+)(?:\\s+(true|false))?(?:\\s+(\\d+))?(?:\\s+items\\s*\\((.*?)\\))?$"
     emptyDir: "^((?i)Memory)?(?:\\s*((?:\\d+(?:\\.\\d{0,3})?|\\.\\d{1,3})(?:[KMGTPE]i|[mkMGTPE])?))?$"
     fc0: "^targetWWNs\\s*\\((.*?)\\)\\s+(\\d+)\\s+(ext4|xfs|ntfs)\\s*(true|false)?$"
     fc1: "^wwids\\s*\\((.*?)\\)\\s+(ext4|xfs|ntfs)\\s*(true|false)?$"
