@@ -308,13 +308,15 @@
   {{- end }}
 
   {{- /* restartPolicy string */ -}}
-  {{- $restartPolicy := include "base.getValue" (list . "restartPolicy") }}
-  {{- $restartPolicyAllows := list "Always" "Never" "OnFailure" }}
-  {{- if and $restartPolicyRules (not (has $restartPolicy $restartPolicyAllows)) }}
-    {{- fail "container must set restartPolicy explicitly." }}
-  {{- end }}
-  {{- if $restartPolicy }}
-    {{- include "base.field" (list "restartPolicy" $restartPolicy "base.string" $restartPolicyAllows) }}
+  {{- if .restartPolicy }}
+    {{- $restartPolicy := include "base.getValue" (list . "restartPolicy") }}
+    {{- $restartPolicyAllows := list "Always" "Never" "OnFailure" }}
+    {{- if and $restartPolicyRules (not (has $restartPolicy $restartPolicyAllows)) }}
+      {{- fail "container must set restartPolicy explicitly." }}
+    {{- end }}
+    {{- if $restartPolicy }}
+      {{- include "base.field" (list "restartPolicy" $restartPolicy "base.string" $restartPolicyAllows) }}
+    {{- end }}
   {{- end }}
 
   {{- /* securityContext map */ -}}
