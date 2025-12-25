@@ -16,7 +16,7 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: "1.34"
+version: "v1.34"
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -25,6 +25,6 @@ version: "1.34"
 appVersion: "1.16.0"
 
 annotations:
-  kubeVersion: "1.34"
+  kubeVersion: "v1.34"
   kubeAPIURL: "https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/"
   helmVersion: "^4.0.0"
