@@ -166,20 +166,28 @@
   {{- end }}
 
   {{- /* replicas array */ -}}
+  {{- /* 如果原生 replicas 字段定义在 .Values 之下，会冲突 */ -}}
   {{- $replicasVal := include "base.getValue" (list . "replicas") | fromYamlArray }}
   {{- $replicas := list }}
-  {{- range $replicasVal }}
-    {{- $replicas = append $replicas (include "kustomization.Replicas" . | fromYaml) }}
-  {{- end }}
-  {{- $replicas = $replicas | mustUniq | mustCompact }}
-  {{- if $replicas }}
-    {{- include "base.field" (list "replicas" $replicas "base.slice") }}
+  {{- $isNotSlice := include "base.isFromYamlArrayError" $replicasVal }}
+  {{- if eq $isNotSlice "false" }}
+    {{- range $replicasVal }}
+      {{- $replicas = append $replicas (include "kustomization.Replicas" . | fromYaml) }}
+    {{- end }}
+    {{- $replicas = $replicas | mustUniq | mustCompact }}
+    {{- if $replicas }}
+      {{- include "base.field" (list "replicas" $replicas "base.slice") }}
+    {{- end }}
   {{- end }}
 
   {{- /* resources array */ -}}
+  {{- /* 如果原生 resources 字段定义在 .Values 之下，会冲突 */ -}}
   {{- $resources := include "base.getValue" (list . "resources") | fromYamlArray }}
-  {{- if $resources }}
-    {{- include "base.field" (list "resources" $resources "base.slice") }}
+  {{- $isNotSlice := include "base.isFromYamlArrayError" $resources }}
+  {{- if eq $isNotSlice "false" }}
+    {{- if $resources }}
+      {{- include "base.field" (list "resources" $resources "base.slice") }}
+    {{- end }}
   {{- end }}
 
   {{- /* secretGenerator array */ -}}
