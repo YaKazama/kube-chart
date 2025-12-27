@@ -96,12 +96,15 @@
   {{- /* images array */ -}}
   {{- $imagesVal := include "base.getValue" (list . "images") | fromYamlArray }}
   {{- $images := list }}
-  {{- range $imagesVal }}
-    {{- $images = append $images (include "kustomization.Image" . | fromYaml) }}
-  {{- end }}
-  {{- $images = $images | mustUniq | mustCompact }}
-  {{- if $images }}
-    {{- include "base.field" (list "images" $images "base.slice") }}
+  {{- $isNotSlice := include "base.isFromYamlArrayError" $imagesVal }}
+  {{- if eq $isNotSlice "false" }}
+    {{- range $imagesVal }}
+      {{- $images = append $images (include "kustomization.Image" . | fromYaml) }}
+    {{- end }}
+    {{- $images = $images | mustUniq | mustCompact }}
+    {{- if $images }}
+      {{- include "base.field" (list "images" $images "base.slice") }}
+    {{- end }}
   {{- end }}
 
   {{- /* labels array */ -}}
