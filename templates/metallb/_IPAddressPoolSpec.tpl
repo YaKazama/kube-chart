@@ -1,7 +1,7 @@
 {{- define "metallb.IPAddressPoolSpec" -}}
-  {{- /* address string array */ -}}
-  {{- $address := include "base.getValue" (list . "address") | fromYamlArray }}
-  {{- if $address }}
-    {{- include "base.field" (list "address" $address "base.slice.ips") }}
+  {{- /* addresses string array */ -}}
+  {{- $addresses := include "base.getValue" (list . "addresses") | fromYamlArray }}
+  {{- if $addresses }}
+    {{- include "base.field" (list "addresses" $addresses "base.slice.ips") }}
   {{- end }}
 {{- end }}
