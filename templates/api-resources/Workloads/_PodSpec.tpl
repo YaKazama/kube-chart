@@ -60,6 +60,10 @@
   {{- $dnsPolicy := include "base.getValue" (list . "dnsPolicy") }}
   {{- $dnsPolicyAllows := list "ClusterFirst" "ClusterFirstWithHostNet" "Default" "None" }}
   {{- if $dnsPolicy }}
+    {{- $hostNetwork := include "base.getValue" (list . "hostNetwork") }}
+    {{- if eq $hostNetwork "true" }}
+      {{- $dnsPolicy = "ClusterFirstWithHostNet" }}
+    {{- end }}
     {{- include "base.field" (list "dnsPolicy" $dnsPolicy "base.string" $dnsPolicyAllows) }}
   {{- end }}
 
