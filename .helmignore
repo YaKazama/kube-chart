@@ -25,6 +25,4 @@
 configs/
 examples/
 auto-publish.sh
-LICENSE
-*.md
 .helmignore
