@@ -10,7 +10,15 @@
   {{- end }}
 
   {{- /* capacity object/map */ -}}
-  {{- $capacity := include "base.getValue" (list . "capacity") | fromYaml }}
+  {{- /* Currently, storage size is the only resource that can be set or requested. Future attributes may include IOPS, throughput, etc. */ -}}
+  {{- $capacityVal := include "base.getValue" (list . "capacity") }}
+  {{- $isNotMap := include "base.isFromYamlError" ($capacityVal | fromYaml) }}
+  {{- $capacity := dict }}
+  {{- if eq $isNotMap "true" }}
+    {{- $_ := set $capacity "storage" $capacityVal }}
+  {{- else }}
+    {{- $capacity = pick ($capacityVal | fromYaml) "storage" }}
+  {{- end }}
   {{- if $capacity }}
     {{- include "base.field" (list "capacity" $capacity "base.map") }}
   {{- end }}

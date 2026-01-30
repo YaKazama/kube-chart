@@ -11,7 +11,11 @@ PersistentVolume:
   namespace: string
   # format: []string
   accessModes: []
-  capacity: string
+  # 支持原生格式和字符串格式
+  # 字符串格式
+  #   capacity: string
+  capacity: {}
+    # storage: 10Gi
   persistentVolumeReclaimPolicy: string # Delete | Recycle | Retain
   storageClassName: string
   volumeAttributesClassName: string
