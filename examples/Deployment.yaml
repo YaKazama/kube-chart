@@ -57,7 +57,7 @@ Deployment:
       - weight: int
         # 可以适配以下格式
         #   基于等值 / 不等值: = | != | > | <
-        #   基于集合: in | notin | exists | doesnotexist | gt | and lt
+        #   基于集合: in | notin | exists | doesnotexist | gt | lt
         #   基于原生字典
         matchExpressions: []
         # 同上
