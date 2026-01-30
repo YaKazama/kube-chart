@@ -2,6 +2,8 @@
 # 定义 Context 需使用 `{{- $_ := set . "Context" .Values.Namespace }}`
 
 Namespace:
+  # annotations 可以写，但不常见、不常用
+  annotations: {}
   labels: {}
   # name fullname 功能一致，但 fullnane 会覆盖 name
   # 此处的 name fullname 定义会作为命名空间的名

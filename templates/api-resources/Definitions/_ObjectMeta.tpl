@@ -4,7 +4,7 @@
   {{- $_kind := coalesce (get . "_pkind") (get . "_kind") }}
 
   {{- /* annotations map */ -}}
-  {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "StatefulSetSpec") (eq $_kind "Namespace")) }}
+  {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "StatefulSetSpec")) }}
     {{- $annotations := include "base.getValue" (list . "annotations") | fromYaml }}
     {{- if $annotations }}
       {{- include "base.field" (list "annotations" $annotations "base.map") }}
