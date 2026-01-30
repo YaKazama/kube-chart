@@ -1,7 +1,11 @@
 {{- define "cluster.PersistentVolumeSpec" -}}
   {{- /* accessModes string array */ -}}
   {{- $accessModes := include "base.getValue" (list . "accessModes") | fromYamlArray }}
+  {{- $accessModesAllows := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
   {{- if $accessModes }}
+    {{- if not (has $accessModes $accessModesAllows) }}
+      {{- fail (printf "accessModes '%s' invalid" $accessModes) }}
+    {{- end }}
     {{- include "base.field" (list "accessModes" $accessModes "base.slice") }}
   {{- end }}
 
