@@ -9,7 +9,6 @@ RoleBinding:
   name: string
   fullname: string
   namespace: string
-  RoleBinding:
   # 支持原生格式 []map[string]string 和抽象字符串 string
   # 字符串格式，会将 roleRef 的值直接作为 roleRef.name 的值来使用，而 apiGroup 和 kind 会强制设置为固定值
   #   roleRef: string
