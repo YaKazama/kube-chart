@@ -13,7 +13,7 @@ Service:
   externalName: string
   externalTrafficPolicy: string # Cluster | Local
   healthCheckNodePort: int
-  internalTrafficPolicy: string
+  internalTrafficPolicy: string # Cluster | Local
   ipFamilies: [] # IPv4 | IPv6
   ipFamilyPolicy: string # SingleStack | PreferDualStack | RequireDualStack
   loadBalancerClass: string
@@ -26,6 +26,7 @@ Service:
   publishNotReadyAddresses: bool
   selector: {}
   sessionAffinity: string # ClientIP | None
+  # 范围 1 - 86400 单位: 秒
   sessionAffinityConfig: int
   trafficDistribution: string # PreferClose | PreferSameZone | PreferSameNode
   type: string # ExternalName | ClusterIP | NodePort | LoadBalancer
