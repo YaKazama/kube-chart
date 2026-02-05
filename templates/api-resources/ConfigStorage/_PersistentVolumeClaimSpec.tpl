@@ -71,7 +71,8 @@
 
   {{- /* volumeMode string */ -}}
   {{- $volumeMode := include "base.getValue" (list . "volumeMode") }}
-  {{- if $volumeMode }}
+  {{- $volumeModeAllows := list "Block" "Filesystem" }}
+  {{- if has $volumeMode $volumeModeAllows }}
     {{- include "base.field" (list "volumeMode" $volumeMode) }}
   {{- end }}
 
