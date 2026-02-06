@@ -26,3 +26,5 @@ configs/
 examples/
 auto-publish.sh
 .helmignore
+*.md
+templates/*/*.md
