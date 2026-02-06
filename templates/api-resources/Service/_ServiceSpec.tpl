@@ -120,14 +120,18 @@
   {{- end }}
 
   {{- /* selector object/map */ -}}
-  {{- $_type := include "base.getValue" (list . "type") }}
-  {{- $_selectorAllows := list "ClusterIP" "NodePort" "LoadBalancer" }}
-  {{- if mustHas $_type $_selectorAllows }}
-    {{- $selector := include "base.getValue" (list . "selector") | fromYaml }}
-    {{- $labels := include "base.labels" . | fromYaml }}
-    {{- $selector = merge $selector $labels }}
-    {{- if $selector }}
-      {{- include "base.field" (list "selector" $selector "base.map") }}
+  {{- /*  */ -}}
+  {{- $ignoreSelector := include "base.getValue" (list . "ignoreSelector") }}
+  {{- if not $ignoreSelector }}
+    {{- $_type := include "base.getValue" (list . "type") }}
+    {{- $_selectorAllows := list "ClusterIP" "NodePort" "LoadBalancer" }}
+    {{- if mustHas $_type $_selectorAllows }}
+      {{- $selector := include "base.getValue" (list . "selector") | fromYaml }}
+      {{- $labels := include "base.labels" . | fromYaml }}
+      {{- $selector = merge $selector $labels }}
+      {{- if $selector }}
+        {{- include "base.field" (list "selector" $selector "base.map") }}
+      {{- end }}
     {{- end }}
   {{- end }}
 

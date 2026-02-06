@@ -24,6 +24,9 @@ Service:
   #   [nodePort:]port[:targetPort][/protocol][@appProtocol][#name]
   ports: []
   publishNotReadyAddresses: bool
+  # 是否忽略 selector
+  #   如果 ignoreSelector = true 则会创建 "无选择算符的 Service"
+  ignoreSelector: bool
   selector: {}
   sessionAffinity: string # ClientIP | None
   # 范围 1 - 86400 单位: 秒
