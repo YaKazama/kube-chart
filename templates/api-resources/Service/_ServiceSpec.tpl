@@ -120,7 +120,7 @@
   {{- end }}
 
   {{- /* selector object/map */ -}}
-  {{- /*  */ -}}
+  {{- /* 如果 ignoreSelector = true 则会创建 "无选择算符的 Service" */ -}}
   {{- $ignoreSelector := include "base.getValue" (list . "ignoreSelector") }}
   {{- if not $ignoreSelector }}
     {{- $_type := include "base.getValue" (list . "type") }}
