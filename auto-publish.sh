@@ -44,7 +44,7 @@ function publish() {
             if [[ "${ngx_upload}" == "True" ]]; then
                 helm_upload_url="${index_url}/upload"
 
-                if [[ "${index_url}" =~ (12334.icu) || -n "${ngx_k}" ]]; then
+                if [[ "${index_url}" =~ (12334.host) || -n "${ngx_k}" ]]; then
                     helm_custom_nginx_header="NGX_K: ${ngx_k}"
                     curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/${name}-${version}.tgz --data-binary @${name}-${version}.tgz
                     curl -XPUT -H "${helm_custom_nginx_header}" ${helm_upload_url}/index.yaml --data-binary @index.yaml
@@ -106,7 +106,7 @@ function main() {
     [[ "${_NO_CLEAN}" != "True" ]] && _NO_CLEAN="False"
     [[ -z "$1" ]] && usage
     [[ -z "${INDEX_URL}" ]] && echo "HELM Chart 仓库未找到，--index-url 参数未指定！"
-    [[ "${INDEX_URL}" =~ (12334.icu) && -z "${_NGX_K}" ]] && echo "--ngx-k 未定义！" && usage
+    [[ "${INDEX_URL}" =~ (12334.host) && -z "${_NGX_K}" ]] && echo "--ngx-k 未定义！" && usage
     publish "$1" "${INDEX_URL}" "${_NGX_UPLOAD}" "${MERGE_STATUS}" "${_NEXUS_LOGIN}" "${_NO_CLEAN}" "${_NGX_K}"
 }
 
