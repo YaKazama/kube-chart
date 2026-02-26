@@ -7,12 +7,15 @@
 
   提示：
     - 两个参数时， define 默认为 "base.string"
-    - 三个参数时， define 可以为任意模板定义名称或 "quote"
+    - 三个参数时， define 可以为任意模板定义名称或 "quote"、"containers.env"
+      - quote 调用 base.string  主要处理 [a, b, c] 类型的列表
+      - containers.env 调用 base.process.containers.env 专门处理 containers.env.value 不加引号的问题
     - 四个参数时， define 会强制为 "base.string" (有 allows 的情况，全是 string 类型的数据)
 
   传值使用示例：
     - key value / key value "base.string"
     - key value "quote"
+    - key value "containers.env"
     - key value "base.string" allowsList
 
   return: key: value
@@ -24,6 +27,9 @@
   {{- end }}
 
   {{- $sliceLen := len . }}
+  {{- if not (or (eq $sliceLen 2) (eq $sliceLen 3) (eq $sliceLen 4)) }}
+    {{- fail (printf "base.field: Invalid parameter count %d, expected 2-4" $sliceLen) }}
+  {{- end }}
 
   {{- /* 2. 解析基础参数 */}}
   {{- $key := include "base.string" (index . 0) }}
@@ -43,8 +49,11 @@
   {{- $isQuote := false }}
   {{- if eq $define "quote" }}
     {{- $isQuote = true }}
+    {{- $define = "base.string" }}
+  {{- else if eq $define "containers.env" }}
+    {{- $define = "base.process.containers.env" }}
   {{- end }}
-  {{- if or $allows $isQuote }}
+  {{- if or $allows }}
     {{- $define = "base.string" }}
   {{- end }}
 
@@ -54,9 +63,7 @@
   {{- /* 5. 多行字符串判断（兼容Unix/Windows换行符，只判断不修改） */ -}}
   {{- /* 精准判断多行字符串（三步校验） 1. 是字符串类型 2. 非空 3. 包含换行符 */ -}}
   {{- $isMultiLine := false }}
-  {{- if kindIs "string" $val }}
-    {{- $isMultiLine = and (ne $val "") (or (contains "\n" $val) (contains "\r\n" $val)) }}
-  {{- end }}
+  {{- $isMultiLine = and (ne $val "") (or (contains "\n" $val) (contains "\r\n" $val)) }}
 
   {{- /* 6. 处理引号 仅对单行字符串添加引号，多行跳过 */}}
   {{- /* 如果 isQuote = true 将默认值和处理后的值都加双引号 */ -}}
@@ -77,9 +84,10 @@
     {{- /* 辅助判断：是否为切片/映射类型 */}}
     {{- $isMap := or (contains "map" $define) (contains "object" $define) }}
     {{- $isSlice := or (contains "slice" $define) (contains "array" $define) (contains "list" $define) (contains "tuple" $define) }}
+    {{- $isEnv := eq $define "base.process.containers.env" }}
 
     {{- /* 处理sliceLen的不同情况（合并逻辑，简化代码） */}}
-    {{- if or $isMap $isSlice }}
+    {{- if or $isMap $isSlice $isEnv }}
       {{- /* 切片/映射：原有换行缩进逻辑 */}}
       {{- nindent 0 "" -}}{{ $key }}:
       {{- $finalVal | nindent 2 }}

@@ -287,3 +287,31 @@
 
   {{- . }}
 {{- end }}
+
+
+{{- /* 特定定义：专用于处理 containers.env 为 value 添加引号 */ -}}
+{{- define "base.process.containers.env" -}}
+  {{- include "base.invalid" . }}
+
+  {{- if kindIs "slice" . }}
+    {{- $val := list }}
+
+    {{- range . }}
+      {{- /* 核心逻辑：仅判断 value/valueFrom（二者互斥），无需判断 name */ -}}
+      {{- if hasKey . "value" }}
+        {{- if kindIs "string" .value }}
+          {{- $val = append $val . }}
+        {{- else }}
+          {{- $val = append $val (dict "name" .name "value" (.value | quote | replace "\"" "")) }}
+        {{- end }}
+      {{- else -}}
+        {{- $val = append $val . }}
+      {{- end -}}
+    {{- end -}}
+    {{- /* 返回处理后的 YAML 字符串，方便外部调用 */ -}}
+    {{- toYamlPretty $val }}
+
+  {{- else }}
+    {{- include "base.faild" (dict "iName" "base.process.containers.env" "iValue" .) }}
+  {{- end }}
+{{- end }}

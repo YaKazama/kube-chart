@@ -68,7 +68,7 @@
   {{- end }}
   {{- $env = $env | mustUniq | mustCompact }}
   {{- if $env }}
-    {{- include "base.field" (list "env" $env "base.slice") }}
+    {{- include "base.field" (list "env" $env "containers.env") }}
   {{- end }}
 
   {{- /* envFrom array */ -}}
