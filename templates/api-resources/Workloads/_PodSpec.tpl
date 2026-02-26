@@ -82,7 +82,7 @@
   {{- end }}
   {{- $hostAliases = $hostAliases | mustUniq | mustCompact }}
   {{- if $hostAliases }}
-    {{- include "base.field" (list "hostAlias" $hostAliases "base.slice") }}
+    {{- include "base.field" (list "hostAliases" $hostAliases "base.slice") }}
   {{- end }}
 
   {{- /* hostNetwork bool */ -}}
