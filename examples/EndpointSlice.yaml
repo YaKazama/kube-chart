@@ -1,0 +1,49 @@
+# 理论上 EndpointSlice 下定义的字段，放到 .Values .Values.global 中也是可以生效的
+# 定义 Context 需使用 `{{- $_ := set . "Context" .Values.EndpointSlice }}`
+
+EndpointSlice:
+  annotations: {}
+  labels: {}
+  # name fullname 功能一致，但 fullnane 会覆盖 name
+  # 优先级 fullname > name
+  name: string
+  fullname: string
+  namespace: string
+  addressType: string # FQDN | IPv4 | IPv6
+  # []string
+  # 格式: port[/protocol][@appProtocol][#name]
+  # 最多 100 条
+  # appProtocol 参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.35/#endpointport-v1-discovery-k8s-io
+  ports: []
+    # - 8989/tcp@kubernetes.io/h2c#aaaa
+  # 原生格式: []map[string]string
+  # 最多 1000 条记录
+  endpoints:
+    - addresses:
+        - string
+      conditions:
+        ready: bool
+        serving: bool
+        terminating: bool
+      deprecatedTopology: {}
+      # []string
+      # 正则格式: node|zone name ...
+      #   name 的值，最多 8 个
+      hints:
+        - node n-xxxx n-yyyy...
+        - zone z-xxxx z-yyyy...
+        # forNodes:
+        #   - name: string
+        # forZones:
+        #   - name: string
+      hostname: string
+      nodeName: string
+      targetRef:
+        apiVersion: string
+        fieldPath: string
+        kind: string
+        name: string
+        namespace: string
+        resourceVersion: string
+        uid: string
+      zone: string
