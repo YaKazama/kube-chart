@@ -400,24 +400,30 @@
   {{- range $volumeMountsVal }}
     {{- $match := regexFindAll $const.k8s.volume.mount . -1 }}
     {{- if not $match }}
-      {{- fail (printf "workloads.Container: volumeMounts invalid. Values: %s, format: 'name mountPath [subPath] [subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]'" .) }}
+      {{- fail (printf "workloads.Container: volumeMounts invalid. Values: %s, format: 'name mountPath [subPath|subPathExpr] [readOnly] [recursiveReadOnly] [mountPropagation]'" .) }}
     {{- end }}
 
     {{- $name := regexReplaceAll $const.k8s.volume.mount . "${1}" | trim }}
     {{- $mountPath := regexReplaceAll $const.k8s.volume.mount . "${2}" | trim }}
-    {{- $subPath := regexReplaceAll $const.k8s.volume.mount . "${3}" | trim }}
-    {{- $subPathExpr := regexReplaceAll $const.k8s.volume.mount . "${4}" | trim }}
-    {{- $readOnly := regexReplaceAll $const.k8s.volume.mount . "${5}" | trim }}
-    {{- $recursiveReadOnly := regexReplaceAll $const.k8s.volume.mount . "${6}" | trim }}
-    {{- $mountPropagation := regexReplaceAll $const.k8s.volume.mount . "${7}" | trim }}
+    {{- $subPathLike := regexReplaceAll $const.k8s.volume.mount . "${3}" | trim }}
+    {{- $readOnly := regexReplaceAll $const.k8s.volume.mount . "${4}" | trim }}
+    {{- $recursiveReadOnly := regexReplaceAll $const.k8s.volume.mount . "${5}" | trim }}
+    {{- $mountPropagation := regexReplaceAll $const.k8s.volume.mount . "${6}" | trim }}
 
     {{- /* subPath subPathExpr 不能为 true|false */ -}}
-    {{- if and (or (eq $subPath "true") (eq $subPath "false") (empty $subPathExpr)) }}
-      {{- $readOnly = $subPath }}
-      {{- $subPath = "" }}
-    {{- else if or (eq $subPathExpr "true") (eq $subPathExpr "false") }}
-      {{- $readOnly = $subPathExpr }}
-      {{- $subPathExpr = "" }}
+    {{- if or (eq $subPathLike "true") (eq $subPathLike "false") }}
+      {{- $readOnly = $subPathLike }}
+      {{- $subPathLike = "" }}
+    {{- end }}
+    {{- $subPath := "" }}
+    {{- $subPathExpr := "" }}
+    {{- if ne $subPathLike "" }}
+      {{- $hasEnvVar := regexFind $const.k8s.volume.mountSubPathLike $subPathLike }}
+      {{- if $hasEnvVar }}
+        {{- $subPathExpr = $subPathLike }}
+      {{- else }}
+        {{- $subPath = $subPathLike }}
+      {{- end }}
     {{- end }}
 
     {{- $val := dict "name" $name "mountPath" $mountPath "subPath" $subPath "subPathExpr" $subPathExpr "readOnly" $readOnly "recursiveReadOnly" $recursiveReadOnly "mountPropagation" $mountPropagation }}
