@@ -1,12 +1,9 @@
 {{- define "configStorage.PersistentVolumeClaimSpec" -}}
   {{- /* accessModes string array */ -}}
-  {{- $accessModes := include "base.getValue" (list . "accessModes") | fromYamlArray }}
+  {{- $accessModes := include "base.getValue" (list . "accessModes") | fromYamlArray | mustUniq | mustCompact }}
   {{- $accessModesAllows := list "ReadWriteOnce" "ReadOnlyMany" "ReadWriteMany" "ReadWriteOncePod" }}
   {{- if $accessModes }}
-    {{- if not (has $accessModes $accessModesAllows) }}
-      {{- fail (printf "configStorage.PersistentVolumeClaimSpec: accessModes '%s' invalid" $accessModes) }}
-    {{- end }}
-    {{- include "base.field" (list "accessModes" $accessModes "base.slice") }}
+    {{- include "base.field" (list "accessModes" (list $accessModes $accessModesAllows) "base.slice.allows") }}
   {{- end }}
 
   {{- /* dataSource map */ -}}

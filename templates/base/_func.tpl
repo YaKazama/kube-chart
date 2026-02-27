@@ -245,11 +245,11 @@
   {{- $allows := index . 1 }}
 
   {{- if not (kindIs "slice" $data) }}
-    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 1) }}
+    {{- include "base.faild" (dict "iName" "base.slice.allows" "iValue" . "iLine" 1) }}
   {{- end }}
 
   {{- if not (kindIs "slice" $allows) }}
-    {{- include "base.faild" (dict "iName" "base.slice.ips" "iValue" . "iLine" 1) }}
+    {{- include "base.faild" (dict "iName" "base.slice.allows" "iValue" . "iLine" 2) }}
   {{- end }}
 
   {{- $val := list }}
