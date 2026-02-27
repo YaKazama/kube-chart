@@ -171,3 +171,7 @@
 {{- /* 生成 MetalLB L2Advertisement */ -}}
 {{- $_ := set . "Context" .Values.L2Advertisement }}
 {{- include "metallb.L2Advertisement" . }}
+
+{{- /* EndpointSlice */ -}}
+{{- $_ := set . "Context" .Values.EndpointSlice }}
+{{- include "service.EndpointSlice" . }}
