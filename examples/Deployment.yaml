@@ -140,7 +140,7 @@ Deployment:
     fsGroupChangePolicy: string # OnRootMismatch | Always
     runAsGroup: int
     runAsNonRoot: bool
-    runAsUser: string
+    runAsUser: int
     seLinuxChangePolicy: string
     seLinuxOptions:
       level: string
