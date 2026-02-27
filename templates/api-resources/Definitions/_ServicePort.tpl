@@ -10,7 +10,7 @@
   {{- $_port := include "base.getValue" (list . "port") }}
   {{- $_targetPort := include "base.getValue" (list . "targetPort") }}
   {{- $_protocol := include "base.getValue" (list . "protocol") | lower }}
-  {{- include "base.field" (list "name" (coalesce $name (printf "%s-%s-%s-%s" (coalesce $_protocol "tcp") $_port (coalesce $_targetPort $_port) (randAlpha 8 | lower)))) }}
+  {{- include "base.field" (list "name" (coalesce $name (printf "%s-%s-%s-%s" (coalesce $_protocol "tcp") $_port (coalesce $_targetPort $_port) (randAlpha 8 | lower))) "base.name") }}
 
   {{- /* nodePort int */ -}}
   {{- $nodePort := include "base.getValue" (list . "nodePort") }}
