@@ -15,11 +15,10 @@
   {{- /* namespace string */ -}}
   {{- if eq $kind "ServiceAccount" }}
     {{- $namespace := include "base.getValue" (list . "namespace") }}
-    {{- if $namespace }}
-      {{- include "base.field" (list "namespace" $namespace "base.namespace") }}
-    {{- else }}
+    {{- if empty $namespace }}
       {{- fail "old.Subject: kind=ServiceAccount namespace cannot be empty" }}
     {{- end }}
+    {{- include "base.field" (list "namespace" $namespace "base.namespace") }}
   {{- end }}
 
   {{- /* apiGroup string */ -}}

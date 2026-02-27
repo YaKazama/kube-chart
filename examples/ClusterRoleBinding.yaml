@@ -8,7 +8,7 @@ ClusterRoleBinding:
   # 优先级 fullname > name
   name: string
   fullname: string
-  # 支持原生格式 []map[string]string 和抽象字符串 string
+  # 支持原生格式 map[string]string 和抽象字符串 string
   # 字符串格式，会将 roleRef 的值直接作为 roleRef.name 的值来使用，而 apiGroup 和 kind 会强制设置为固定值
   #   roleRef: string
   roleRef:
@@ -24,3 +24,5 @@ ClusterRoleBinding:
       namespace: string
       kind: string
       apiGroup: string
+# 如果 kind = user | group namespace 应为空 apiGroup 不能为空
+# 如果 kind = serviceaccount apiGroup 应为空 namespace 不能为空

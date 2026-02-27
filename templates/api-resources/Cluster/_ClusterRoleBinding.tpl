@@ -20,11 +20,11 @@
     {{- /* string 格式会直接作为 name 属性的值，因为 kind 和 apiGroup 理论上是个固定值 */ -}}
     {{- $isNotSlice := include "base.isFromYamlArrayError" ($roleRefVal | fromYamlArray) }}
     {{- $isNotMap := include "base.isFromYamlError" ($roleRefVal | fromYaml) }}
-    {{- $val := dict }}
+    {{- $val := dict "apiGroup" "rbac.authorization.k8s.io" "kind" "ClusterRole" }}
     {{- if and (eq $isNotSlice "true") (eq $isNotMap "true") }}
-      {{- $val = dict "apiGroup" "rbac.authorization.k8s.io" "kind" "ClusterRole" "name" $roleRefVal }}
+      {{- $val = mergeOverwrite $val (dict "name" $roleRefVal) }}
     {{- else if eq $isNotMap "false" }}
-      {{- $val = pick ($roleRefVal | fromYaml) "apiGroup" "kind" "name" }}
+      {{- $val = mergeOverwrite $val (pick ($roleRefVal | fromYaml) "apiGroup" "kind" "name") }}
     {{- end }}
     {{- $roleRef := include "definitions.RoleRef" $val | fromYaml }}
     {{- if $roleRef }}
@@ -40,26 +40,38 @@
     {{- if kindIs "string" . }}
       {{- $match := regexFindAll $const.k8s.rbac.subject . -1 }}
       {{- if not $match }}
-        {{- fail (printf "cluster.RoleBinding: subjects invalid. Values: '%s', format: 'kind name [namespace]'" .) }}
+        {{- fail (printf "cluster.ClusterRoleBinding: subjects invalid. Values: '%s', format: 'kind name [namespace|apiGroup]'" .) }}
       {{- end }}
 
-      {{- $val := dict }}
       {{- $kind := regexReplaceAll $const.k8s.rbac.subject . "${1}" | trim }}
       {{- $name := regexReplaceAll $const.k8s.rbac.subject . "${2}" | trim }}
+      {{- $nsOrag := regexReplaceAll $const.k8s.rbac.subject . "${3}" | trim }}
+
       {{- $val = dict "kind" $kind "name" $name }}
       {{- if eq $kind "ServiceAccount" }}
-        {{- $namespace := regexReplaceAll $const.k8s.rbac.subject . "${3}" | trim }}
-        {{- if empty $namespace }}
-          {{- fail "cluster.RoleBinding: kind=ServiceAccount, namespace cannot be empty" }}
+        {{- if empty $nsOrag }}
+          {{- fail "cluster.ClusterRoleBinding: kind=ServiceAccount, namespace cannot be empty" }}
         {{- end }}
-        {{- $val = dict "kind" $kind "name" $name "namespace" $namespace }}
+        {{- $val = mergeOverwrite $val (dict "namespace" $nsOrag) }}
+      {{- else }}
+        {{- $val = mergeOverwrite $val (dict "apiGroup" $nsOrag) }}
       {{- end }}
 
-      {{- $subjects = append $subjects (include "old.Subject" $val | fromYaml) }}
-
     {{- else if kindIs "map" . }}
-      {{- $subjects = append $subjects (include "old.Subject" . | fromYaml) }}
+      {{- if empty (get . "kind") }}
+        {{- fail "cluster.ClusterRoleBinding: kind cannot be empty" }}
+      {{- end }}
+
+      {{- if eq .kind "ServiceAccount" }}
+        {{- if empty .namespace }}
+          {{- fail "cluster.ClusterRoleBinding: kind=ServiceAccount, namespace cannot be empty" }}
+        {{- end }}
+        {{- $val = pick . "kind" "name" "namespace" }}
+      {{- else }}
+        {{- $val = pick . "kind" "name" "apiGroup" }}
+      {{- end }}
     {{- end }}
+    {{- $subjects = append $subjects (include "old.Subject" $val | fromYaml) }}
   {{- end }}
   {{- $subjects = $subjects | mustUniq | mustCompact }}
   {{- if $subjects }}
