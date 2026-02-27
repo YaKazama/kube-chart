@@ -173,5 +173,6 @@
 {{- include "metallb.L2Advertisement" . }}
 
 {{- /* EndpointSlice */ -}}
+---
 {{- $_ := set . "Context" .Values.EndpointSlice }}
 {{- include "service.EndpointSlice" . }}
