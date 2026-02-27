@@ -52,6 +52,12 @@
     {{- end }}
   {{- end }}
 
+  {{- /* 保底，强制添加 name 标签。相当于强制 justNameLabel=true */ -}}
+  {{- if empty $labels }}
+    {{- $name := include "base.name" . }}
+    {{- $labels = dict "name" $name }}
+  {{- end }}
+
   {{- if $labels }}
     {{- toYamlPretty $labels }}
   {{- end }}
