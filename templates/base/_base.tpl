@@ -4,7 +4,7 @@
   参数:
     - index 0: list 上下文(any)
     - index 1: 目标键名(string)
-    - index 2: 强制类型(int|int64|float64|atoi|toString|toStrings|toDecimal)
+    - index 2: 强制类型(int|int64|float64|atoi|toString|toStrings|toDecimal|quote|squote)
       - 特殊：若此值为 "debug" 则会输出 DEBUG 信息
 
   可以处理的数据类型包括：
@@ -19,7 +19,7 @@
 */ -}}
 {{- define "base.getValue" -}}
   {{- if or (not (kindIs "slice" .)) (lt (len .) 2) }}
-    {{- fail (printf "base.getValue: Must be a slice and requires 2-3 parameters. format: '[]any{ctx(any) key(string) type(string, choices: int|int64|float64|atoi|toString|toStrings|toDecimal)}', len: '%d', type: '%s', values: '%s'" (len .) (kindOf .) .) }}
+    {{- fail (printf "base.getValue: Must be a slice and requires 2-3 parameters. format: '[]any{ctx(any) key(string) type(string, choices: int|int64|float64|atoi|toString|toStrings|toDecimal|quote|squote)}', len: '%d', type: '%s', values: '%s'" (len .) (kindOf .) .) }}
   {{- end }}
 
   {{- $root := index . 0 }}
@@ -109,6 +109,10 @@
                 {{- $res = toStrings . }}
               {{- else if eq $newType "toDecimal" }}
                 {{- $res = toDecimal . }}
+              {{- else if eq $newType "quote" }}
+                {{- $res = quote . }}
+              {{- else if eq $newType "squote" }}
+                {{- $res = squote . }}
               {{- else }}
                 {{- $res = . }}
               {{- end }}
