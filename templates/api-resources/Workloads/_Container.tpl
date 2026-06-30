@@ -238,49 +238,51 @@
     # 读取内容后与 resources 合并
     # 优先级 resources < resourcesFileRefs 且 resourcesFileRefs 按序覆盖
   */ -}}
-  {{- $resourcesVal := include "base.getValue" (list . "resources") | fromYaml }}
-  {{- $resources := dict }}
-  {{- if $resourcesVal }}
-    {{- $val := pick $resourcesVal "limits" "requests" }}
-    {{- $resources = include "definitions.ResourceRequirements" $val | fromYaml }}
-  {{- end }}
-  {{- /* 处理 resourcesFileRefs 将数据追加到 resources 中 */ -}}
-  {{- $resourcesFileRefs := include "base.getValue" (list . "resourcesFileRefs") | fromYamlArray }}
-  {{- range $resourcesFileRefs }}
-    {{- $filePath := include "base.getValue" (list . "filePath") }}
-    {{- $filePath = include "base.relPath" $filePath }}
-    {{- if empty $filePath }}
-      {{- fail "workloads.Container: envFileRefs[].filePath cannot be empty" }}
+  {{- if not (or .Context.resources .Values.resources .global.resources) }}
+    {{- $resourcesVal := include "base.getValue" (list . "resources") | fromYaml }}
+    {{- $resources := dict }}
+    {{- if $resourcesVal }}
+      {{- $val := pick $resourcesVal "limits" "requests" }}
+      {{- $resources = include "definitions.ResourceRequirements" $val | fromYaml }}
     {{- end }}
-    {{- $content := $.Files.Get $filePath }}
-
-    {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
-    {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
-    {{- if empty $fieldPaths }}
-      {{- /* 文件中的数据是 map 才追加 */ -}}
-      {{- $contentFormat := $content | fromYaml }}
-      {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
-      {{- if eq $isNotMap "false" }}
-        {{- $val := pick $contentFormat "limits" "requests" }}
-        {{- $resources = mergeOverwrite $resources (include "definitions.ResourceRequirements" $val | fromYaml) }}
+    {{- /* 处理 resourcesFileRefs 将数据追加到 resources 中 */ -}}
+    {{- $resourcesFileRefs := include "base.getValue" (list . "resourcesFileRefs") | fromYamlArray }}
+    {{- range $resourcesFileRefs }}
+      {{- $filePath := include "base.getValue" (list . "filePath") }}
+      {{- $filePath = include "base.relPath" $filePath }}
+      {{- if empty $filePath }}
+        {{- fail "workloads.Container: envFileRefs[].filePath cannot be empty" }}
       {{- end }}
+      {{- $content := $.Files.Get $filePath }}
 
-    {{- /* 通过 fieldPaths 取值 */ -}}
-    {{- else }}
-      {{- range $fieldPaths }}
+      {{- $fieldPaths := include "base.getValue" (list . "fieldPaths") | fromYamlArray }}
+      {{- /* fieldPaths 为空，尝试加载整个文件 */ -}}
+      {{- if empty $fieldPaths }}
+        {{- /* 文件中的数据是 map 才追加 */ -}}
         {{- $contentFormat := $content | fromYaml }}
         {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
         {{- if eq $isNotMap "false" }}
-          {{- $_val := include "base.map.dig" (dict "m" $contentFormat "k" .) | fromYaml }}
-          {{- $val := pick $_val "limits" "requests" }}
+          {{- $val := pick $contentFormat "limits" "requests" }}
           {{- $resources = mergeOverwrite $resources (include "definitions.ResourceRequirements" $val | fromYaml) }}
+        {{- end }}
+
+      {{- /* 通过 fieldPaths 取值 */ -}}
+      {{- else }}
+        {{- range $fieldPaths }}
+          {{- $contentFormat := $content | fromYaml }}
+          {{- $isNotMap := include "base.isFromYamlError" $contentFormat }}
+          {{- if eq $isNotMap "false" }}
+            {{- $_val := include "base.map.dig" (dict "m" $contentFormat "k" .) | fromYaml }}
+            {{- $val := pick $_val "limits" "requests" }}
+            {{- $resources = mergeOverwrite $resources (include "definitions.ResourceRequirements" $val | fromYaml) }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}
-  {{- end }}
-  {{- if $resources }}
     {{- if $resources }}
-      {{- include "base.field" (list "resources" $resources "base.map") }}
+      {{- if $resources }}
+        {{- include "base.field" (list "resources" $resources "base.map") }}
+      {{- end }}
     {{- end }}
   {{- end }}
 
