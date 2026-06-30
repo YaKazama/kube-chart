@@ -308,7 +308,7 @@
         {{- if kindIs "string" .value }}
           {{- $val = append $val . }}
         {{- else }}
-          {{- $val = append $val (dict "name" .name "value" (.value | quote | replace "\"" "")) }}
+          {{- $val = append $val (dict "name" .name "value" ((include "base.int" .value) | quote | replace "\"" "")) }}
         {{- end }}
       {{- else -}}
         {{- $val = append $val . }}

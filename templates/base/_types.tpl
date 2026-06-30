@@ -44,26 +44,20 @@
 {{- define "base.int" -}}
   {{- include "base.invalid" . }}
 
-  {{- $typesNum := list "float64" "int" "int64" }}
-  {{- $typesStr := list "string" }}
-
   {{- $type := kindOf . }}
 
-  {{- if mustHas $type $typesNum }}
-    {{- /* float64 精度只有 15 位，从 16 位开始四舍五入 */ -}}
-    {{- /* 此处直接强制转为 int 类型，但会丢失小数位后的所有内容，这似乎适用于大部分场景 */ -}}
-    {{- /* 若确实需要原样返回，在定义时添加双引号，使用字符串即可 */ -}}
-    {{- int . }}
+  {{- $typesInt := list "int" "int64" }}
+  {{- $typesFloat := list "float64" }}
+  {{- $typesStr := list "string" }}
+
+  {{- if mustHas $type $typesInt }}
+    {{- printf "%d" . }}
+  {{- else if mustHas $type $typesFloat }}
+    {{- printf "%.0f" . }}
   {{- else if mustHas $type $typesStr }}
     {{- $const := include "base.env" "" | fromYaml }}
-
     {{- if mustRegexMatch $const.types.int . }}
-      {{- $val := atoi . }}
-      {{- if eq $val 9223372036854775807 }}
-        {{- . }}
-      {{- else }}
-        {{- $val }}
-      {{- end }}
+      {{- . }}
     {{- else }}
       {{- include "base.faild" (dict "iName" "base.int" "iValue" . "iLine" 1) }}
     {{- end }}
