@@ -28,3 +28,5 @@
 **/Chart.lock
 **/library-charts*.tgz
 **/*.tgz
+
+TODO.md
