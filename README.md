@@ -9,7 +9,7 @@
     dependencies:
     - name: kube-chart
       version: v1.34
-      repository: https://helm.12334.icu/
+      repository: https://helm-repository.example.com/
     ```
 
   - 若遇到以下报错，可忽略。
