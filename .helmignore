@@ -28,3 +28,8 @@ auto-publish.sh
 .helmignore
 *.md
 templates/*/*.md
+output/
+docs/
+charts/
+index.yaml
+*.tgz
