@@ -21,10 +21,10 @@
 {{- define "base.get" -}}
   {{- /* Step 1: 参数校验 */}}
   {{- if not (kindIs "slice" .) }}
-    {{- fail "[base.get] 参数必须是 slice 类型" }}
+    {{- fail "[base.get] parameter must be slice type" }}
   {{- end }}
   {{- if lt (len .) 2 }}
-    {{- fail (printf "[base.get] 至少需要 2 个参数(上下文、点分路径)，当前传入 %d 个" (len .)) }}
+    {{- fail (printf "[base.get] at least 2 parameters required (context, dot-path), got '%d'" (len .)) }}
   {{- end }}
 
   {{- /* Step 2: 解析参数 */}}
@@ -52,7 +52,7 @@
   {{- $keys := splitList "." $keyPath }}
 
   {{- if $debug }}
-    {{- printf "DEBUG[base.get]: keyPath=%s, keys=%v, type=%s, mergeMode=%s, required=%v\n" $keyPath $keys $type $mergeMode $required }}
+    {{- printf "DEBUG[base.get]: keyPath='%s', keys='%v', type='%s', mergeMode='%s', required='%v'\n" $keyPath $keys $type $mergeMode $required }}
   {{- end }}
 
   {{- /* Step 4: 初始化状态变量 */}}
@@ -106,7 +106,7 @@
     {{- end }}
 
     {{- if $debug }}
-      {{- printf "DEBUG[base.get]: source=%v, nested val=%v (kind=%s)\n" . $val (kindOf $val) }}
+      {{- printf "DEBUG[base.get]: source='%v', nested val='%v' (kind='%s')\n" . $val (kindOf $val) }}
     {{- end }}
 
     {{- /* 6.3 类型分类 */}}
@@ -129,19 +129,19 @@
         {{- $firstType = "basic" }}
         {{- $done = true }}
         {{- if $debug }}
-          {{- printf "DEBUG[base.get]: 基础类型赋值成功: res=%v\n" $res }}
+          {{- printf "DEBUG[base.get]: basic type assigned: res='%v'\n" $res }}
         {{- end }}
       {{- else if eq $currentType "slice" }}
         {{- $slices = mustDeepCopy $val }}
         {{- $firstType = "slice" }}
         {{- if $debug }}
-          {{- printf "DEBUG[base.get]: 切片类型赋值成功: slices=%v\n" $slices }}
+          {{- printf "DEBUG[base.get]: slice type assigned: slices='%v'\n" $slices }}
         {{- end }}
       {{- else if eq $currentType "map" }}
         {{- $maps = mustDeepCopy $val }}
         {{- $firstType = "map" }}
         {{- if $debug }}
-          {{- printf "DEBUG[base.get]: 映射类型赋值成功: maps=%v\n" $maps }}
+          {{- printf "DEBUG[base.get]: map type assigned: maps='%v'\n" $maps }}
         {{- end }}
       {{- end }}
 
@@ -155,7 +155,7 @@
             {{- $slices = concat $slices $val | uniq }}
           {{- end }}
           {{- if $debug }}
-            {{- printf "DEBUG[base.get]: 切片合并: slices=%v\n" $slices }}
+            {{- printf "DEBUG[base.get]: slice merged: slices='%v'\n" $slices }}
           {{- end }}
         {{- end }}
       {{- else if eq $currentType "map" }}
@@ -166,7 +166,7 @@
             {{- $maps = mustMerge $maps (mustDeepCopy $val) }}
           {{- end }}
           {{- if $debug }}
-            {{- printf "DEBUG[base.get]: 映射合并: maps=%v\n" $maps }}
+            {{- printf "DEBUG[base.get]: map merged: maps='%v'\n" $maps }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -191,7 +191,7 @@
       {{- end }}
     {{- end }}
     {{- if $isEmpty }}
-      {{- fail (printf "[base.get] %s: 必填字段缺失或为空" $keyPath) }}
+      {{- fail (printf "[base.get] '%s': required field is missing or empty" $keyPath) }}
     {{- end }}
   {{- end }}
 
@@ -225,7 +225,7 @@
   {{- end }}
 
   {{- if $debug }}
-    {{- printf "DEBUG[base.get]: finalType=%s, res=%v, slices=%v, maps=%v\n" $finalType $res $slices $maps }}
+    {{- printf "DEBUG[base.get]: finalType='%s', res='%v', slices='%v', maps='%v'\n" $finalType $res $slices $maps }}
   {{- end }}
 
   {{- /* Step 9: 返回 toYamlPretty 格式化结果 */}}
