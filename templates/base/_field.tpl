@@ -1,19 +1,24 @@
 {{- /*
-  安全渲染 YAML 键值对，处理引号、枚举及特殊类型。
+  安全渲染 YAML 键值对，统一处理引号、枚举校验与多种类型输出。
+
+  行为:
+    - 入参必须为长度为 2-4 的 slice，否则快速失败
+    - 解析 key(必填字符串,非空) / rawValue(任意类型) / define(渲染模板名,可选) / allows(枚举列表,可选)
+    - define 关键字 "quote" 转为强制加引号; "containers.env" 转为容器 env 专用处理
+    - 指定 allows 时强制使用 base.string 作为渲染模板, 渲染前先做枚举校验
+    - 渲染后仅当 val 非空时输出; 单行引号 / 多行块标量 / 复杂类型按需切换输出格式
 
   入参: list <key> <value> [渲染模板] [允许值列表枚举]
-    key               键名，字符串，必填
-    value             需要渲染的值，任意类型，必填
-    渲染模板          用来处理 value 的命名模板名称，可选
-                      - "base.string"：默认值，自动添加双引号/转义符
-                      - "quote"：强制添加双引号
-                      - "containers.env"：容器 env 变量专用，为 0/true/false/数值 自动添加双引号
-                      - 其他模板名：调用对应模板处理
-    允许值列表枚举    值校验列表，可选
-                      - 匹配成功则保留，匹配失败则丢弃，都不匹配则报错
-                      - 指定时，渲染模板强制使用 "base.string"
+    key               键名, 字符串, 必填且非空
+    value             需要渲染的值, 任意类型, 必填
+    渲染模板          处理 value 的命名模板, 可选
+                      - "base.string": 默认值, 执行 trim / 零折叠 / 特殊格式直通
+                      - "quote": 强制添加双引号 (内部映射为 base.string + 引号)
+                      - "containers.env": 容器 env 变量专用, 为非字符串类型值自动添加双引号
+                      - 其他模板名: 调用对应模板处理
+    允许值列表枚举    枚举校验列表, 可选; 指定时强制使用 base.string, 值不在列表中则报错
 
-  返回值: 序列化后的 YAML 格式内容（key: value 形式）
+  返回值: 序列化后的 YAML 键值对 (key: value 形式, 复杂类型换行缩进, 多行字符串使用 |- 块标量)
 
   示例:
     {{- include "base.field" (list "replicas" $replicas "base.int") }}
@@ -114,16 +119,25 @@
 
 
 {{- /*
-  特定定义：专用于处理 containers.env 中的 value 引号问题。
-  为 0/true/false/数值 等布尔值和数字自动添加双引号，保持字符串原样。
+  特定定义：专用于处理 containers.env 中的 value 引号问题, 由 base.field 路由调用。
+
+  行为:
+    - 入参必须为 slice, 否则快速失败
+    - 遍历每个元素, 必须为 dict, 必须包含 name 字段
+    - 字符串类型 value 保持原样; 非字符串类型 value 转为字符串并强制加引号, 防止 YAML 解析错误
+    - valueFrom 字段保持原样; 同时缺少 value 和 valueFrom 时快速失败
+    - value 与 valueFrom 互斥, 优先处理 value
 
   入参: slice 容器环境变量列表
-    每个元素为 dict，包含 name 和 value/valueFrom 字段
+    每个元素为 dict, 包含以下字段:
+      - name        变量名, 字符串, 必填
+      - value       变量值, 任意类型, 与 valueFrom 互斥
+      - valueFrom   变量引用源, 字典, 与 value 互斥, 原样透传
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串
+  返回值: toYamlPretty 格式化后的环境变量 YAML 列表
 
   示例:
-    {{- include "base.process.containers.env" .Values.env }}
+    {{- include "base.field" (list "env" $envList "containers.env") }}
 */ -}}
 {{- define "base.process.containers.env" -}}
   {{- /* 参数校验 */}}
