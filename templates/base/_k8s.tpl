@@ -279,13 +279,12 @@
 */ -}}
 {{- define "base.helmLabels" -}}
   {{- nindent 0 "" -}}helm.sh/chart: {{ include "base.chart" . | quote }}
-  {{- nindent 0 "" -}}app.kubernetes.io/version: {{ .Chart.AppVersion | default (printf "ver-%s" (randNumeric 8)) | quote }}
-  {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ .Release.Service | default "Helm4" | quote }}
+  {{- nindent 0 "" -}}app.kubernetes.io/managed-by: {{ .Release.Service | default "Helm" | quote }}
 {{- end }}
 
 
 {{- /*
-  统一处理 Kubernetes labels（YAML 格式字符串，可通过 fromYaml 解析为字典）。
+  统一处理 Kubernetes labels（YAML 格式字符串，可通过 fromYaml 解析为字典）。参考 https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/common-labels/
 
   行为:
     - 支持三种模式，按优先级互斥:
