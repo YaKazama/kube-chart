@@ -3,8 +3,8 @@
 - `base.env` 正则表达式，参考 `docs/template/base/env.md`，只选取需要的写入 `templates/base/_env.tpl`；禁止将参考示例全量写入新文件。
 - 字段类型默认行为：
   - string: `base.get` 不需要强制类型转换；`base.field` 常用 `base.string` 模板渲染。
-  - integer: `base.get` 不需要强制类型转换；`base.field` 常用 `base.int` 模板渲染。
-  - boolean: `base.get` 不需要强制类型转换；`base.field` 常用 `base.bool` 模板渲染。
+  - integer/int: `base.get` 不需要强制类型转换；`base.field` 常用 `base.int` 模板渲染。
+  - boolean/bool: `base.get` 不需要强制类型转换；`base.field` 常用 `base.bool` 模板渲染。
   - object/map: `base.get` 常结合 `fromYaml` 使用、不需要 `trim` 空格；`base.field` 常用 `base.map` 模板渲染。
   - array/slice: `base.get` 常结合 `fromYamlArray` 使用、不需要 `trim` 空格；`base.field` 常用 `base.slice` 模板渲染。
 - 禁止字段： `status`。
