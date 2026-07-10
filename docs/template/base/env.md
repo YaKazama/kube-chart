@@ -7,7 +7,7 @@
 emptyStr: ""
 # 常用分隔符
 split:
-  all: "\\s*[\\s:,./|*^@#]+\\s*"
+  all: "\\s*[\\s:,./|*^@#-]+\\s*"
   space: "\\s+"
   comma: ",\\s*"
   commaOrSpace: ",\\s*|\\s+"
@@ -15,6 +15,7 @@ split:
 # 类型相关
 types:
   int: "^[+-]?\\d+(\\.\\d+)?$"
+  float: "^[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?$"
   positiveInt: "^\\d+$"
   zero: "^([+-]?)0+(\\d*)$"
   octalHex: "^0(x|X|o|O)"
