@@ -335,7 +335,7 @@
 
 
 {{- /*
-  校验 Kubernetes Quantity 格式是否合法。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#quantity-resource-core
+  校验 Kubernetes Quantity 格式是否合法。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#quantity-resource-core
 
   行为:
     - 接受字符串或数字类型的入参。
@@ -365,7 +365,7 @@
 
 
 {{- /*
-  校验并转换 Kubernetes Time 格式。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#time-v1-meta
+  校验并转换 Kubernetes Time 格式。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta
 
   行为:
     - 数字类型（int/int64/float64）：视为秒数，通过 duration 转换为 Go duration 字符串。
@@ -406,7 +406,7 @@
 
 
 {{- /*
-  校验 Kubernetes FieldsV1 格式是否合法。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.34/#fieldsv1-v1-meta
+  校验 Kubernetes FieldsV1 格式是否合法。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#fieldsv1-v1-meta
 
   行为:
     - 接受字符串类型的入参。
@@ -437,30 +437,38 @@
 
 
 {{- /*
-  校验 RollingUpdate 配置值是否合法。
+  校验 RollingUpdate 配置值是否合法。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#rollingupdatedeployment-v1-apps
 
   行为:
     - 数字类型（int/int64/float64）：直接转换为 int 返回（表示副本数）。
     - 字符串类型：
-      - 匹配 TYPES.PERCENT 正则（如 "25%"、"100%"）：直接返回原值。
+      - 匹配 TYPES.PERCENT 正则（K8s IntOrString 自动识别）：
+        - 带 "%" 后缀（如 "25%"、"100%"）：作为百分比字符串直接返回。
+        - 纯数字（如 "3"、"-1"）：由 K8s IntOrString 自动识别为数值，此处直接返回原值。
       - 不匹配：立即失败。
     - 其他类型：立即失败。
 
   入参:
     - value (int|int64|float64|string): 待校验的 RollingUpdate 值
 
-  返回值: int 类型（数字输入）或百分比字符串（如 "25%"）；非法入参中断渲染。
+  返回值: int 类型（数字输入）或字符串（纯数字字符串/百分比字符串）；非法入参中断渲染。
 
   示例:
     {{- include "base.rollingUpdate" 3 }}      // 3
+    {{- include "base.rollingUpdate" "3" }}    // 3
     {{- include "base.rollingUpdate" "25%" }}  // 25%
-    {{- include "base.rollingUpdate" "abc" }}  // [base.rollingUpdate] value: 'abc' does not match Percent (...)
+    {{- include "base.rollingUpdate" "" }}     // [base.rollingUpdate] value: empty string is not allowed
+    {{- include "base.rollingUpdate" "abc" }}  // [base.rollingUpdate] value: 'abc' does not match Percent (^\d+(\%)?$)
 */ -}}
 {{- define "base.rollingUpdate" -}}
   {{- $type := kindOf . }}
   {{- if or (eq $type "int") (eq $type "int64") (eq $type "float64") }}
     {{- int . }}
   {{- else if eq $type "string" }}
+    {{- /* 空字符串拦截: 防止误判并提供明确错误信息 */ -}}
+    {{- if eq . "" }}
+      {{- fail "[base.rollingUpdate] value: empty string is not allowed" }}
+    {{- end }}
     {{- $const := include "base.env" "" | fromYaml }}
     {{- if mustRegexMatch $const.TYPES.PERCENT . }}
       {{- . }}
