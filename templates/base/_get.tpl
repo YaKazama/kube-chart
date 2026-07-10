@@ -239,3 +239,143 @@
     {{- "" }}
   {{- end }}
 {{- end }}
+
+
+{{- /*
+  高层取值函数：支持别名/多路径回溯，从多层上下文按路径优先级取值并按合并模式合并。
+
+  行为:
+    - 路径列表按优先级从高到低排列，依次尝试取值；首个非空命中即作为基础结果。
+    - 基础结果为标量或列表时直接返回。
+    - 基础结果为 Map 时，根据合并模式处理剩余路径:
+        "left"   (默认): 低优先级路径补全高优先级路径缺失的字段。
+        "right"        : 高优先级路径覆盖低优先级路径的字段。
+        "replace"      : 仅取首个有效 Map，忽略后续路径。
+    - 必填校验: 所有路径都未取到值时，若 required=true 则立即失败。
+    - 路径中的空字符串自动跳过。
+    - 底层调用 base.get，统一遵循其类型/合并/必填语义。
+
+  入参: list <上下文> <路径列表> [强制类型] [合并模式] [必填校验]
+    上下文       根上下文（通常为 `.`），必填
+    路径列表     list 类型，按优先级从高到低排列，元素必须为非空字符串，必填
+    强制类型     int | int64 | float64 | atoi | toString | toStrings | toDecimal | quote | squote，默认 ""
+    合并模式     left (默认) | right | replace
+    必填校验     true 时取值为空立即报错，默认 false
+
+  返回值: toYamlPretty 格式化后的 YAML 字符串，配合 fromYaml 使用
+
+  示例:
+    {{- $tag := include "base.getWithAlias" (list . (list "image.tagAlias" "image.tag")) | fromYaml }}
+    {{- $tag := include "base.getWithAlias" (list . (list "image.tagAlias" "image.tag") "toString" "" true) | fromYaml }}
+    {{- $labels := include "base.getWithAlias" (list . (list "labels.alias" "labels") "" "right") | fromYaml }}
+*/ -}}
+{{- define "base.getWithAlias" -}}
+  {{- /* 参数基本校验: 必须为 slice 且至少 2 个元素 (context, paths-list) */ -}}
+  {{- if not (kindIs "slice" .) }}
+    {{- fail "[base.getWithAlias] parameter: expected list type" }}
+  {{- end }}
+  {{- if lt (len .) 2 }}
+    {{- fail (printf "[base.getWithAlias] at least 2 parameters required (context, paths-list), got '%d'" (len .)) }}
+  {{- end }}
+
+  {{- /* 解析参数: 用 ge (len .) N 守卫可选参数, 避免 index 越界 panic */ -}}
+  {{- $root := index . 0 }}
+  {{- $paths := index . 1 }}
+  {{- $type := "" }}
+  {{- $mergeMode := "left" }}
+  {{- $required := false }}
+
+  {{- if ge (len .) 3 }}
+    {{- $type = index . 2 }}
+  {{- end }}
+  {{- if ge (len .) 4 }}
+    {{- $mergeMode = index . 3 }}
+  {{- end }}
+  {{- if ge (len .) 5 }}
+    {{- $required = index . 4 }}
+  {{- end }}
+
+  {{- /* 入参类型与取值校验 */ -}}
+  {{- if not (kindIs "slice" $paths) }}
+    {{- fail "[base.getWithAlias] paths: expected list type" }}
+  {{- end }}
+  {{- if not (kindIs "string" $type) }}
+    {{- fail (printf "[base.getWithAlias] type: expected string type, got '%v' (kind: %s)" $type (kindOf $type)) }}
+  {{- end }}
+  {{- /* mergeMode 空字符串回退为默认值 left, 兼容显式传 "" 的写法 */ -}}
+  {{- if eq $mergeMode "" }}
+    {{- $mergeMode = "left" }}
+  {{- end }}
+  {{- if not (kindIs "string" $mergeMode) }}
+    {{- fail (printf "[base.getWithAlias] mergeMode: expected string type, got '%v' (kind: %s)" $mergeMode (kindOf $mergeMode)) }}
+  {{- end }}
+  {{- if not (has $mergeMode (list "left" "right" "replace")) }}
+    {{- fail (printf "[base.getWithAlias] mergeMode: expected one of [left, right, replace], got '%s'" $mergeMode) }}
+  {{- end }}
+  {{- if not (kindIs "bool" $required) }}
+    {{- fail (printf "[base.getWithAlias] required: expected bool type, got '%v' (kind: %s)" $required (kindOf $required)) }}
+  {{- end }}
+
+  {{- /* 状态变量 */ -}}
+  {{- $finalVal := "" }}
+  {{- $isFound := false }}
+  {{- $firstKind := "" }}
+
+  {{- /* 循环遍历所有给定的路径 */ -}}
+  {{- range $path := $paths }}
+    {{- /* 路径元素类型校验 */ -}}
+    {{- if not (kindIs "string" $path) }}
+      {{- fail (printf "[base.getWithAlias] paths item: expected string type, got '%v' (kind: %s)" $path (kindOf $path)) }}
+    {{- end }}
+    {{- /* 空字符串路径自动跳过 */ -}}
+    {{- if eq $path "" }}
+      {{- continue }}
+    {{- end }}
+
+    {{- /* 调用底层的 base.get, 关闭其自带的 required 校验, 由外层统一控制 */ -}}
+    {{- $raw := include "base.get" (list $root $path $type $mergeMode false) }}
+    {{- if ne $raw "" }}
+      {{- $val := $raw | fromYaml }}
+
+      {{- /* 判断是否为空值 (空字符串/空列表/空map) */ -}}
+      {{- $isEmpty := false }}
+      {{- if kindIs "string" $val }}
+        {{- $isEmpty = eq $val "" }}
+      {{- else if or (kindIs "slice" $val) (kindIs "map" $val) }}
+        {{- $isEmpty = eq (len $val) 0 }}
+      {{- end }}
+
+      {{- if not $isEmpty }}
+        {{- /* 首次找到有效值 */ -}}
+        {{- if not $isFound }}
+          {{- $finalVal = $val }}
+          {{- $isFound = true }}
+          {{- $firstKind = kindOf $val }}
+
+          {{- /* 标量/列表: 直接终止; Map + replace 模式也直接终止 */ -}}
+          {{- if or (ne $firstKind "map") (eq $mergeMode "replace") }}
+            {{- break }}
+          {{- end }}
+
+        {{- /* 后续路径处理: 仅当首次命中是 Map, 且合并模式不是 replace 时, 进行多路径 Map 合并 */ -}}
+        {{- else if and (eq $firstKind "map") (kindIs "map" $val) }}
+          {{- if eq $mergeMode "right" }}
+            {{- /* right: 高优先级 $finalVal 覆盖低优先级 $val */ -}}
+            {{- $finalVal = mustMergeOverwrite (mustDeepCopy $val) $finalVal }}
+          {{- else }}
+            {{- /* left: 低优先级 $val 补全高优先级 $finalVal 缺失的字段 */ -}}
+            {{- $finalVal = mustMerge (mustDeepCopy $finalVal) $val }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* 统一必填校验 */ -}}
+  {{- if and $required (not $isFound) }}
+    {{- fail (printf "[base.getWithAlias] required fields %v are all missing or empty" $paths) }}
+  {{- end }}
+
+  {{- /* 返回 YAML 序列化结果 */ -}}
+  {{- toYamlPretty $finalVal }}
+{{- end }}
