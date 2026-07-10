@@ -29,7 +29,7 @@
 - 模板命名：末级目录前缀.小驼峰（如 `apps.deployment`）。
 - 注释：
   - 中文输出。
-  - 每个 define 块必含：功能说明、入参结构、返回值、示例。
+  - 每个 define 块必含：功能说明、边界行为说明、入参结构/核心字段、返回值、示例。
   - 添加必要的逻辑注释，包括步骤、函数、模板、变量等。
 - 排版控制：2 空格缩进，必要时用 `{{- nindent 0 "" -}}` 优化 YAML 排版。
 - 报错格式：`[模板名] 字段路径: 错误原因`，例：`{{- fail "[apps.deployment] image.repository: 必填" -}}`。
@@ -37,14 +37,9 @@
 - 变量：局部用 `$var`；临时变量用 `$_`/`$__` 前缀。
   - `base.get` 取值通常应该赋值给 `$_`/`$__`前缀的同名变量。
 
-  ```go
-  {{- $_key := include "base.get" (list . "key") }}
-  {{- $_key := include "base.get" (list . "key") | fromYaml }}
-  ```
-
 ### base.get核心取值机制
 
-统一取值函数，返回 YAML 字符串，配合 fromYaml 使用。
+统一取值函数，返回 YAML 字符串，配合 `fromYaml` / `fromYamlArray` 使用。
 
 - 入参：`list <上下文> <点分路径> [强制类型] [合并模式] [必填校验布尔] [调试布尔]`
   - 强制类型：int/int64/float64/atoi/toString/toStrings/toDecimal/quote/squote。
@@ -55,11 +50,11 @@
 
 ```go
 // 基础取值
-{{- $targetVal := include "base.get" (list . "key") | fromYaml }}
+{{- $targetVal := include "base.get" (list . "key") }}
 // 强制类型 + 必填校验
-{{- $repo := include "base.get" (list . "key" "toString" "" true) | fromYaml }}
+{{- $repo := include "base.get" (list . "key" "" "" true) }}
 // 字典右优覆盖合并
-{{- $labels := include "base.get" (list . "key" "" "right") | fromYaml }}
+{{- $labels := include "base.get" (list . "key" "" "right") }}
 ```
 
 ### base.field 核心渲染机制
@@ -71,7 +66,9 @@
 
 ```go
 // 常规渲染
+{{- include "base.field" (list "replicas" $replicas) }}
 {{- include "base.field" (list "replicas" $replicas "base.int") }}
+{{- include "base.field" (list "replicas" $replicas "base.bool") }}
 // 强制加引号
 {{- include "base.field" (list "tag" $tag "quote") }}
 // 枚举校验 (只允许 "Always" / "IfNotPresent")
@@ -133,8 +130,8 @@
 - 交互：目标+需求+约束+参考；中文输出；数字、英文、中文混合输出时需要加空格。
 - 路径规范：凡涉及文件引用，路径默认为工作区相对路径。
 - 校验入口：
-  - 触发「校验检查」/「checklist」: 读 `./docs/dev.checklist`。
-  - 触发「交付检查」/「deploy checklist」: 读 `./docs/deployment.checklist`。
+  - 触发 `校验检查`/`checklist`: 读 `./docs/dev.checklist`。
+  - 触发 `交付检查`/`deploy checklist`: 读 `./docs/deployment.checklist`。
 - values.yaml 字段必须包含「类型 + 含义 + 是否必填 + 默认值」注释。
 - Schema 单源原则：仅维护 values.schema.yaml，发布前工具转为 `.json`。所有顶层字段必须声明类型，必填列入 required，显式声明枚举。
 - README 固定结构：
