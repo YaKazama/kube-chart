@@ -22,26 +22,7 @@
 - 允许读取`参考`提供的 URL ，通过 Field 和 Description 确认是否必填项及正则校验、可用设置、默认值、数量限制等。
 - 允许读取 `docs/examples/` 和 `templates/` 目录下的 `tpl` 文件，获取示例代码。
 参考:
-- API：https://kubernetes.io/docs/reference/kubernetes-api/definitions/api-group-v1-meta/#APIGroup
+- API：
+  - https://kubernetes.io/docs/reference/kubernetes-api/definitions/api-group-v1-meta/#APIGroup
 - 示例代码：
-
-  ```text
-  ## apiVersion 和 kind 字段
-  {{- nindent 0 "" -}}apiVersion: "meta/v1"
-  {{- nindent 0 "" -}}kind: "APIGroup"
-  ## metadata 字段, 示例
-  {{- $metadata := include "definitions.ObjectMeta" . | fromYaml }}
-  {{- if $metadata }}
-    {{- include "base.field" (list "metadata" $metadata "base.map") }}
-  {{- end }}
-  ```
-
-  ```text
-  ## 单行注释
-  {{- /* 注释 */ -}}
-  ## 多行注释
-  {{- /*
-    注释
-    注释
-  */ -}}
-  ```
+  - 引用 `docs/template/const-example-code.md`。
