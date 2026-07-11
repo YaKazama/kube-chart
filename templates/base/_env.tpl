@@ -23,6 +23,6 @@ K8S:
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
 API_GROUP:
-  GROUP_VERSION_DISCOVERY: "^([a-z0-9]([-a-z0-9.]*[a-z0-9])?/[a-z0-9][a-z0-9.]*)\\s+([a-z0-9][a-z0-9.]*)$"
+  GROUP_VERSION_DISCOVERY: "^(\\S+\\/\\S+) +([a-z0-9][a-z0-9.]*)$"
   SERVER_ADDRESS_BY_CLIENT_CIDR: "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/\\d{1,2})?)\\s+(\\S+)$"
 {{- end }}

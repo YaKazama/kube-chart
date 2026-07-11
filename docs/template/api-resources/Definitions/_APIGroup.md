@@ -7,16 +7,21 @@
   - `name`：string, 必填项。
   - `preferredVersion`：string。
     - 引用模板 `definitions.GroupVersionForDiscovery` 。
-    - 向下传递以空格分隔的字符串：`groupVersion(group/version) version`，例如：`meta/v1 v1.23.0`。
+    - 向下传递上下文为 dict 类型。示例：`dict "groupVersion" "meta/v1" "version" "v1.23.0"`。
     - 正则校验；正则分组到 API_GROUP。
+      - 格式：`groupVersion(group/version) version`
+      - 示例：`meta/v1 v1.23.0`
   - `serverAddressByClientCIDRs`：array([]string)。
     - 引用模板 `definitions.ServerAddressByClientCIDR` 。
-    - 向下传递以空格分隔的字符串：`clientCIDR(client/cidr) serverAddress(server/address)`，例如：`10.0.0.0/24 10.0.0.1`。
-      - 可用设置：hostname, hostname:port, IP or IP:port
+      - 结果要去重、去空。示例：`mustUniq | mustCompact`。
+      - 向下传递上下文为 dict 类型。示例：`dict "clientCIDR" "10.0.0.0/24" "serverAddress" "10.0.0.1"`。
+        - This can be a hostname, hostname:port, IP or IP:port.
     - 正则校验；正则分组到 API_GROUP。
-    - 需要去重、去空。示例：`mustUniq | mustCompact`。
+      - 格式：`clientCIDR serverAddress`
+      - 示例：`10.0.0.0/24 10.0.0.1`
   - `versions`：array([]string), 必填项, 同 `preferredVersion` 字段。
-    - 需要去重、去空。示例：`mustUniq | mustCompact`。
+    - 结果要去重、去空。示例：`mustUniq | mustCompact`。
+    - 向下传递上下文为 dict 类型。示例：`dict "groupVersion" "meta/v1" "version" "v1.23.0"`
 约束:
 - 引用约束 `docs/template/const-general.md`。
 - 允许读取`参考`提供的 URL ，通过 Field 和 Description 确认是否必填项及正则校验、可用设置、默认值、数量限制等。
