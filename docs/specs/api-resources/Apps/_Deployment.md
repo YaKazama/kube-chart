@@ -6,7 +6,7 @@
   - `apiVersion`: string, `apps/v1`。
   - `kind`: string, `Deployment`。
   - `metadata`: object，必填，委托 `definitions.objectMeta`。
-  - `spec`: object，必填，委托 `definitions.deploymentSpec` 渲染（不创建）。
+  - `spec`: object，必填，委托 `apps.deploymentSpec` 渲染（不创建）。
 - 边界行为：
   - 必填项缺失或值为 `nil`（`base.get` 返回字符串 `"null"`）时立即中断并报错。
   - slice/list 类型字段需通过 `base.isFromYamlArrayError` 兼容 Helm 4.2.2 `fromYamlArray` 对非 slice/list 类型输入返回错误切片的 BUG。

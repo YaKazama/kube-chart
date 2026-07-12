@@ -32,11 +32,11 @@
   {{- include "base.field" (list "metadata" $metadata "base.map") }}
 
   {{- /*
-    Step 3: spec (dict, 必填): 委托 definitions.deploymentSpec 渲染
+    Step 3: spec (dict, 必填): 委托 apps.deploymentSpec 渲染
     向下传递 ., 渲染结果缺失 / 为空 / 非法 YAML / 非 dict 类型时立即中断并报错
     兼容 Helm 4.2.2 fromYaml 对非 YAML 输入返回错误 map 的行为, 委托 base.isFromYamlError 检测
   */ -}}
-  {{- $specRaw := include "definitions.deploymentSpec" . }}
+  {{- $specRaw := include "apps.deploymentSpec" . }}
   {{- if not $specRaw }}
     {{- fail "[apps.deployment] spec: required field is missing or empty" }}
   {{- end }}
