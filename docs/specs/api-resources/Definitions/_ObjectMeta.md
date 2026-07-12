@@ -1,0 +1,50 @@
+目标: 新增命名模板 `definitions.objectMeta`，写入 `templates/api-resources/Definitions/_ObjectMeta.tpl`。
+需求:
+- 入参：唯一上下文 `.`。
+- 行为：从上下文 (`.Context` > `.Values` > `.Values.global`) 逐字段取值并按 K8s API 规范输出 ObjectMeta 键值对（不含 `metadata` 父键），由调用方自行包入 `metadata` 块；依据 `_kind` / `_pkind` 自动跳过不适用的字段。
+- 核心入参：
+  - `_kind` (string, 必填): 当前资源类型，用于决定字段渲染策略。
+  - `_pkind` (string, 可选): 父资源类型 (嵌套资源场景，如 StatefulSet 调用 PersistentVolumeClaim 时 `_pkind=StatefulSetSpec`)。
+    - 取值优先级：`_pkind` > `_kind`。
+- 字段：
+  - `annotations`：map(string), 可选。
+    - 字符串键值对，外部工具使用的非查询性元数据。
+    - 渲染模板：`base.map`。
+    - 排除规则：`PodTemplateSpec` / `JobTemplateSpec` / `StatefulSetSpec` 不渲染（嵌套资源由父资源统一管理）。
+  - `generateName`：string, 可选。
+    - 仅在 `name` 未指定时由服务器生成唯一名的可选前缀。
+    - 遵循 RFC1035 Label 规范，由 `base.rfc 1035` 校验。
+    - 最多 63 字符。
+    - 渲染模板：`quote`。
+  - `labels`：map(string), 可选。
+    - 用于组织与选择对象的字符串键值对。
+    - 渲染模板：`base.map`；通过 `base.labels` 取值（融合 helmLabels / justNameLabel / 用户 labels）。
+    - 排除规则：`StatefulSetSpec` 不渲染（其 `spec.selector` 与 pod template 共享标签）。
+  - `name`：string, 可选（`_kind` 非 PodTemplateSpec/JobTemplateSpec 时）。
+    - 命名空间内唯一标识。
+    - 校验模式根据 `_kind` 选择：
+      - RBAC 类型（`ClusterRole` / `Role` / `ClusterRoleBinding` / `RoleBinding`）：`base.name` + `rbac` 模式（RFC1035_RBAC，允许大小写/多级域名）。
+      - `APIService`：`base.name` + `apiservice` 模式（RFC APIService，允许多级域名）。
+      - 其他类型：`base.name` 默认模式（RFC1035 Label）。
+    - 渲染模板：`quote`。
+    - 排除规则：`PodTemplateSpec` / `JobTemplateSpec` 不渲染（无独立 metadata）。
+  - `namespace`：string, 可选。
+    - 命名空间定义值空间。
+    - 通过 `base.namespace` 规范化（小写、去空格、去除尾部 `-`）。
+    - 渲染模板：`quote`。
+    - 排除规则：`PodTemplateSpec` / `JobTemplateSpec`（无独立 metadata）、`Namespace`（自身 namespace 为空）、`ClusterRole` / `ClusterRoleBinding`（集群级资源）、`Role` / `RoleBinding`（由调用方按 RBAC 场景统一处理）。
+- 字段渲染顺序：`annotations` → `generateName` → `labels` → `name` → `namespace`（按 K8s API 规范顺序）。
+- 边界行为：
+  - 字段未提供时静默跳过，不输出空键。
+  - `base.get` 返回字符串 `"null"` 时视为未提供。
+- 报错格式：`[definitions.objectMeta] 字段路径: 错误原因`。
+约束:
+- 引用约束 `docs/rules/const-general.md`。
+- 允许读取`参考`提供的 URL ，通过 Field 和 Description 确认是否必填项及正则校验、可用设置、默认值、数量限制等。
+- 允许读取 `docs/samples/` 和 `templates/` 目录下的 `tpl` 文件，获取示例代码。
+参考:
+- API：
+  - https://kubernetes.io/docs/reference/kubernetes-api/definitions/object-meta-v1-meta/
+  - https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta
+- 示例代码：
+  - 引用 `docs/rules/const-example-code.md`。

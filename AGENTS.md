@@ -38,7 +38,7 @@
 - 变量：局部用 `$var`；临时变量用 `$_`/`$__` 前缀。
   - `base.get` 取值通常应该赋值给 `$_`/`$__`前缀的同名变量。
 
-### base.get核心取值机制
+### base.get 核心取值机制
 
 统一取值函数，返回 YAML 字符串，配合 `fromYaml` / `fromYamlArray` 使用。
 
@@ -49,33 +49,12 @@
 - 合并策略：字符串高优覆盖；列表默认拼接去空去重；字典默认左优合并，支持右优覆盖模式；合并 `.Values` 嵌套字典必须 mustDeepCopy 防污染。
 - 边界行为：非必填路径不存在返回对应类型零值；必填时立即报错。
 
-```go
-// 基础取值
-{{- $targetVal := include "base.get" (list . "key") }}
-// 强制类型 + 必填校验
-{{- $repo := include "base.get" (list . "key" "" "" true) }}
-// 字典右优覆盖合并
-{{- $labels := include "base.get" (list . "key" "" "right") }}
-```
-
 ### base.field 核心渲染机制
 
 安全渲染 YAML 键值对，处理引号、枚举及特殊类型。
 
 - 入参：`(list <key> <value> [渲染模板/quote] [允许值列表枚举])`
   - 渲染模板： base.string（默认，自动加双引号/转义）、base.int/base.int64/base.float64（数字原生输出）、quote（强转加双引号）、containers.env（容器 env 专用模式）。
-
-```go
-// 常规渲染
-{{- include "base.field" (list "replicas" $replicas) }}
-{{- include "base.field" (list "replicas" $replicas "base.int") }}
-{{- include "base.field" (list "replicas" $replicas "base.bool") }}
-// 强制加引号
-{{- include "base.field" (list "tag" $tag "quote") }}
-// 枚举校验 (只允许 "Always" / "IfNotPresent")
-{{- $allows := list "Always" "IfNotPresent" }}
-{{- include "base.field" (list "pullPolicy" $policy "base.string" $allows) }}
-```
 
 ### 核心能力
 
