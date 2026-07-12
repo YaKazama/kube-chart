@@ -14,9 +14,9 @@
   返回值: MutatingAdmissionPolicy 资源 YAML 字段 (不含顶级 "---", 由调用方决定)
 
   示例:
-    {{- include "admissionregistration.MutatingAdmissionPolicy" . }}
+    {{- include "admissionregistration.mutatingAdmissionPolicy" . }}
 */ -}}
-{{- define "admissionregistration.MutatingAdmissionPolicy" -}}
+{{- define "admissionregistration.mutatingAdmissionPolicy" -}}
   {{- /* Step 1: apiVersion / kind 固定, 与 K8s API 规范对齐, 不允许覆盖 */ -}}
   {{- nindent 0 "" -}}apiVersion: "admissionregistration.k8s.io/v1"
   {{- nindent 0 "" -}}kind: "MutatingAdmissionPolicy"
@@ -27,7 +27,7 @@
   {{- $_ := set . "_kind" "MutatingAdmissionPolicy" }}
   {{- $metadata := include "definitions.objectMeta" . | fromYaml }}
   {{- if not $metadata }}
-    {{- fail "[admissionregistration.MutatingAdmissionPolicy] metadata: required field is missing or empty" }}
+    {{- fail "[admissionregistration.mutatingAdmissionPolicy] metadata: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "metadata" $metadata "base.map") }}
 
@@ -41,11 +41,11 @@
     {{- $specObj := $specRaw | fromYaml }}
     {{- if $specObj }}
       {{- if eq (include "base.isFromYamlError" $specObj) "true" }}
-        {{- fail "[admissionregistration.MutatingAdmissionPolicy] spec: invalid YAML output from admissionregistration.mutatingAdmissionPolicySpec" }}
+        {{- fail "[admissionregistration.mutatingAdmissionPolicy] spec: invalid YAML output from admissionregistration.mutatingAdmissionPolicySpec" }}
       {{- end }}
 
       {{- if not (kindIs "map" $specObj) }}
-        {{- fail "[admissionregistration.MutatingAdmissionPolicy] spec: must be dict type" }}
+        {{- fail "[admissionregistration.mutatingAdmissionPolicy] spec: must be dict type" }}
       {{- end }}
 
       {{- include "base.field" (list "spec" $specObj "base.map") }}

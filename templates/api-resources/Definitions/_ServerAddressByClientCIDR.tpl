@@ -13,20 +13,20 @@
   返回值: ServerAddressByClientCIDR 资源 YAML 字段 (不含顶级 "---", 由调用方决定)
 
   示例:
-    {{- include "definitions.ServerAddressByClientCIDR" . }}
+    {{- include "definitions.serverAddressByClientCIDR" . }}
 */ -}}
-{{- define "definitions.ServerAddressByClientCIDR" -}}
+{{- define "definitions.serverAddressByClientCIDR" -}}
   {{- /* Step 1: clientCIDR (string, 必填): "CIDR" 形式, 上游 APIGroup 已通过 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR 正则分组提取 (${1}) */ -}}
   {{- $_clientCIDR := include "base.get" (list . "clientCIDR") | trim }}
   {{- if or (not $_clientCIDR) (eq $_clientCIDR "null") }}
-    {{- fail "[definitions.ServerAddressByClientCIDR] clientCIDR: required field is missing or empty" }}
+    {{- fail "[definitions.serverAddressByClientCIDR] clientCIDR: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "clientCIDR" $_clientCIDR "base.string") }}
 
   {{- /* Step 2: serverAddress (string, 必填): "IP" 形式, 上游 APIGroup 已通过 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR 正则分组提取 (${2}) */ -}}
   {{- $_serverAddress := include "base.get" (list . "serverAddress") | trim }}
   {{- if or (not $_serverAddress) (eq $_serverAddress "null") }}
-    {{- fail "[definitions.ServerAddressByClientCIDR] serverAddress: required field is missing or empty" }}
+    {{- fail "[definitions.serverAddressByClientCIDR] serverAddress: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "serverAddress" $_serverAddress "base.string") }}
 {{- end }}

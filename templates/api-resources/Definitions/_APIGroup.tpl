@@ -5,9 +5,9 @@
     - apiVersion (string, 必填): 固定为 meta/v1, 与 K8s API 规范对齐, 不允许覆盖。
     - kind (string, 必填): 固定为 APIGroup, 与 K8s API 规范对齐, 不允许覆盖。
     - name (string, 必填): 遵循 RFC1035 Label 规范, 由 base.rfc 校验。
-    - preferredVersion (string, 可选): 调用 definitions.GroupVersionForDiscovery 渲染, 校验前先正则匹配 API_GROUP.GROUP_VERSION_DISCOVERY。
-    - serverAddressByClientCIDRs (array, 可选): 元素形如 "clientCIDR serverAddress", 逐项调用 definitions.ServerAddressByClientCIDR 渲染, 每项先正则匹配 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR。
-    - versions (array, 必填, 非空): 元素形如 "group/version version", 逐项调用 definitions.GroupVersionForDiscovery 渲染, 每项先正则匹配 API_GROUP.GROUP_VERSION_DISCOVERY。
+    - preferredVersion (string, 可选): 调用 definitions.groupVersionForDiscovery 渲染, 校验前先正则匹配 API_GROUP.GROUP_VERSION_DISCOVERY。
+    - serverAddressByClientCIDRs (array, 可选): 元素形如 "clientCIDR serverAddress", 逐项调用 definitions.serverAddressByClientCIDR 渲染, 每项先正则匹配 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR。
+    - versions (array, 必填, 非空): 元素形如 "group/version version", 逐项调用 definitions.groupVersionForDiscovery 渲染, 每项先正则匹配 API_GROUP.GROUP_VERSION_DISCOVERY。
     - 禁止渲染 status、metadata 字段 (APIGroup 在 K8s 中无 ObjectMeta 语义)。
 
   核心字段: 上下文 map, 可包含以下字段:
@@ -37,7 +37,7 @@
   {{- $_ := include "base.rfc" (list $_name "1035") }}
   {{- include "base.field" (list "name" $_name "base.string") }}
 
-  {{- /* Step 5: preferredVersion (string, 可选): 正则提取 groupVersion/version 后构造 dict, 转交 definitions.GroupVersionForDiscovery 渲染 */ -}}
+  {{- /* Step 5: preferredVersion (string, 可选): 正则提取 groupVersion/version 后构造 dict, 转交 definitions.groupVersionForDiscovery 渲染 */ -}}
   {{- $_preferredVersion := include "base.get" (list . "preferredVersion") | trim }}
   {{- if and $_preferredVersion (ne $_preferredVersion "null") }}
     {{- if not (mustRegexMatch $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion) }}
@@ -47,7 +47,7 @@
     {{- $_gv := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${1}" | trim }}
     {{- $_v := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${2}" | trim }}
     {{- $preferredVersionDict := dict "groupVersion" $_gv "version" $_v }}
-    {{- $preferredVersionObj := include "definitions.GroupVersionForDiscovery" $preferredVersionDict | fromYaml }}
+    {{- $preferredVersionObj := include "definitions.groupVersionForDiscovery" $preferredVersionDict | fromYaml }}
     {{- if $preferredVersionObj }}
       {{- include "base.field" (list "preferredVersion" $preferredVersionObj "base.map") }}
     {{- end }}
@@ -84,9 +84,9 @@
       {{- $_cidr := regexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${1}" | trim }}
       {{- $_addr := regexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${2}" | trim }}
       {{- $cDict := dict "clientCIDR" $_cidr "serverAddress" $_addr }}
-      {{- $cObj := include "definitions.ServerAddressByClientCIDR" $cDict | fromYaml }}
+      {{- $cObj := include "definitions.serverAddressByClientCIDR" $cDict | fromYaml }}
       {{- if not $cObj }}
-        {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' rendered to empty by definitions.ServerAddressByClientCIDR" $cStr) }}
+        {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' rendered to empty by definitions.serverAddressByClientCIDR" $cStr) }}
       {{- end }}
 
       {{- $cidrsList = append $cidrsList $cObj | mustUniq | mustCompact }}
@@ -132,9 +132,9 @@
     {{- $_gv := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${1}" | trim }}
     {{- $_v := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${2}" | trim }}
     {{- $vDict := dict "groupVersion" $_gv "version" $_v }}
-    {{- $vObj := include "definitions.GroupVersionForDiscovery" $vDict | fromYaml }}
+    {{- $vObj := include "definitions.groupVersionForDiscovery" $vDict | fromYaml }}
     {{- if not $vObj }}
-      {{- fail (printf "[definitions.APIGroup] versions: element '%s' rendered to empty by definitions.GroupVersionForDiscovery" $vStr) }}
+      {{- fail (printf "[definitions.APIGroup] versions: element '%s' rendered to empty by definitions.groupVersionForDiscovery" $vStr) }}
     {{- end }}
 
     {{- $versionsList = append $versionsList $vObj | mustUniq | mustCompact }}

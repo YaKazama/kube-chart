@@ -13,20 +13,20 @@
   返回值: GroupVersionForDiscovery 资源 YAML 字段 (不含顶级 "---", 由调用方决定)
 
   示例:
-    {{- include "definitions.GroupVersionForDiscovery" . }}
+    {{- include "definitions.groupVersionForDiscovery" . }}
 */ -}}
-{{- define "definitions.GroupVersionForDiscovery" -}}
+{{- define "definitions.groupVersionForDiscovery" -}}
   {{- /* Step 1: groupVersion (string, 必填): "group/version" 形式, 上游 APIGroup 已通过 API_GROUP.GROUP_VERSION_DISCOVERY 正则分组提取 (${1}) */ -}}
   {{- $_groupVersion := include "base.get" (list . "groupVersion") | trim }}
   {{- if or (not $_groupVersion) (eq $_groupVersion "null") }}
-    {{- fail "[definitions.GroupVersionForDiscovery] groupVersion: required field is missing or empty" }}
+    {{- fail "[definitions.groupVersionForDiscovery] groupVersion: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "groupVersion" $_groupVersion "base.string") }}
 
   {{- /* Step 2: version (string, 必填): "version" 形式, 上游 APIGroup 已通过 API_GROUP.GROUP_VERSION_DISCOVERY 正则分组提取 (${2}) */ -}}
   {{- $_version := include "base.get" (list . "version") | trim }}
   {{- if or (not $_version) (eq $_version "null") }}
-    {{- fail "[definitions.GroupVersionForDiscovery] version: required field is missing or empty" }}
+    {{- fail "[definitions.groupVersionForDiscovery] version: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "version" $_version "base.string") }}
 {{- end }}
