@@ -60,3 +60,13 @@ base.field 渲染字段：
 {{- $allows := list "Always" "IfNotPresent" }}
 {{- include "base.field" (list "pullPolicy" $policy "base.string" $allows) }}
 ```
+
+ spec 字段, 示例：
+
+```go
+  {{- /* spec DeploymentSpec */ -}}
+  {{- $spec := include "workloads.DeploymentSpec" . | fromYaml }}
+  {{- if $spec }}
+    {{- include "base.field" (list "spec" $spec "base.map") }}
+  {{- end }}
+```
