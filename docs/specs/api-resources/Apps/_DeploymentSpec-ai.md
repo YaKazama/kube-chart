@@ -104,19 +104,19 @@ template:
 1. 入口处声明 `$strategyVal := dict`，保证下游统一接收 dict 而非混合类型。
 2. 通过 `base.get` 取值并 trim，判空（`""` 或 `"null"` 跳过）。
 3. 类型识别 + 规整为 dict：
-   - object 路径：`fromYaml` 解析为 map 时（通过 `base.isFromYamlError` + `kindIs "map"` 双重校验），`mustDeepCopy` 复制后赋给 `$strategyVal`，避免污染上游 `.Values`。
-   - string 路径：先从 `base.env` 读取 `APPS.DEPLOYMENT.STRATEGY` 正则（集中管理，硬编码到 `templates/base/_env.tpl`），用 `mustRegexMatch` 预校验整串匹配后，通过 `regexReplaceAll` 的三个捕获组提取：
+   - **object 路径**：`fromYaml` 解析为 map 时（通过 `base.isFromYamlError` + `kindIs "map"` 双重校验），`mustDeepCopy` 复制后赋给 `$strategyVal`，避免污染上游 `.Values`。
+   - **string 路径**：先从 `base.env` 读取 `APPS.DEPLOYMENT.STRATEGY` 正则（集中管理，硬编码到 `templates/base/_env.tpl`），用 `mustRegexMatch` 预校验整串匹配后，通过 `regexReplaceAll` 提取两个捕获组：
      - `${1}` → `type`（`Recreate` 或 `RollingUpdate`）
-     - `${2}` → `rollingUpdate.maxSurge`
-     - `${3}` → `rollingUpdate.maxUnavailable`
+     - `${2}` → `rollingUpdate` 整段（YAML map 字符串）
+   - **捕获组 trim**：regexReplaceAll 提取后立即 `trim` 删除前后空格，避免 `rollingUpdate` 中残留空白导致 `fromYaml` 解析异常。
    - 规整原则：
      - 空字符串不写入 dict（如 `type` 为空时不写入）。
-     - `maxSurge` 与 `maxUnavailable` 同时为空时跳过 `rollingUpdate` 整体。
+     - `rollingUpdate` 为空时跳过该字段写入（不构造空 dict）。
      - 正则整串不匹配时不渲染 strategy 整体（避免 `{type: ""}` 这种无效输出）。
-4. 规整完成后，在外层统一 `if $strategyVal` 守卫下委托 `apps.deploymentStrategy`，下层不再区分 string/object 类型。
+4. 规整完成后，在外层统一 `if $strategyVal` 守卫下委托 `apps.deploymentStrategy`，下层不再区分 string/object 类型。rollingUpdate 解析结果的 map 类型校验委托给 `apps.deploymentStrategy` 统一收口，本层不重复校验。
 5. 委托输出非空时通过 `base.field` 渲染。
 
-设计原则：先在 `DeploymentSpec` 层把入参规整为统一的 dict 形态，再透传给下层。下层 `apps.deploymentStrategy` 仅需实现对 dict 的渲染，无需关心 string 解析逻辑。
+设计原则：先在 `DeploymentSpec` 层把入参规整为统一的 dict 形态（type 为 string，rollingUpdate 为 trim 后的捕获组原值），再透传给下层。下层 `apps.deploymentStrategy` 仅需实现对 dict 的渲染与 map 类型校验，无需关心 string 解析逻辑与捕获组 trim。
 
 ### Step 8: template (object, 必填)
 
@@ -136,6 +136,7 @@ template:
 - **类型非法**：必填项传入非 map 类型时立即 `fail`，避免下游 `fromYaml` 解析异常。
 - **Helm 4.2.2 `fromYaml` BUG 兼容**：map/dict 类型字段统一通过 `base.isFromYamlError` 检测后再使用。
 - **基本类型 BUG 兼容**：`minReadySeconds` 等 int / bool 字段直接对 `base.get` 输出做 `atoi` 或字符串比较，绕过 `fromYaml`。
+- **strategy 捕获组 trim**：regexReplaceAll 提取的捕获组必须 `trim`，避免 `rollingUpdate` 中残留空白字符串。
 
 ### 状态隔离
 
@@ -151,15 +152,16 @@ template:
 
 - 必填缺失：`[apps.deploymentSpec] selector: required field is missing or empty`
 - 类型非法：`[apps.deploymentSpec] selector: must be map type`
+- rollingUpdate 类型非法（由下层 `apps.deploymentStrategy` 抛出）：`[apps.deploymentStrategy] rollingUpdate: must be map type`
 - 委托输出为空：上层 `apps.deployment` 侧负责检查，本层不重复校验。
 
 ### 已知未实现依赖
 
 `apps.deploymentSpec` 委托的以下下层模板当前尚未实现（由后续 spec 任务负责）：
 
-- `apps.deploymentStrategy`：strategy 字段的最终渲染
 - `definitions.labelSelector`：selector 字段的最终渲染
 - `core.podTemplateSpec`：template 字段的最终渲染
+- `apps.rollingUpdateDeployment`：`apps.deploymentStrategy` 进一步委托的 rollingUpdate 子结构渲染
 
 `apps.deploymentSpec` 自身按规范完整实现，对下层的委托调用已具备正确性，但端到端渲染需要在这些下层模板实现后才能通过。
 

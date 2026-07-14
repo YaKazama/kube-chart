@@ -117,12 +117,12 @@
 
   {{- /*
     Step 7: strategy (string/object, 可选): 统一规整为 dict 后委托 apps.deploymentStrategy 渲染
-    - string 类型: 通过正则 ^(Recreate|RollingUpdate)?(?:\s*(\d+\%?))?(?:\s+(\d+\%?))?$ 解析,
-      提取 type, rollingUpdate.maxSurge, rollingUpdate.maxUnavailable 组装为 dict
+    - string 类型: 通过正则 ^(Recreate|RollingUpdate)(?:\s+(.*))?$ 解析,
+      group1 提取 type (Recreate / RollingUpdate), group2 提取 rollingUpdate 整段
     - object 类型: 原生定义, 原样保留为 dict
     - 规整后的 dict 统一通过 include 传递, 下层不再区分类型
-    - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
-    - mustRegexMatch 预校验整串匹配, regexReplaceAll 提取三个捕获组
+    - rollingUpdate 解析结果的 map 类型校验委托给下层 apps.deploymentStrategy 统一收口, 本层不重复校验
+    - mustRegexMatch 预校验整串匹配, regexReplaceAll 提取两个捕获组并 trim 删除空格
     - 空字符串不写入 dict, 空 type 不渲染 strategy 整体
   */ -}}
   {{- $_strategyRaw := include "base.get" (list . "strategy") }}
@@ -138,23 +138,15 @@
       {{- $const := include "base.env" "" | fromYaml }}
       {{- $pattern := $const.APPS.DEPLOYMENT.STRATEGY }}
       {{- if mustRegexMatch $pattern $_strategyRaw }}
-        {{- $type := regexReplaceAll $pattern $_strategyRaw "${1}" }}
-        {{- $maxSurge := regexReplaceAll $pattern $_strategyRaw "${2}" }}
-        {{- $maxUnavailable := regexReplaceAll $pattern $_strategyRaw "${3}" }}
+        {{- $type := regexReplaceAll $pattern $_strategyRaw "${1}" | trim }}
+        {{- $rollingUpdateRaw := regexReplaceAll $pattern $_strategyRaw "${2}" | trim }}
 
         {{- if $type }}
           {{- $_ := set $strategyVal "type" $type }}
         {{- end }}
 
-        {{- if or $maxSurge $maxUnavailable }}
-          {{- $rollingUpdate := dict }}
-          {{- if $maxSurge }}
-            {{- $_ := set $rollingUpdate "maxSurge" $maxSurge }}
-          {{- end }}
-          {{- if $maxUnavailable }}
-            {{- $_ := set $rollingUpdate "maxUnavailable" $maxUnavailable }}
-          {{- end }}
-          {{- $_ := set $strategyVal "rollingUpdate" $rollingUpdate }}
+        {{- if $rollingUpdateRaw }}
+          {{- $_ := set $strategyVal "rollingUpdate" $rollingUpdateRaw }}
         {{- end }}
       {{- end }}
     {{- end }}

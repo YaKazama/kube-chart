@@ -14,9 +14,11 @@
     - `base.labels` 入参上下文：`.`。
     - 去重、去空。
   - `strategy`: string / object，可选，委托 `apps.deploymentStrategy`。
-    - string 类型，正则，参考：`^(Recreate|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s+(\\d+\\%?))?$`。
-      - 需要使用正则拆分字符串，提取 `type`、`minReadySeconds`、`maxSurge`、`maxUnavailable` 字段并生成可用的 dict 兼容原生语义。
+    - string 类型，正则，参考：`^(Recreate|RollingUpdate)(?:\\s+(.*))?$`。
+      - 正则拆分字符串，提取 `type`、`rollingUpdate` 字段并生成可用的 dict。
+        - `type`、`rollingUpdate` 字段分别对应正则表达式的第 1 个和第 2 个捕获组。
       - 正则表达式放到 `Apps` 组。
+      - 捕获组需要 `trim` 删除空格。
       - 先统一解析规整为 dict，再透传给委托的模板。
     - object 类型，原生定义。包括 `type`、`rollingUpdate` 字段。
     - 上下文：dict，包括 `type`、`rollingUpdate` 字段。

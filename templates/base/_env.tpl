@@ -24,7 +24,7 @@ K8S:
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
 APPS:
   DEPLOYMENT:
-    STRATEGY: "^(Recreate|RollingUpdate)?(?:\\s*(\\d+\\%?))?(?:\\s+(\\d+\\%?))?$"
+    STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
 API_GROUP:
   GROUP_VERSION_DISCOVERY: "^(\\S+\\/\\S+) +([a-z0-9][a-z0-9.]*)$"
   SERVER_ADDRESS_BY_CLIENT_CIDR: "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/\\d{1,2})?)\\s+(\\S+)$"
