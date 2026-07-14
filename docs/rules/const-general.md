@@ -1,12 +1,14 @@
 - 只能使用 `base.get` 取值。
   - 触发`别名`/`alias`时，调用 `base.getWithAlias` 取值，默认别名优先级高。
+  - 不需要 `trim` 删除空格。
 - `base.env` 正则表达式，参考 `docs/samples/env.tpl`，只选取需要的写入 `templates/base/_env.tpl`；禁止将参考示例全量写入新文件。
+- 允许读取 `docs/samples/` 和 `templates/` 目录下的 `tpl` 文件，获取示例代码。
 - 字段类型默认行为：
   - string: `base.get` 不需要强制类型转换；`base.field` 常用 `base.string` 模板渲染。
   - integer/int: `base.get` 不需要强制类型转换；`base.field` 常用 `base.int` 模板渲染。
   - boolean/bool: `base.get` 不需要强制类型转换；`base.field` 常用 `base.bool` 模板渲染。
-  - object/map: `base.get` 常结合 `fromYaml` 使用、不需要 `trim` 空格；`base.field` 常用 `base.map` 模板渲染。
-  - array/slice: `base.get` 常结合 `fromYamlArray` 使用、不需要 `trim` 空格；`base.field` 常用 `base.slice` 模板渲染。
+  - object/map: `base.get` 常结合 `fromYaml` 使用；`base.field` 常用 `base.map` 模板渲染。
+  - array/slice: `base.get` 常结合 `fromYamlArray` 使用；`base.field` 常用 `base.slice` 模板渲染。
 - 禁止字段： `status`。
 - 禁止在工程目录下进行所有验证，特别是创建隐藏文件或目录（如 `.verify/` 目录）。所有验证只能在 `/tmp/` 目录下进行。
 - 完成后需要检查是否有隐性 BUG 并修复。
@@ -14,6 +16,8 @@
   - `{{- else if }}` 前需要空行。
 - `spec` 字段，向下传递 `.` 或 `mustDeepCopy` 后的对象。
 - 禁止创建不存在的模板，使用提供的模板名占位。
+  - 父模板向子模板透传字段时，采用 dict 类型。
+  - 针对抽象出来的正则表达式定义：简单的在父级模板中解析；复杂的在子模板中逐级解析。
 - 字段定义支持多类型时，需要在上层模板中处理类型转换。
   - 先统一解析规整为 dict，再透传给委托的模板。
 - 模板名称自行修复。
