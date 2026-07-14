@@ -21,8 +21,8 @@
 */ -}}
 {{- define "definitions.objectMeta" -}}
   {{- /* 取值顺序: _pkind > _kind; _pkind 大部分时候应为空，仅在嵌套资源 (如 StatefulSetSpec -> PersistentVolumeClaim) 时被设置 */ -}}
-  {{- $_pkind := include "base.get" (list . "_pkind") | trim }}
-  {{- $_kind := include "base.get" (list . "_kind") | trim }}
+  {{- $_pkind := include "base.get" (list . "_pkind") }}
+  {{- $_kind := include "base.get" (list . "_kind") }}
   {{- $_kind = coalesce $_pkind $_kind }}
 
   {{- /* annotations map: 字符串键值对，外部工具使用的非查询性元数据
@@ -35,7 +35,7 @@
   {{- end }}
 
   {{- /* generateName string: 仅在 name 未指定时由服务器生成唯一名的可选前缀，校验规则同 name (RFC1035) */ -}}
-  {{- $generateName := include "base.get" (list . "generateName") | trim }}
+  {{- $generateName := include "base.get" (list . "generateName") }}
   {{- if $generateName }}
     {{- $_ := include "base.rfc" (list $generateName "1035") }}
     {{- include "base.field" (list "generateName" $generateName "quote") }}
@@ -72,7 +72,7 @@
        Namespace 自身的 namespace 为空; ClusterRole / ClusterRoleBinding 为集群级资源，无 namespace
        Role / RoleBinding 为命名空间级资源，同样排除 (由调用方按 RBAC 场景统一处理) */ -}}
   {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "Namespace") (eq $_kind "ClusterRole") (eq $_kind "ClusterRoleBinding") (eq $_kind "Role") (eq $_kind "RoleBinding")) }}
-    {{- $nsStr := include "base.get" (list . "namespace") | trim }}
+    {{- $nsStr := include "base.get" (list . "namespace") }}
     {{- if $nsStr }}
       {{- $namespace := include "base.namespace" $nsStr }}
       {{- if $namespace }}

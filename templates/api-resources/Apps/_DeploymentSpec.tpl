@@ -30,7 +30,7 @@
   {{- /* Step 1: minReadySeconds (int, 可选): 仅在显式值 > 0 时渲染, 缺省时由 K8s 默认为 0
        约束: 显式值 < 0 时不渲染 (0 等同缺省, 负数非法)
        注: 兼容 Helm 4.2.2 fromYaml 对基本类型返回错误 map 的 BUG, 直接 atoi 解析 base.get 输出 */ -}}
-  {{- $_minReadySecondsRaw := include "base.get" (list . "minReadySeconds" "int") | trim }}
+  {{- $_minReadySecondsRaw := include "base.get" (list . "minReadySeconds" "int") }}
   {{- if $_minReadySecondsRaw }}
     {{- $_minReadySeconds := atoi $_minReadySecondsRaw }}
     {{- if gt $_minReadySeconds 0 }}
@@ -40,7 +40,7 @@
 
   {{- /* Step 2: paused (bool, 可选): 仅在显式设置为 true 时渲染, K8s 缺省为 false
        注: 兼容 Helm 4.2.2 fromYaml 对基本类型返回错误 map 的 BUG, 直接比较 base.get 输出字符串 */ -}}
-  {{- $_pausedRaw := include "base.get" (list . "paused") | trim }}
+  {{- $_pausedRaw := include "base.get" (list . "paused") }}
   {{- if eq $_pausedRaw "true" }}
     {{- include "base.field" (list "paused" true "base.bool") }}
   {{- end }}
@@ -48,7 +48,7 @@
   {{- /* Step 3: progressDeadlineSeconds (int, 可选): 仅在显式值 > 0 时渲染, 缺省时由 K8s 默认为 600
        约束: 显式值 <= 0 时不渲染 (0 和负数均非法)
        注: 兼容 Helm 4.2.2 fromYaml 对基本类型返回错误 map 的 BUG, 直接 atoi 解析 base.get 输出 */ -}}
-  {{- $_progressDeadlineSecondsRaw := include "base.get" (list . "progressDeadlineSeconds" "int") | trim }}
+  {{- $_progressDeadlineSecondsRaw := include "base.get" (list . "progressDeadlineSeconds" "int") }}
   {{- if $_progressDeadlineSecondsRaw }}
     {{- $_progressDeadlineSeconds := atoi $_progressDeadlineSecondsRaw }}
     {{- if gt $_progressDeadlineSeconds 0 }}
@@ -59,7 +59,7 @@
   {{- /* Step 4: replicas (int, 可选): 仅在显式值 >= 0 时渲染, 缺省时由 K8s 默认为 1 (允许显式 0 表示缩容到零)
        约束: 显式值 < 0 时不渲染 (0 合法, 表示缩容到零; 负数非法)
        注: 兼容 Helm 4.2.2 fromYaml 对基本类型返回错误 map 的 BUG, 直接 atoi 解析 base.get 输出 */ -}}
-  {{- $_replicasRaw := include "base.get" (list . "replicas" "int") | trim }}
+  {{- $_replicasRaw := include "base.get" (list . "replicas" "int") }}
   {{- if $_replicasRaw }}
     {{- $_replicas := atoi $_replicasRaw }}
     {{- if ge $_replicas 0 }}
@@ -70,7 +70,7 @@
   {{- /* Step 5: revisionHistoryLimit (int, 可选): 仅在显式值 >= 0 时渲染, 缺省时由 K8s 默认为 10
        约束: 显式值 < 0 时不渲染 (允许显式 0 表示不保留历史, 0 和负数中 0 合法, 负数非法)
        注: 兼容 Helm 4.2.2 fromYaml 对基本类型返回错误 map 的 BUG, 直接 atoi 解析 base.get 输出 */ -}}
-  {{- $_revisionHistoryLimitRaw := include "base.get" (list . "revisionHistoryLimit" "int") | trim }}
+  {{- $_revisionHistoryLimitRaw := include "base.get" (list . "revisionHistoryLimit" "int") }}
   {{- if $_revisionHistoryLimitRaw }}
     {{- $_revisionHistoryLimit := atoi $_revisionHistoryLimitRaw }}
     {{- if ge $_revisionHistoryLimit 0 }}
@@ -86,7 +86,7 @@
     - 必填项缺失或非 map 类型时立即中断并报错
     - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
   */ -}}
-  {{- $_selectorRaw := include "base.get" (list . "selector") | trim }}
+  {{- $_selectorRaw := include "base.get" (list . "selector") }}
   {{- if or (not $_selectorRaw) (eq $_selectorRaw "null") }}
     {{- fail "[apps.deploymentSpec] selector: required field is missing or empty" }}
   {{- end }}
@@ -125,7 +125,7 @@
     - mustRegexMatch 预校验整串匹配, regexReplaceAll 提取三个捕获组
     - 空字符串不写入 dict, 空 type 不渲染 strategy 整体
   */ -}}
-  {{- $_strategyRaw := include "base.get" (list . "strategy") | trim }}
+  {{- $_strategyRaw := include "base.get" (list . "strategy") }}
   {{- $strategyVal := dict }}
 
   {{- if and $_strategyRaw (ne $_strategyRaw "null") }}
@@ -172,7 +172,7 @@
     - 必填项缺失或非 map 类型时立即中断并报错
     - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
   */ -}}
-  {{- $_templateRaw := include "base.get" (list . "template") | trim }}
+  {{- $_templateRaw := include "base.get" (list . "template") }}
   {{- if or (not $_templateRaw) (eq $_templateRaw "null") }}
     {{- fail "[apps.deploymentSpec] template: required field is missing or empty" }}
   {{- end }}

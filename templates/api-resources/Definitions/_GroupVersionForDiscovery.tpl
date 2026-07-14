@@ -17,14 +17,14 @@
 */ -}}
 {{- define "definitions.groupVersionForDiscovery" -}}
   {{- /* Step 1: groupVersion (string, 必填): "group/version" 形式, 上游 APIGroup 已通过 API_GROUP.GROUP_VERSION_DISCOVERY 正则分组提取 (${1}) */ -}}
-  {{- $_groupVersion := include "base.get" (list . "groupVersion") | trim }}
+  {{- $_groupVersion := include "base.get" (list . "groupVersion") }}
   {{- if or (not $_groupVersion) (eq $_groupVersion "null") }}
     {{- fail "[definitions.groupVersionForDiscovery] groupVersion: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "groupVersion" $_groupVersion "base.string") }}
 
   {{- /* Step 2: version (string, 必填): "version" 形式, 上游 APIGroup 已通过 API_GROUP.GROUP_VERSION_DISCOVERY 正则分组提取 (${2}) */ -}}
-  {{- $_version := include "base.get" (list . "version") | trim }}
+  {{- $_version := include "base.get" (list . "version") }}
   {{- if or (not $_version) (eq $_version "null") }}
     {{- fail "[definitions.groupVersionForDiscovery] version: required field is missing or empty" }}
   {{- end }}

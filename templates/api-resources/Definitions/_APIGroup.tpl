@@ -30,7 +30,7 @@
   {{- nindent 0 "" -}}kind: "APIGroup"
 
   {{- /* Step 4: name (string, 必填): RFC1035 Label 规范, 由 base.rfc 校验长度与格式 */ -}}
-  {{- $_name := include "base.get" (list . "name") | trim }}
+  {{- $_name := include "base.get" (list . "name") }}
   {{- if or (not $_name) (eq $_name "null") }}
     {{- fail "[definitions.APIGroup] name: required field is missing or empty" }}
   {{- end }}
@@ -38,7 +38,7 @@
   {{- include "base.field" (list "name" $_name "base.string") }}
 
   {{- /* Step 5: preferredVersion (string, 可选): 正则提取 groupVersion/version 后构造 dict, 转交 definitions.groupVersionForDiscovery 渲染 */ -}}
-  {{- $_preferredVersion := include "base.get" (list . "preferredVersion") | trim }}
+  {{- $_preferredVersion := include "base.get" (list . "preferredVersion") }}
   {{- if and $_preferredVersion (ne $_preferredVersion "null") }}
     {{- if not (mustRegexMatch $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion) }}
       {{- fail (printf "[definitions.APIGroup] preferredVersion: '%s' does not match format 'groupVersion version' (regex: %s)" $_preferredVersion $const.API_GROUP.GROUP_VERSION_DISCOVERY) }}

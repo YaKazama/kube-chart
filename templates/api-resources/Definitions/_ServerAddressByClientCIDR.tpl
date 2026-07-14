@@ -17,14 +17,14 @@
 */ -}}
 {{- define "definitions.serverAddressByClientCIDR" -}}
   {{- /* Step 1: clientCIDR (string, 必填): "CIDR" 形式, 上游 APIGroup 已通过 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR 正则分组提取 (${1}) */ -}}
-  {{- $_clientCIDR := include "base.get" (list . "clientCIDR") | trim }}
+  {{- $_clientCIDR := include "base.get" (list . "clientCIDR") }}
   {{- if or (not $_clientCIDR) (eq $_clientCIDR "null") }}
     {{- fail "[definitions.serverAddressByClientCIDR] clientCIDR: required field is missing or empty" }}
   {{- end }}
   {{- include "base.field" (list "clientCIDR" $_clientCIDR "base.string") }}
 
   {{- /* Step 2: serverAddress (string, 必填): "IP" 形式, 上游 APIGroup 已通过 API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR 正则分组提取 (${2}) */ -}}
-  {{- $_serverAddress := include "base.get" (list . "serverAddress") | trim }}
+  {{- $_serverAddress := include "base.get" (list . "serverAddress") }}
   {{- if or (not $_serverAddress) (eq $_serverAddress "null") }}
     {{- fail "[definitions.serverAddressByClientCIDR] serverAddress: required field is missing or empty" }}
   {{- end }}
