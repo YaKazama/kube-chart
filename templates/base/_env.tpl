@@ -23,6 +23,11 @@ K8S:
   QUANTITY: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
+  SELECTOR:
+    EQUALITY0: "^\\s*([^\\s!=(),]+)\\s*(==|=|!=)\\s*([^\\s!=(),]+)\\s*$"
+    SET0: "^\\s*([^\\s!=(),]+)\\s+(In|NotIn)\\s*\\(\\s*([^()]+?)\\s*\\)\\s*$"
+    SET_EXISTS: "^\\s*(!?)([^\\s!=(),]+)\\s*$"
+    SET_VALUES_SPLIT: "\\s*,\\s*"
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
