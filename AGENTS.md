@@ -111,10 +111,10 @@
 - 交互：目标+需求+约束+参考；中文输出；数字、英文、中文混合输出时需要加空格。
 - 路径规范：凡涉及文件引用，路径默认为工作区相对路径。
 - 校验入口：
-  - 触发 `校验检查`/`checklist`: 读 `./docs/rules/dev.checklist`。
-  - 触发 `交付检查`/`deploy checklist`: 读 `./docs/rules/deployment.checklist`。
+  - 触发 `ck-dev`: 读 `./docs/rules/dev.checklist`。
+  - 触发 `ck-deploy`: 读 `./docs/rules/deployment.checklist`。
 - Specs 重写规则：
-  - 触发 `AI 重写 specs`/`AI rewrite specs`：读 `./docs/rules/specs-ai-rewrite.md`
+  - 触发 `sdd-rewrite`: 读 `./docs/rules/specs-ai-rewrite.md`
 - values.yaml 字段必须包含「类型 + 含义 + 是否必填 + 默认值」注释。
 - Schema 单源原则：仅维护 values.schema.yaml，发布前工具转为 `.json`。所有顶层字段必须声明类型，必填列入 required，显式声明枚举。
 - 触发 `readme 初始化`/`readme init`：读 `./docs/rules/readme-rules.md`

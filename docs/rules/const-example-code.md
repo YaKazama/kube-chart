@@ -1,3 +1,7 @@
+# 示例代码
+
+## 常用示例
+
 注释：
 
 ```go
@@ -69,4 +73,12 @@ base.field 渲染字段：
   {{- if $spec }}
     {{- include "base.field" (list "spec" $spec "base.map") }}
   {{- end }}
+```
+
+## 禁止示例
+
+```
+{{- $in = dict
+"maxSurge" (regexReplaceAll $const.APPS.DEPLOYMENT.ROLLING_UPDATE $rTrimmed "${1}" | trim)
+"maxUnavailable" (regexReplaceAll $const.APPS.DEPLOYMENT.ROLLING_UPDATE $rTrimmed "${2}" | trim) }}
 ```
