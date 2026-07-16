@@ -17,10 +17,11 @@
 
 ## 模板委托与透传规则
 
-- 字段支持多类型时，必须在上层模板中完成类型归一化处理：先统一解析规整为 dict，再透传给委托模板
-- 父模板向子模板透传字段时，统一使用 dict 类型传递上下文
+- 字段支持多类型时，必须在上层模板中完成类型归一化处理：先统一解析规整为 dict，再透传给委托模板/子模板
+- 父模板向委托模板/子模板透传字段时，统一使用 dict 类型传递上下文
 - `spec` 字段向下传递时，使用原始上下文 `.` 或 `mustDeepCopy` 后的对象
-- 禁止创建规范未定义的模板，未实现的委托模板使用指定名称占位
+- 禁止创建未定义的模板
+- 禁止创建委托模板/子模板，仅名称占位使用
 - 模板名称需自行修复（末级目录前缀.小驼峰），特殊情况保持大写（如 `API`）
 
 ## 正则解析原则
@@ -30,7 +31,8 @@
 
 ## 工程与编码规范
 
-- 字段渲染顺序必须严格对齐 K8s 官方 API 的字段顺序
+- 字段处理和渲染顺序必须严格对齐 K8s 官方 API 的展示顺序，形成 “处理-渲染”单字段闭环；禁止批量集中处理所有字段后再统一渲染
+  - 例外情况：当字段之间存在强互斥或数据关联关系时，允许将关联字段集中处理后，再按 API 顺序渲染
 - 禁止实现 `status` 字段及相关逻辑
 - 所有验证操作必须在 `/tmp/` 目录下执行，禁止在工程目录内创建验证用文件/目录（如 `.verify/`）
 - 代码通过空行分隔不同功能模块，提升可读性；`{{- else if }}` 语句前必须空行
@@ -39,11 +41,13 @@
 - 正则表达式统一归入 `templates/base/_env.tpl` 目录，禁止在其他模板中直接使用正则表达式
 - 正则表达式定义需要添加注释，说明正则表达式定义的含义与使用场景
 
-## HELM 内置函数规范
+## HELM 规范
+
+### 内置函数
 
 - 优先使用 `must` 函数。包括 `mustToJson`、`mustToPrettyJson`、`mustToRawJson`、`mustToToml`、`mustRegexMatch`、`mustRegexFindAll`、`mustRegexFind`、`mustRegexReplaceAll`、`mustRegexReplaceAllLiteral`、`mustRegexSplit`、`mustDateModify`、`mustToDate`、`mustMerge`、`mustMergeOverwrite`、`mustDeepCopy`、`mustFirst`、`mustRest`、`mustLast`、`mustInitial`、`mustAppend`、`mustPrepend`、`mustReverse`、`mustUniq`、`mustWithout`、`mustHas`、`mustCompact`、`mustSlice`
 
-## HELM 命令规范
+### 命令规范
 
 - `helm` 命令引用 `/opt/homebrew/bin/helm`，禁止遍历磁盘
 
