@@ -21,7 +21,7 @@
 - 父模板向子模板透传字段时，统一使用 dict 类型传递上下文
 - `spec` 字段向下传递时，使用原始上下文 `.` 或 `mustDeepCopy` 后的对象
 - 禁止创建规范未定义的模板，未实现的委托模板使用指定名称占位
-- 模板名称需自行修复规范，特殊情况保持大写（如 `API`）
+- 模板名称需自行修复（末级目录前缀.小驼峰），特殊情况保持大写（如 `API`）
 
 ## 正则解析原则
 
@@ -42,6 +42,10 @@
 ## HELM 内置函数规范
 
 - 优先使用 `must` 函数。包括 `mustToJson`、`mustToPrettyJson`、`mustToRawJson`、`mustToToml`、`mustRegexMatch`、`mustRegexFindAll`、`mustRegexFind`、`mustRegexReplaceAll`、`mustRegexReplaceAllLiteral`、`mustRegexSplit`、`mustDateModify`、`mustToDate`、`mustMerge`、`mustMergeOverwrite`、`mustDeepCopy`、`mustFirst`、`mustRest`、`mustLast`、`mustInitial`、`mustAppend`、`mustPrepend`、`mustReverse`、`mustUniq`、`mustWithout`、`mustHas`、`mustCompact`、`mustSlice`
+
+## HELM 命令规范
+
+- `helm` 命令引用 `/opt/homebrew/bin/helm`，禁止遍历磁盘
 
 ## 强制自检清单
 
