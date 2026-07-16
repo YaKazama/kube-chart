@@ -43,6 +43,7 @@
 
       {{- if kindIs "map" $expression }}
         {{- $expressionDict = pick $expression "key" "operator" "values" }}
+
       {{- else if kindIs "string" $expression }}
         {{- if mustRegexMatch $const.K8S.SELECTOR.EQUALITY0 $expression }}
           {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${1}" | trim }}
@@ -54,6 +55,7 @@
             {{- $operator = "NotIn" }}
           {{- end }}
           {{- $expressionDict = dict "key" $key "operator" $operator "values" $values }}
+
         {{- else if mustRegexMatch $const.K8S.SELECTOR.SET0 $expression }}
           {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${1}" | trim }}
           {{- $operator = "In" }}
@@ -71,6 +73,7 @@
             {{- $values = mustAppend $values $value }}
           {{- end }}
           {{- $expressionDict = dict "key" $key "operator" $operator "values" ($values | mustUniq | mustCompact) }}
+
         {{- else if mustRegexMatch $const.K8S.SELECTOR.SET_EXISTS $expression }}
           {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.SET_EXISTS $expression "${2}" | trim }}
           {{- $operator = "Exists" }}
@@ -80,9 +83,11 @@
             {{- $operator = "DoesNotExist" }}
           {{- end }}
           {{- $expressionDict = dict "key" $key "operator" $operator }}
+
         {{- else }}
           {{- fail (printf "[definitions.labelSelector] matchExpressions[%d]: unsupported selector '%s'" $index $expression) }}
         {{- end }}
+
       {{- else }}
         {{- fail (printf "[definitions.labelSelector] matchExpressions[%d]: must be string or object type" $index) }}
       {{- end }}
