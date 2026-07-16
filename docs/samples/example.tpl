@@ -1,7 +1,7 @@
 {{- /* strategy map */ -}}
 {{- /* 为空或未定义时，使用默认设置 RollingUpdate 25% 25% */ -}}
 {{- $strategyVal := include "base.getValue" (list . "strategy") }}
-{{- $match := regexFindAll $const.k8s.strategy.deployment $strategyVal -1 }}
+{{- $match := mustRegexFindAll $const.k8s.strategy.deployment $strategyVal -1 }}
 {{- if $match }}
   {{- /* 相对较简单，一次性处理完成 */ -}}
   {{- $type := mustRegexReplaceAll $const.k8s.strategy.deployment $strategyVal "${1}" | trim }}

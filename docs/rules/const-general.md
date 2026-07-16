@@ -39,6 +39,10 @@
 - 正则表达式统一归入 `templates/base/_env.tpl` 目录，禁止在其他模板中直接使用正则表达式
 - 正则表达式定义需要添加注释，说明正则表达式定义的含义与使用场景
 
+## HELM 内置函数规范
+
+- 优先使用 `must` 函数。包括 `mustToJson`、`mustToPrettyJson`、`mustToRawJson`、`mustToToml`、`mustRegexMatch`、`mustRegexFindAll`、`mustRegexFind`、`mustRegexReplaceAll`、`mustRegexReplaceAllLiteral`、`mustRegexSplit`、`mustDateModify`、`mustToDate`、`mustMerge`、`mustMergeOverwrite`、`mustDeepCopy`、`mustFirst`、`mustRest`、`mustLast`、`mustInitial`、`mustAppend`、`mustPrepend`、`mustReverse`、`mustUniq`、`mustWithout`、`mustHas`、`mustCompact`、`mustSlice`
+
 ## 强制自检清单
 
 代码实现完成后必须逐条确认：

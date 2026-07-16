@@ -35,7 +35,7 @@ metadata 字段, 示例：
 {{- $name := mustRegexReplaceAll $const.k8s.volume.configMap $volumeData "${1}" | trim | lower  }}
 {{- $optional := mustRegexReplaceAll $const.k8s.volume.configMap $volumeData "${2}" | trim }}
 {{- $defaultMode := mustRegexReplaceAll $const.k8s.volume.configMap $volumeData "${3}" | trim }}
-{{- $items := regexSplit $const.split.comma (mustRegexReplaceAll $const.k8s.volume.configMap $volumeData "${4}" | trim) -1 }}
+{{- $items := mustRegexSplit $const.split.comma (mustRegexReplaceAll $const.k8s.volume.configMap $volumeData "${4}" | trim) -1 }}
 {{- $val := dict "name" $name "optional" $optional "defaultMode" $defaultMode "items" $items }}
 {{- $cm := include "definitions.A" $val | fromYaml }}
 ```
