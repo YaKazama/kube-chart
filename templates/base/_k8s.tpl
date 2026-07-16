@@ -392,7 +392,7 @@
   {{- else if eq $type "string" }}
     {{- $const := include "base.env" "" | fromYaml }}
     {{- if mustRegexMatch $const.TYPES.INT . }}
-      {{- duration (atoi .) }}
+      {{- duration (int .) }}
     {{- else if mustRegexMatch $const.K8S.TIME . }}
       {{- . }}
     {{- else }}

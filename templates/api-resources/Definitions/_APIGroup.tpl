@@ -89,7 +89,7 @@
         {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' rendered to empty by definitions.serverAddressByClientCIDR" $cStr) }}
       {{- end }}
 
-      {{- $cidrsList = append $cidrsList $cObj | mustUniq | mustCompact }}
+      {{- $cidrsList = mustAppend $cidrsList $cObj | mustUniq | mustCompact }}
     {{- end }}
     {{- include "base.field" (list "serverAddressByClientCIDRs" $cidrsList "base.slice") }}
   {{- end }}
@@ -137,7 +137,7 @@
       {{- fail (printf "[definitions.APIGroup] versions: element '%s' rendered to empty by definitions.groupVersionForDiscovery" $vStr) }}
     {{- end }}
 
-    {{- $versionsList = append $versionsList $vObj | mustUniq | mustCompact }}
+    {{- $versionsList = mustAppend $versionsList $vObj | mustUniq | mustCompact }}
   {{- end }}
   {{- include "base.field" (list "versions" $versionsList "base.slice") }}
 {{- end }}

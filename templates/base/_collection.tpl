@@ -246,9 +246,9 @@
     {{- if not (kindIs "string" $v) }}
       {{- fail (printf "[base.slice.ips] element: must be string type, got '%s'" (kindOf $v)) }}
     {{- end }}
-    {{- $val = append $val (include "base.net" (list $v "ip")) }}
+    {{- $val = mustAppend $val (include "base.net" (list $v "ip")) }}
   {{- end }}
-  {{- toYamlPretty ($val | uniq) }}
+  {{- toYamlPretty ($val | mustUniq) }}
 {{- end }}
 
 
@@ -282,11 +282,11 @@
 
   {{- $val := list }}
   {{- range $v := $data }}
-    {{- if has $v $allows }}
-      {{- $val = append $val $v }}
+    {{- if mustHas $v $allows }}
+      {{- $val = mustAppend $val $v }}
     {{- end }}
   {{- end }}
-  {{- toYamlPretty ($val | uniq) }}
+  {{- toYamlPretty ($val | mustUniq) }}
 {{- end }}
 
 
@@ -310,7 +310,7 @@
     - 未指定 sep：toYamlPretty 格式化后的列表
     - 指定 sep：join 拼接后的字符串
     - 元素类型保留原始类型，纯数字字符串自动转 int
-    - 末尾自动 uniq 去重；empty=false 时仅去除空字符串，不影响 0/false
+    - 末尾自动 mustUniq 去重；empty=false 时仅去除空字符串，不影响 0/false
 
   示例:
     字符串拆分：默认分隔符
@@ -406,10 +406,10 @@
       {{- range $part := mustRegexSplit $r $v -1 }}
         {{- $trimmed := trim $part }}
         {{- /* 数字字符串自动转 int 类型 */ -}}
-        {{- if regexMatch $const.TYPES.INT $trimmed }}
-          {{- $valTmp = append $valTmp ($trimmed | atoi) }}
+        {{- if mustRegexMatch $const.TYPES.INT $trimmed }}
+          {{- $valTmp = mustAppend $valTmp ($trimmed | int) }}
         {{- else }}
-          {{- $valTmp = append $valTmp $trimmed }}
+          {{- $valTmp = mustAppend $valTmp $trimmed }}
         {{- end }}
       {{- end }}
       {{- $clean = concat $clean $valTmp }}
@@ -438,7 +438,7 @@
   {{- /* Step 7: 末尾去重 + 按需剔除空字符串（不误删 0/false） */ -}}
   {{- $val = mustUniq $val }}
   {{- if not $empty }}
-    {{- $val = without $val "" }}
+    {{- $val = mustWithout $val "" }}
   {{- end }}
 
   {{- /* Step 8: 输出（始终输出，不走 if $val 包裹；空列表对应 toYamlPretty→"[]" / join→""，均可被安全解析） */ -}}

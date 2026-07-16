@@ -152,7 +152,7 @@
           {{- if eq $mergeMode "replace" }}
             {{- $slices = mustDeepCopy $val }}
           {{- else }}
-            {{- $slices = concat $slices $val | uniq }}
+            {{- $slices = concat $slices $val | mustUniq }}
           {{- end }}
           {{- if $debug }}
             {{- printf "DEBUG[base.get]: slice merged: slices='%v'\n" $slices }}
@@ -309,7 +309,7 @@
   {{- if not (kindIs "string" $mergeMode) }}
     {{- fail (printf "[base.getWithAlias] mergeMode: expected string type, got '%v' (kind: %s)" $mergeMode (kindOf $mergeMode)) }}
   {{- end }}
-  {{- if not (has $mergeMode (list "left" "right" "replace")) }}
+  {{- if not (mustHas $mergeMode (list "left" "right" "replace")) }}
     {{- fail (printf "[base.getWithAlias] mergeMode: expected one of [left, right, replace], got '%s'" $mergeMode) }}
   {{- end }}
   {{- if not (kindIs "bool" $required) }}

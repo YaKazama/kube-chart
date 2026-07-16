@@ -163,16 +163,16 @@
 
       {{- /* 字符串类型保持原样，其他类型必须加引号防止 YAML 解析错误 */}}
       {{- if kindIs "string" $value }}
-        {{- $result = append $result (dict "name" $name "value" $value) }}
+        {{- $result = mustAppend $result (dict "name" $name "value" $value) }}
       {{- else }}
         {{- /* 非字符串类型：转为字符串并强制加引号 */}}
         {{- $strVal := print $value | quote }}
-        {{- $result = append $result (dict "name" $name "value" $strVal) }}
+        {{- $result = mustAppend $result (dict "name" $name "value" $strVal) }}
       {{- end }}
 
     {{- else if hasKey . "valueFrom" }}
       {{- /* valueFrom 保持原样 */}}
-      {{- $result = append $result . }}
+      {{- $result = mustAppend $result . }}
     {{- else }}
       {{- fail (printf "[base.process.containers.env] environment variable '%s' missing value or valueFrom field" $name) }}
     {{- end }}
