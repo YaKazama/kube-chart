@@ -44,8 +44,8 @@
       {{- fail (printf "[definitions.APIGroup] preferredVersion: '%s' does not match format 'groupVersion version' (regex: %s)" $_preferredVersion $const.API_GROUP.GROUP_VERSION_DISCOVERY) }}
     {{- end }}
 
-    {{- $_gv := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${1}" | trim }}
-    {{- $_v := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${2}" | trim }}
+    {{- $_gv := mustRegexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${1}" | trim }}
+    {{- $_v := mustRegexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $_preferredVersion "${2}" | trim }}
     {{- $preferredVersionDict := dict "groupVersion" $_gv "version" $_v }}
     {{- $preferredVersionObj := include "definitions.groupVersionForDiscovery" $preferredVersionDict | fromYaml }}
     {{- if $preferredVersionObj }}
@@ -81,8 +81,8 @@
         {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' does not match format 'clientCIDR serverAddress' (regex: %s)" $cStr $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR) }}
       {{- end }}
 
-      {{- $_cidr := regexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${1}" | trim }}
-      {{- $_addr := regexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${2}" | trim }}
+      {{- $_cidr := mustRegexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${1}" | trim }}
+      {{- $_addr := mustRegexReplaceAll $const.API_GROUP.SERVER_ADDRESS_BY_CLIENT_CIDR $cStr "${2}" | trim }}
       {{- $cDict := dict "clientCIDR" $_cidr "serverAddress" $_addr }}
       {{- $cObj := include "definitions.serverAddressByClientCIDR" $cDict | fromYaml }}
       {{- if not $cObj }}
@@ -129,8 +129,8 @@
       {{- fail (printf "[definitions.APIGroup] versions: element '%s' does not match format 'groupVersion version' (regex: %s)" $vStr $const.API_GROUP.GROUP_VERSION_DISCOVERY) }}
     {{- end }}
 
-    {{- $_gv := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${1}" | trim }}
-    {{- $_v := regexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${2}" | trim }}
+    {{- $_gv := mustRegexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${1}" | trim }}
+    {{- $_v := mustRegexReplaceAll $const.API_GROUP.GROUP_VERSION_DISCOVERY $vStr "${2}" | trim }}
     {{- $vDict := dict "groupVersion" $_gv "version" $_v }}
     {{- $vObj := include "definitions.groupVersionForDiscovery" $vDict | fromYaml }}
     {{- if not $vObj }}

@@ -4,9 +4,9 @@
 {{- $match := regexFindAll $const.k8s.strategy.deployment $strategyVal -1 }}
 {{- if $match }}
   {{- /* 相对较简单，一次性处理完成 */ -}}
-  {{- $type := regexReplaceAll $const.k8s.strategy.deployment $strategyVal "${1}" | trim }}
-  {{- $maxSurge := regexReplaceAll $const.k8s.strategy.deployment $strategyVal "${2}" | trim }}
-  {{- $maxUnavailable := regexReplaceAll $const.k8s.strategy.deployment $strategyVal "${3}" | trim }}
+  {{- $type := mustRegexReplaceAll $const.k8s.strategy.deployment $strategyVal "${1}" | trim }}
+  {{- $maxSurge := mustRegexReplaceAll $const.k8s.strategy.deployment $strategyVal "${2}" | trim }}
+  {{- $maxUnavailable := mustRegexReplaceAll $const.k8s.strategy.deployment $strategyVal "${3}" | trim }}
   {{- $val := dict "type" $type "rollingUpdate" (dict "maxSurge" $maxSurge "maxUnavailable" $maxUnavailable) }}
 
   {{- $strategy := include "workloads.DeploymentStrategy" $val | fromYaml }}
