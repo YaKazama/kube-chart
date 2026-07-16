@@ -12,14 +12,21 @@
     - 正则定义参考：`k8s.selector.equality0`、`k8s.selector.set0`、`k8s.selector.setExists`
 - `matchLabels`: object，直接渲染
 边界：
-  - 引用 `docs/rules/const-boundary.md`
-  - `matchExpressions`：向下传递前，需要选转换为 dict 类型；回收时，需要去重、去空。
-    - 列表元素：
-      - dict 类型：原生 object 类型，直接传递，包括 `key`（必填）、`operator`（必填）、`values` 字段
-      - string 类型：正则解析为 dict 后传递，包含 `key`、`operator`、`values` 字段
+- 引用 `docs/rules/const-boundary.md`
+- `matchExpressions`：向下传递前，需要选转换为 dict 类型；回收时，需要去重、去空。
+  - 列表元素：
+    - dict 类型：原生 object 类型，直接传递，包括 `key`（必填）、`operator`（必填）、`values` 字段
+    - string 类型：正则解析为 dict 后传递，包含 `key`、`operator`、`values` 字段
+- `operator`：正则使用全小写，避免大小写敏感问题
+- 标签是键值对。有效的标签键有两个段：可选的前缀和名称，用斜杠（/）分隔。 名称段是必需的，必须小于等于 63 个字符，以字母数字字符（[a-z0-9A-Z]）开头和结尾， 带有破折号（-），下划线（_），点（ .）和之间的字母数字。 前缀是可选的。如果指定，前缀必须是 DNS 子域：由点（.）分隔的一系列 DNS 标签，总共不超过 253 个字符， 后跟斜杠（/）。
+- 有效标签值：
+  - 必须为 63 个字符或更少（可以为空）
+  - 除非标签值为空，必须以字母数字字符（[a-z0-9A-Z]）开头和结尾
+  - 包含破折号（-）、下划线（_）、点（.）和字母或数字
 约束:
 - 引用 `docs/rules/const-general.md`
 - 允许读取`参考`提供的 URL ，通过 Field 和 Description 确认是否必填项及正则校验、可用设置、默认值、数量限制等
+- 禁止创建新模板
 参考:
 - API：
   - https://kubernetes.io/docs/reference/kubernetes-api/definitions/label-selector-v1-meta/#LabelSelector

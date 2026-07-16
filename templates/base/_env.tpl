@@ -25,9 +25,11 @@ K8S:
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
   SELECTOR:
-    EQUALITY0: "^([A-Za-z0-9-]+)(?:\\s+([=]{1,2}|!=))(?:\\s+([A-Za-z0-9-]+))$"
-    SET0: "^([A-Za-z0-9-]+)(?:\\s+((?i)in|notin))(?:\\s+\\(.*?\\))$"
-    SET_EXISTS: "^(!)?([A-Za-z0-9-]+)"
+    EQUALITY0: "^([A-Za-z0-9._-]+)(?:\\s+([=]{1,2}|!=))(?:\\s+([A-Za-z0-9._-]+))$"
+    # 集合选择器 (In/NotIn, 操作符大小写不敏感, 捕获 key/op/values)
+    SET0: "^([A-Za-z0-9._-]+)(?:\\s+((?i)in|(?i)notin))(?:\\s+\\((.*?)\\))$"
+    # 存在性选择器 (key / !key, 捕获 not 前缀和 key)
+    SET_EXISTS: "^(!)?([A-Za-z0-9._-]+)$"
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"

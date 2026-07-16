@@ -19,6 +19,9 @@
     - 列表字面量特征: "- " 开头 (非空) 或 "[]" (空), 借助 fromYamlArray 解析
     - 兼容 Helm 4.2.2 fromYamlArray 对非列表输入返回错误切片的 BUG, 委托 base.isFromYamlArrayError 检测
     - 末尾 mustUniq | mustCompact 去重去空
+    - 解析前置声明 $expressionDict / $key / $operator / $values, 各分支用 = 赋值, 避免散落 :=
+    - 原生 object 通过 pick 提取 K8s 规范字段, 防止外部注入额外字段
+    - SET0 values 用 mustRegexSplit + mustAppend 手动拆分行, 保留 string 类型, 避免 base.slice.cleanup 自动把数字字符串转 int
   */ -}}
   {{- $_matchExpressionsRaw := include "base.get" (list . "matchExpressions") }}
   {{- $matchExpressions := list }}
@@ -34,24 +37,33 @@
     {{- $const := include "base.env" "" | fromYaml }}
     {{- range $index, $expression := $expressions }}
       {{- $expressionDict := dict }}
+      {{- $key := "" }}
+      {{- $operator := "" }}
+      {{- $values := list }}
+
       {{- if kindIs "map" $expression }}
-        {{- $expressionDict = mustDeepCopy $expression }}
+        {{- $expressionDict = pick $expression "key" "operator" "values" }}
       {{- else if kindIs "string" $expression }}
         {{- if mustRegexMatch $const.K8S.SELECTOR.EQUALITY0 $expression }}
-          {{- $key := mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${1}" | trim }}
-          {{- $operatorRaw := mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${2}" | trim }}
-          {{- $value := mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${3}" | trim }}
-          {{- $operator := "In" }}
-          {{- if eq $operatorRaw "!=" }}
+          {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${1}" | trim }}
+          {{- $values = list (mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${3}" | trim) }}
+          {{- $operator = "In" }}
+
+          {{- $_operator := mustRegexReplaceAll $const.K8S.SELECTOR.EQUALITY0 $expression "${2}" | trim }}
+          {{- if eq $_operator "!=" }}
             {{- $operator = "NotIn" }}
           {{- end }}
-          {{- $expressionDict = dict "key" $key "operator" $operator "values" (list $value) }}
+          {{- $expressionDict = dict "key" $key "operator" $operator "values" $values }}
         {{- else if mustRegexMatch $const.K8S.SELECTOR.SET0 $expression }}
-          {{- $key := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${1}" | trim }}
-          {{- $operator := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${2}" | trim }}
-          {{- $valuesRaw := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${3}" | trim }}
-          {{- $values := list }}
-          {{- range $value := mustRegexSplit $const.SPLIT.COMMA $valuesRaw -1 }}
+          {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${1}" | trim }}
+          {{- $operator = "In" }}
+
+          {{- $_operator := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${2}" | trim | lower }}
+          {{- if eq $_operator "notin" }}
+            {{- $operator = "NotIn" }}
+          {{- end }}
+          {{- $_valuesRaw := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${3}" | trim }}
+          {{- range $value := mustRegexSplit $const.SPLIT.COMMA $_valuesRaw -1 }}
             {{- $value = $value | trim }}
             {{- if not $value }}
               {{- fail (printf "[definitions.labelSelector] matchExpressions[%d]: set selector contains an empty value" $index) }}
@@ -60,10 +72,11 @@
           {{- end }}
           {{- $expressionDict = dict "key" $key "operator" $operator "values" ($values | mustUniq | mustCompact) }}
         {{- else if mustRegexMatch $const.K8S.SELECTOR.SET_EXISTS $expression }}
-          {{- $not := mustRegexReplaceAll $const.K8S.SELECTOR.SET_EXISTS $expression "${1}" | trim }}
-          {{- $key := mustRegexReplaceAll $const.K8S.SELECTOR.SET_EXISTS $expression "${2}" | trim }}
-          {{- $operator := "Exists" }}
-          {{- if eq $not "!" }}
+          {{- $key = mustRegexReplaceAll $const.K8S.SELECTOR.SET_EXISTS $expression "${2}" | trim }}
+          {{- $operator = "Exists" }}
+
+          {{- $_not := mustRegexReplaceAll $const.K8S.SELECTOR.SET_EXISTS $expression "${1}" | trim }}
+          {{- if eq $_not "!" }}
             {{- $operator = "DoesNotExist" }}
           {{- end }}
           {{- $expressionDict = dict "key" $key "operator" $operator }}
