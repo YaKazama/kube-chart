@@ -10,6 +10,7 @@ TYPES:
   PERCENT: "^\\d+(\\%)?$"
 SYS:
   FILE_MODE: "^(0[0-7]{3}|0|[1-9]\\d|[1-4]\\d{2}|50\\d|51[0-1])$"
+  YAML_QUOTED: "^'(.*)'$"
 NET:
   IP: "^((0|25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]?)\\.){3}(0|25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]?)(\\/\\d{1,2})?$"
   DOMAIN_NAME: "(?i)^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\\.|$))*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$"
@@ -25,6 +26,7 @@ K8S:
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
+    ROLLING_UPDATE: "^(\\d+\\%?)?(?:\\s+(\\d+\\%?))?$"
 API_GROUP:
   GROUP_VERSION_DISCOVERY: "^(\\S+\\/\\S+) +([a-z0-9][a-z0-9.]*)$"
   SERVER_ADDRESS_BY_CLIENT_CIDR: "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/\\d{1,2})?)\\s+(\\S+)$"
