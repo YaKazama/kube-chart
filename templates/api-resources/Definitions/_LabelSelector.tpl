@@ -51,7 +51,7 @@
           {{- $operator := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${2}" | trim }}
           {{- $valuesRaw := mustRegexReplaceAll $const.K8S.SELECTOR.SET0 $expression "${3}" | trim }}
           {{- $values := list }}
-          {{- range $value := mustRegexSplit $const.K8S.SELECTOR.SET_VALUES_SPLIT $valuesRaw -1 }}
+          {{- range $value := mustRegexSplit $const.SPLIT.COMMA $valuesRaw -1 }}
             {{- $value = $value | trim }}
             {{- if not $value }}
               {{- fail (printf "[definitions.labelSelector] matchExpressions[%d]: set selector contains an empty value" $index) }}

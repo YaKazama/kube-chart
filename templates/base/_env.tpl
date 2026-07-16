@@ -2,6 +2,7 @@
 EMPTY_STR: ""
 SPLIT:
   ALL: "\\s*[\\s:,./|*^@#-]+\\s*"
+  COMMA: "\\s*,\\s*"
 TYPES:
   INT: "^[+-]?\\d+$"
   POSITIVE_INT: "^\\d+$"
@@ -24,10 +25,9 @@ K8S:
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
   SELECTOR:
-    EQUALITY0: "^\\s*([^\\s!=(),]+)\\s*(==|=|!=)\\s*([^\\s!=(),]+)\\s*$"
-    SET0: "^\\s*([^\\s!=(),]+)\\s+(In|NotIn)\\s*\\(\\s*([^()]+?)\\s*\\)\\s*$"
-    SET_EXISTS: "^\\s*(!?)([^\\s!=(),]+)\\s*$"
-    SET_VALUES_SPLIT: "\\s*,\\s*"
+    EQUALITY0: "^([A-Za-z0-9-]+)(?:\\s+([=]{1,2}|!=))(?:\\s+([A-Za-z0-9-]+))$"
+    SET0: "^([A-Za-z0-9-]+)(?:\\s+((?i)in|notin))(?:\\s+\\(.*?\\))$"
+    SET_EXISTS: "^(!)?([A-Za-z0-9-]+)"
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
