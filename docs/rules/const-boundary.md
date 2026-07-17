@@ -2,22 +2,23 @@
 
 ## 输出结构规则
 
-- 规范未定义的输入字段，静默忽略，不渲染到最终结果
-- 禁止输出 `status` 字段及相关状态内容
+- 规范未定义的输入字段，静默忽略，不渲染到最终结果。
+- 禁止输出 `status` 字段及相关状态内容。
+- 有 `必填`/`required` 标识的字段，缺失或为空值时，立即中断并报错。
 
 ## 异常输入处理
 
-- 必填项缺失 / 值为 `nil`（`base.get` 返回字符串 `"null"`）：立即中断并报错
-- 非法枚举值：报错并输出合法取值范围
-- 类型不匹配：优先安全类型转换，失败则报错
-- 字段逻辑冲突 / 互斥：按优先级取生效值，输出渲染警告
+- 必填项缺失 / 值为 `nil`（`base.get` 返回字符串 `"null"`）：立即中断并报错。
+- 非法枚举值：报错并输出合法取值范围。
+- 类型不匹配：优先安全类型转换，失败则报错。
+- 字段逻辑冲突 / 互斥：按优先级取生效值，输出渲染警告。
 
 ## 字段值渲染
 
-- 空值 / 零值处理：以各字段定义的生效条件判断是否渲染
+- 空值 / 零值处理：以各字段定义的生效条件判断是否渲染。
 
 ## 版本兼容性
 
 针对 Helm 4.2.2 版本的已知 BUG，所有模板必须强制使用以下底层函数进行拦截：
-- map/dict 类型：必须通过 `base.isFromYamlError` 兼容 `fromYaml` 对非 map 类型输入返回错误 map 的 BUG
-- slice/list 类型：必须通过 `base.isFromYamlArrayError` 兼容 `fromYamlArray` 对非 slice/list 类型输入返回错误切片的 BUG
+- map/dict 类型：必须通过 `base.isFromYamlError` 兼容 `fromYaml` 对非 map 类型输入返回错误 map 的 BUG。
+- slice/list 类型：必须通过 `base.isFromYamlArrayError` 兼容 `fromYamlArray` 对非 slice/list 类型输入返回错误切片的 BUG。

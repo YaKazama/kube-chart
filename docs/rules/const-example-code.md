@@ -71,14 +71,22 @@ base.field 渲染字段：
 {{- include "base.field" (list "pullPolicy" $policy "base.string" $allows) }}
 ```
 
- spec 字段, 示例：
+spec 字段, 示例：
 
 ```text
-  {{- /* spec DeploymentSpec */ -}}
   {{- $spec := include "workloads.DeploymentSpec" . | fromYaml }}
   {{- if $spec }}
     {{- include "base.field" (list "spec" $spec "base.map") }}
   {{- end }}
+```
+
+template 字段委托 PodTemplateSpec 渲染，示例：
+
+```text
+{{- $template := include "core.podTemplateSpec" . | fromYaml }}
+{{- if $template }}
+  {{- include "base.field" (list "template" $template "base.map") }}
+{{- end }}
 ```
 
 ## 禁止示例
