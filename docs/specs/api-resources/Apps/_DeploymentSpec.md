@@ -22,8 +22,8 @@
       - 先统一解析规整为 dict，再透传给委托的模板。
     - object 类型，原生定义。包括 `type`、`rollingUpdate` 字段。
     - 上下文：dict，包括 `type`、`rollingUpdate` 字段。
-  - `template`: object，必填，委托 `core.podTemplateSpec`。
-    - 上下文：`.`。
+  - `template`: object，必填，委托 `core.podTemplateSpec` 并直接透传上下文 `.`。
+    - 缺失或为空时, 立即中断并报错。
 - 边界行为：
   - 必填项缺失或值为 `nil`（`base.get` 返回字符串 `"null"`）时立即中断并报错。
   - slice/list 类型字段需通过 `base.isFromYamlArrayError` 兼容 Helm 4.2.2 `fromYamlArray` 对非 slice/list 类型输入返回错误切片的 BUG。

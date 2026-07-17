@@ -5,6 +5,7 @@
 - 只能使用 `base.get` 取值。
 - 触发 `alias` 调用 `base.getWithAlias` 取值，别名优先级高。
 - 无需 `trim` 删除空格。
+- bool 类型字段直接使用 `base.get` 取值，无需 `fromYaml` 处理。
 
 ## 类型渲染规范
 
