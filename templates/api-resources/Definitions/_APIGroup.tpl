@@ -49,6 +49,12 @@
     {{- $preferredVersionDict := dict "groupVersion" $_gv "version" $_v }}
     {{- $preferredVersionObj := include "definitions.groupVersionForDiscovery" $preferredVersionDict | fromYaml }}
     {{- if $preferredVersionObj }}
+      {{- if eq (include "base.isFromYamlError" $preferredVersionObj) "true" }}
+        {{- fail "[definitions.APIGroup] preferredVersion: invalid YAML output from definitions.groupVersionForDiscovery" }}
+      {{- end }}
+      {{- if not (kindIs "map" $preferredVersionObj) }}
+        {{- fail "[definitions.APIGroup] preferredVersion: must be map type" }}
+      {{- end }}
       {{- include "base.field" (list "preferredVersion" $preferredVersionObj "base.map") }}
     {{- end }}
   {{- end }}
@@ -87,6 +93,12 @@
       {{- $cObj := include "definitions.serverAddressByClientCIDR" $cDict | fromYaml }}
       {{- if not $cObj }}
         {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' rendered to empty by definitions.serverAddressByClientCIDR" $cStr) }}
+      {{- end }}
+      {{- if eq (include "base.isFromYamlError" $cObj) "true" }}
+        {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' rendered to invalid YAML by definitions.serverAddressByClientCIDR" $cStr) }}
+      {{- end }}
+      {{- if not (kindIs "map" $cObj) }}
+        {{- fail (printf "[definitions.APIGroup] serverAddressByClientCIDRs: element '%s' must be map type" $cStr) }}
       {{- end }}
 
       {{- $cidrsList = mustAppend $cidrsList $cObj | mustUniq | mustCompact }}
@@ -135,6 +147,12 @@
     {{- $vObj := include "definitions.groupVersionForDiscovery" $vDict | fromYaml }}
     {{- if not $vObj }}
       {{- fail (printf "[definitions.APIGroup] versions: element '%s' rendered to empty by definitions.groupVersionForDiscovery" $vStr) }}
+    {{- end }}
+    {{- if eq (include "base.isFromYamlError" $vObj) "true" }}
+      {{- fail (printf "[definitions.APIGroup] versions: element '%s' rendered to invalid YAML by definitions.groupVersionForDiscovery" $vStr) }}
+    {{- end }}
+    {{- if not (kindIs "map" $vObj) }}
+      {{- fail (printf "[definitions.APIGroup] versions: element '%s' must be map type" $vStr) }}
     {{- end }}
 
     {{- $versionsList = mustAppend $versionsList $vObj | mustUniq | mustCompact }}

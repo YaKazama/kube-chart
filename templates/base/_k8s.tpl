@@ -127,7 +127,7 @@
   {{- if eq $ctxType "string" }}
     {{- $namespace = . | lower | nospace | trimSuffix "-" }}
   {{- else if eq $ctxType "map" }}
-    {{- $_ns := include "base.get" (list . "namespace" "toString") | fromYaml }}
+    {{- $_ns := include "base.get" (list . "namespace") }}
     {{- $namespace = coalesce $_ns "default" | lower | nospace | trimSuffix "-" }}
   {{- else }}
     {{- fail (printf "[base.namespace] context: expected map or string type, got '%v' (kind: %s)" . $ctxType) }}
@@ -306,17 +306,44 @@
     {{- include "base.labels" (dict "labels" (dict "app" "test")) }}  // app: test
 */ -}}
 {{- define "base.labels" -}}
-  {{- $isHelmLabels := include "base.get" (list . "helmLabels") | fromYaml }}
-  {{- $isJustNameLabel := include "base.get" (list . "justNameLabel") | fromYaml }}
+  {{- /* 兼容 Helm 4.2.2 fromYaml 对 string/slice/bool/数字 输入返回错误 map 的 BUG
+     策略: base.get 返回 toYamlPretty YAML 字符串, 对 bool/数字 等非 map 类型 fromYaml 失效
+     - helmLabels / justNameLabel 是 bool, base.get 返回 "true" / "false" 字符串, 直接字符串比较即可, 跳过 fromYaml
+     - labels (map) 与 base.helmLabels 输出 (map) 仍需 fromYaml + BUG 拦截 */ -}}
+  {{- $isHelmLabels := false }}
+  {{- $_hlRaw := include "base.get" (list . "helmLabels") }}
+  {{- if eq $_hlRaw "true" }}
+    {{- $isHelmLabels = true }}
+  {{- end }}
+
+  {{- $isJustNameLabel := false }}
+  {{- $_jnlRaw := include "base.get" (list . "justNameLabel") }}
+  {{- if eq $_jnlRaw "true" }}
+    {{- $isJustNameLabel = true }}
+  {{- end }}
 
   {{- $labels := dict }}
   {{- if $isJustNameLabel }}
     {{- $_ := set $labels "name" (include "base.name" .) }}
   {{- else }}
-    {{- $customLabels := include "base.get" (list . "labels") | fromYaml }}
+    {{- $customLabels := dict }}
+    {{- $_clRaw := include "base.get" (list . "labels") }}
+    {{- if and $_clRaw (ne $_clRaw "null") (ne $_clRaw "{}") (ne $_clRaw "[]") }}
+      {{- $_clParsed := $_clRaw | fromYaml }}
+      {{- if and $_clParsed (eq (include "base.isFromYamlError" $_clParsed) "false") (kindIs "map" $_clParsed) }}
+        {{- $customLabels = $_clParsed }}
+      {{- end }}
+    {{- end }}
     {{- $labels = mustMerge $labels $customLabels }}
     {{- if $isHelmLabels }}
-      {{- $helmLabels := include "base.helmLabels" . | fromYaml }}
+      {{- $helmLabels := dict }}
+      {{- $_hlOutRaw := include "base.helmLabels" . }}
+      {{- if and $_hlOutRaw (ne $_hlOutRaw "null") (ne $_hlOutRaw "{}") (ne $_hlOutRaw "[]") }}
+        {{- $_hlOutParsed := $_hlOutRaw | fromYaml }}
+        {{- if and $_hlOutParsed (eq (include "base.isFromYamlError" $_hlOutParsed) "false") (kindIs "map" $_hlOutParsed) }}
+          {{- $helmLabels = $_hlOutParsed }}
+        {{- end }}
+      {{- end }}
       {{- $labels = mustMerge $labels $helmLabels }}
     {{- end }}
   {{- end }}

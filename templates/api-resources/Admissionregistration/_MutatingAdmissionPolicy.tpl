@@ -23,11 +23,17 @@
 
   {{- /* Step 2: metadata (dict, 必填): 委托 definitions.objectMeta 渲染
        强制设置 _kind = MutatingAdmissionPolicy (definitions.objectMeta 内部不污染源上下文, 无需 mustDeepCopy)
-       渲染结果为空时立即中断并报错, 符合"必填项缺失"边界行为 */ -}}
+       渲染结果为空或 Helm 4.2.2 fromYaml BUG 错误 map 时立即中断并报错, 符合"必填项缺失"边界行为 */ -}}
   {{- $_ := set . "_kind" "MutatingAdmissionPolicy" }}
   {{- $metadata := include "definitions.objectMeta" . | fromYaml }}
   {{- if not $metadata }}
     {{- fail "[admissionregistration.mutatingAdmissionPolicy] metadata: required field is missing or empty" }}
+  {{- end }}
+  {{- if eq (include "base.isFromYamlError" $metadata) "true" }}
+    {{- fail "[admissionregistration.mutatingAdmissionPolicy] metadata: invalid YAML output from definitions.objectMeta" }}
+  {{- end }}
+  {{- if not (kindIs "map" $metadata) }}
+    {{- fail "[admissionregistration.mutatingAdmissionPolicy] metadata: must be map type" }}
   {{- end }}
   {{- include "base.field" (list "metadata" $metadata "base.map") }}
 

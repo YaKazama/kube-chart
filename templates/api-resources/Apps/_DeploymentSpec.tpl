@@ -9,7 +9,7 @@
     - revisionHistoryLimit (int, 可选): 仅在显式值 >= 0 时渲染, 缺省时由 K8s 默认为 10, 显式值 < 0 时不渲染。
     - selector (object, 必填): 委托 definitions.labelSelector 渲染。
     - strategy (string/object, 可选): 委托 apps.deploymentStrategy 渲染。
-    - template (object, 必填): 委托 core.podTemplateSpec 渲染。
+    - template (object, 必填): 委托 core.podTemplateSpec 渲染, 直接透传上下文 (.), 必填与类型校验由下层收口。
 
   核心字段: 上下文 map, 可包含以下字段:
     - minReadySeconds          (int, 可选)         Pod 处于 Ready 状态的最短秒数 (> 0)
@@ -19,7 +19,7 @@
     - revisionHistoryLimit     (int, 可选)         保留的历史 ReplicaSet 数量 (>= 0)
     - selector                 (object, 必填)      LabelSelector 结构, matchLabels 必填, matchExpressions 可选
     - strategy                 (string/object, 可选) DeploymentStrategy 结构
-    - template                 (object, 必填)      PodTemplateSpec 结构
+    - template                 (object, 必填)      PodTemplateSpec 结构, 透传上下文由 core.podTemplateSpec 收口校验
 
   返回值: DeploymentSpec 资源 YAML 键值对 (不含 spec 父键), 由调用方包入 spec 块
 
@@ -85,6 +85,9 @@
     - 若 selector.matchLabels 已存在则 mustMerge, 否则直接使用 base.labels
     - 必填项缺失或非 map 类型时立即中断并报错
     - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
+      - 输入侧: selector 入参 (line 95-100)
+      - 合并侧: $labels 来自 base.labels, 错误 map 直接静默跳过, 不污染 selector
+      - 委托输出侧: definitions.labelSelector 返回值非空但解析失败时 fail
   */ -}}
   {{- $_selectorRaw := include "base.get" (list . "selector") }}
   {{- if or (not $_selectorRaw) (eq $_selectorRaw "null") }}
@@ -100,7 +103,7 @@
   {{- end }}
 
   {{- $labels := include "base.labels" . | fromYaml }}
-  {{- if and $labels (kindIs "map" $labels) }}
+  {{- if and $labels (eq (include "base.isFromYamlError" $labels) "false") (kindIs "map" $labels) }}
     {{- $_matchLabels := get $selectorVal "matchLabels" }}
     {{- if kindIs "map" $_matchLabels }}
       {{- $_matchLabels = mustMerge $_matchLabels $labels }}
@@ -112,6 +115,12 @@
 
   {{- $selector := include "definitions.labelSelector" $selectorVal | fromYaml }}
   {{- if $selector }}
+    {{- if eq (include "base.isFromYamlError" $selector) "true" }}
+      {{- fail "[apps.deploymentSpec] selector: invalid YAML output from definitions.labelSelector" }}
+    {{- end }}
+    {{- if not (kindIs "map" $selector) }}
+      {{- fail "[apps.deploymentSpec] selector: must be map type" }}
+    {{- end }}
     {{- include "base.field" (list "selector" $selector "base.map") }}
   {{- end }}
 
@@ -124,6 +133,9 @@
     - rollingUpdate 解析结果的 map 类型校验委托给下层 apps.deploymentStrategy 统一收口, 本层不重复校验
     - mustRegexMatch 预校验整串匹配, mustRegexReplaceAll 提取两个捕获组并 trim 删除空格
     - 空字符串不写入 dict, 空 type 不渲染 strategy 整体
+    - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
+      - 输入侧: $_strategyRaw 解析 (line 142, 通过 eq (include "base.isFromYamlError" $parsed) "false" 区分 map/string)
+      - 委托输出侧: apps.deploymentStrategy 返回值非空但解析失败时 fail
   */ -}}
   {{- $_strategyRaw := include "base.get" (list . "strategy") }}
   {{- $strategyVal := dict }}
@@ -155,30 +167,31 @@
   {{- if $strategyVal }}
     {{- $strategy := include "apps.deploymentStrategy" $strategyVal | fromYaml }}
     {{- if $strategy }}
+      {{- if eq (include "base.isFromYamlError" $strategy) "true" }}
+        {{- fail "[apps.deploymentSpec] strategy: invalid YAML output from apps.deploymentStrategy" }}
+      {{- end }}
+      {{- if not (kindIs "map" $strategy) }}
+        {{- fail "[apps.deploymentSpec] strategy: must be map type" }}
+      {{- end }}
       {{- include "base.field" (list "strategy" $strategy "base.map") }}
     {{- end }}
   {{- end }}
 
   {{- /*
-    Step 8: template (object, 必填): 委托 core.podTemplateSpec 渲染, 上下文透传 (.)
-    - 必填项缺失或非 map 类型时立即中断并报错
-    - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测
+    Step 8: template (object, 必填): 委托 core.podTemplateSpec 渲染
+    - 直接透传上下文 (.), 由下层 core.podTemplateSpec 完成必填与类型校验
+    - 渲染结果缺失 / 为空时, 立即中断并报错 (符合"必填"边界行为)
+    - 兼容 Helm 4.2.2 fromYaml 对非 map 输入返回错误 map 的 BUG, 委托 base.isFromYamlError + kindIs "map" 双重拦截
   */ -}}
-  {{- $_templateRaw := include "base.get" (list . "template") }}
-  {{- if or (not $_templateRaw) (eq $_templateRaw "null") }}
+  {{- $template := include "core.podTemplateSpec" . | fromYaml }}
+  {{- if not $template }}
     {{- fail "[apps.deploymentSpec] template: required field is missing or empty" }}
   {{- end }}
-
-  {{- $templateVal := $_templateRaw | fromYaml }}
-  {{- if eq (include "base.isFromYamlError" $templateVal) "true" }}
+  {{- if eq (include "base.isFromYamlError" $template) "true" }}
+    {{- fail "[apps.deploymentSpec] template: invalid YAML output from core.podTemplateSpec" }}
+  {{- end }}
+  {{- if not (kindIs "map" $template) }}
     {{- fail "[apps.deploymentSpec] template: must be map type" }}
   {{- end }}
-  {{- if not (kindIs "map" $templateVal) }}
-    {{- fail "[apps.deploymentSpec] template: must be map type" }}
-  {{- end }}
-
-  {{- $template := include "core.podTemplateSpec" . | fromYaml }}
-  {{- if $template }}
-    {{- include "base.field" (list "template" $template "base.map") }}
-  {{- end }}
+  {{- include "base.field" (list "template" $template "base.map") }}
 {{- end -}}

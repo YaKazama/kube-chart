@@ -26,10 +26,11 @@
   {{- $_kind = coalesce $_pkind $_kind }}
 
   {{- /* annotations map: 字符串键值对，外部工具使用的非查询性元数据
-       PodTemplateSpec / JobTemplateSpec / StatefulSetSpec 不渲染 (嵌套资源由父资源统一管理) */ -}}
+       PodTemplateSpec / JobTemplateSpec / StatefulSetSpec 不渲染 (嵌套资源由父资源统一管理)
+       兼容 Helm 4.2.2 fromYaml 对 string/slice 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测 */ -}}
   {{- if not (or (eq $_kind "PodTemplateSpec") (eq $_kind "JobTemplateSpec") (eq $_kind "StatefulSetSpec")) }}
     {{- $annotations := include "base.get" (list . "annotations") | fromYaml }}
-    {{- if $annotations }}
+    {{- if and $annotations (eq (include "base.isFromYamlError" $annotations) "false") (kindIs "map" $annotations) }}
       {{- include "base.field" (list "annotations" $annotations "base.map") }}
     {{- end }}
   {{- end }}
@@ -42,10 +43,11 @@
   {{- end }}
 
   {{- /* labels map: 用于组织与选择对象的字符串键值对
-       StatefulSetSpec 不渲染 (其 spec.selector 与 pod template 共享标签) */ -}}
+       StatefulSetSpec 不渲染 (其 spec.selector 与 pod template 共享标签)
+       兼容 Helm 4.2.2 fromYaml 对 string/slice 输入返回错误 map 的 BUG, 委托 base.isFromYamlError 检测 */ -}}
   {{- if ne $_kind "StatefulSetSpec" }}
     {{- $labels := include "base.labels" . | fromYaml }}
-    {{- if $labels }}
+    {{- if and $labels (eq (include "base.isFromYamlError" $labels) "false") (kindIs "map" $labels) }}
       {{- include "base.field" (list "labels" $labels "base.map") }}
     {{- end }}
   {{- end }}

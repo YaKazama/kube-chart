@@ -337,6 +337,12 @@
     {{- if ne $raw "" }}
       {{- $val := $raw | fromYaml }}
 
+      {{- /* 兼容 Helm 4.2.2 fromYaml 对 string/slice 输入返回错误 map 的 BUG
+         错误 map (含 "Error" 键) 不视为有效取值, 跳过本路径继续下一条 */ -}}
+      {{- if eq (include "base.isFromYamlError" $val) "true" }}
+        {{- continue }}
+      {{- end }}
+
       {{- /* 判断是否为空值 (空字符串/空列表/空map) */ -}}
       {{- $isEmpty := false }}
       {{- if kindIs "string" $val }}
