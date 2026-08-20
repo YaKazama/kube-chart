@@ -33,3 +33,5 @@ docs/
 charts/
 index.yaml
 *.tgz
+
+examples/tpls-bak/

@@ -1,0 +1,28 @@
+schema: spec-driven
+
+context: |
+  项目：kube-chart，Helm library Chart。
+  Kubernetes API 基线：>= v1.36.0。
+  Helm 基线：>= 4.0.0；推荐和验证目标为 4.2.2。
+  实现范围仅限 Helm 内置函数、Go Template、Sprig 与 Helm 特有函数。
+  使用中文编写变更材料，数字、英文与中文混排保留必要空格。
+  这是既有项目：只为真实变更触及并验证的行为建立规格，不批量回填。
+  已批准的当前规格与变更规格优先于代码；代码不一致时修复代码。
+
+rules:
+  proposal:
+    - 一个变更只处理一个模板或一组不可分割的能力。
+    - 明确目标、非目标、受影响能力、模板路径、公共输入和兼容性影响。
+  specs:
+    - 只描述可观察的渲染或失败行为，不写实现步骤。
+    - 每个 Requirement 至少包含一个 WHEN/THEN Scenario。
+    - 适用时覆盖最小有效、代表性有效和关键非法输入。
+    - 不得把静态代码推断直接写成已验证的当前行为。
+  design:
+    - 模板变更读取 openspec/rules/helm-templates.md。
+    - 调用或修改核心命名模板时读取 openspec/rules/core-capabilities.md。
+    - 记录跨层级上下文、类型归一化、合并、兼容性和安全决策的理由与替代方案。
+  tasks:
+    - 包含批准、实现、文档同步和验证任务。
+    - 模板变更包含 /opt/homebrew/bin/helm lint 和可复现的渲染检查。
+    - 临时验证资产只能位于 /tmp，完成后必须清理。
