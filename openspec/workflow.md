@@ -1,280 +1,181 @@
 # kube-chart SDD 工作流
 
-本文件是开发流程和快捷命令语义的唯一来源。它保留原 SDD 的人工确认、验证证据和正式化门禁，同时使用 OpenSpec 的当前规格、变更规格和归档目录。
+本文件是 `/sdd-*` 与 `/ck-deploy` 的唯一流程定义。目标是保留 OpenSpec 的冻结、验证和归档门禁，同时让用户只维护一份直观输入。
 
-相关入口：[`OpenSpec 导航`](README.md) · [`规格与文档规则`](rules/documentation.md) · [`开发检查`](checks/development.md) · [`发布检查`](checks/release.md)
+## 核心原则
 
-## 核心模型
+- `openspec/changes/<change-id>/proposal.md` 是草案阶段唯一用户入口，正文固定为“目标、需求、约束”。
+- “约束”只保存用户明确指定的本次变更特殊限制；用户未指定时保持空白。AI 从项目上下文得到的通用约束只进入生成产物。
+- 参考资料由 AI 自动从 `AGENTS.md`、适用 OpenSpec 规则、当前规格、目标代码和官方资料获取；用户不维护“参考”字段。
+- 用户可以直接修改 proposal，也可以在会话中描述，由 AI 代写并同步其他文件。
+- `specs/*/spec.md` 与 `artifacts/` 中的文件是 AI 产物，不要求用户修改，也不得重复维护完整用户输入。
+- `artifacts/verification.md` 不是草案或探索产物，只能在正式实现完成后的 `/sdd-verify` 阶段根据实际代码和真实子模板创建。
+- 模板按父到子、自顶向下设计和实现；缺失子模板使用 proposal 中的 checkbox 占位，不改走自底向上。
+- 当前规格与已批准变更规格优先于 design、tasks 和代码；客观的 Kubernetes 或 Helm 约束冲突时进入修订，不能按现有代码反写规格。
 
-```text
-当前规格 + 已批准的变更规格 → 候选代码 → 验证 → 新的当前规格
-```
-
-- [`openspec/specs/`](specs/)：当前已经实现、验证和确认的行为契约。
-- [`openspec/changes/<change-id>/`](changes/)：尚未成为当前事实的变更材料。
-- [`templates/`](../templates/)：对规格的候选实现，不是修改规格的依据。
-- [`openspec/changes/archive/`](changes/archive/)：完成变更的历史；未完成或未验证的工作不得进入。
-
-批准后的约束优先级：
+## 流程与目录
 
 ```text
-当前规格 + 已批准的变更规格 > design.md > tasks.md > 代码
+/sdd-new → /sdd-approve → /sdd-apply → /sdd-verify
+                                        ↓
+                                  人工 Review
+                                        ↓
+                                    /sdd-spec
 ```
-
-Kubernetes 或 Helm 的客观行为与规格冲突时，停止实现并进入规格修订，不能用现有代码自动改写规格。
-
-## 变更目录
 
 ```text
 openspec/changes/<change-id>/
-  proposal.md                 变更原因、范围和影响
-  specs/<能力名>/spec.md      本次新增、修改、删除或改名的行为
-  design.md                   重要技术决策，按风险创建
-  tasks.md                    实施与验证清单
-  approval.md                 人工批准及冻结文件摘要
-  verification.md             实际执行的环境、命令和结果
+  proposal.md                 用户入口：目标、需求、约束
+  specs/<能力名>/spec.md      AI 同步的行为与场景
+  artifacts/                  AI 过程产物，用户无需修改
+    design.md                 重要技术决策，按需创建
+    tasks.md                  执行与门禁清单
+    approval.md               批准状态与冻结摘要
+    verification.md           实施完成后由 /sdd-verify 创建的实际验证记录
 ```
 
-纯重构、工具或文档变更可以没有变更规格，但必须在 `.openspec.yaml` 设置 `skip_specs: true`。
+change 根目录只允许 `proposal.md` 与分类目录；design、tasks、approval 和 verification 不得与用户入口处于同一层级。
+这是本项目的固定布局；即使外部 OpenSpec 默认把 design 或 tasks 放在 change 根目录，AI 也必须以本文件为准写入 `artifacts/`。
 
-## 主流程
-
-```text
-/sdd-new
-    ↓
-批准前准备：proposal + 变更规格 + 按需探索和设计 + tasks
-    ↓
-/sdd-approve
-    ↓
-/sdd-apply
-    ↓
-/sdd-verify
-    ↓
-人工 Review
-    ↓
-/sdd-spec → 合并当前规格、同步用户文档并归档
-```
-
-`/sdd-new` 可以新建或继续未批准草案，自动推进到“可批准”或明确的停止条件。草案阶段允许反复修改；`/sdd-approve` 是行为契约冻结点。批准后需要改变需求时必须执行 `/sdd-revise`，不能直接修改变更规格。
-
-判断下一步时只看当前状态：
-
-| 当前状态 | 可以做什么 | 不可以做什么 |
+| 状态 | 允许 | 禁止 |
 |---|---|---|
-| 草案 | 执行 `/sdd-new` 完成批准前准备，Review 或调整草案 | 修改正式代码 |
-| 已批准 | 按冻结规格实现 | 直接改 proposal 或变更规格 |
-| 实施中 | 修复不符合规格的代码，补充不改变行为的任务细节 | 用现有代码反向修改规格 |
-| 已验证 | 人工 Review，处理发现的问题 | 跳过 Review 直接归档 |
-| 已完成 | 读取或整理当前规格，执行发布检查 | 把归档材料当作当前契约 |
+| 草案 | 修改 proposal，执行 `/sdd-new` 同步 | 修改正式代码 |
+| 已批准或实施中 | 按冻结规格实施和验证 | 直接修改 proposal 或变更规格 |
+| 已验证 | 人工 Review | 跳过 Review 归档 |
+| 已完成 | 读取当前规格、执行发布检查 | 把归档材料当作当前契约 |
 
-## 快捷命令
+## 1. `/sdd-new`：建立或继续草案
 
-这些命令是发送给 AI 的会话触发命令，不是 shell 命令。
-
-| 命令 | 读取 | 写入或执行 | 停止条件 |
-|---|---|---|---|
-| `/sdd-new <change-id> <主要能力名> <define名称=tpl文件>...` | 当前规格、目标代码、适用规则、已有未批准草案 | 先创建或更新 proposal 记录模板目标，再生成变更规格、按需探索和 design、tasks | 目标参数非法时不落盘；存在未决用户选择或需要独立设计 Review 时保留 proposal 并提前停止；否则准备至可批准，不修改正式代码 |
-| `/sdd-approve [change-id]` | proposal、变更规格、design、tasks | 创建或更新 `approval.md`，冻结 proposal 与变更规格 | 只能由用户明确触发；AI 不得自行批准 |
-| `/sdd-apply [change-id]` | 全部变更材料、当前规格、实现规则 | 修改代码、勾选 tasks、执行开发检查并记录证据 | 批准缺失、摘要不匹配或出现规格问题时停止 |
-| `/sdd-revise [change-id]` | 已批准材料、新条件或新需求 | 使批准失效，记录原因，修订 proposal、变更规格和任务 | 返回 `/sdd-approve` 前停止，不继续写代码 |
-| `/sdd-verify [change-id]` | 已批准规格、代码、tasks | OpenSpec、Helm 和场景验证；更新 `verification.md` | 有失败或偏差时不得进入归档 |
-| `/sdd-spec [change-id]` | 批准、验证、Review 结果 | 合并当前规格、同步用户文档、校验并移动到 archive | 任一正式化门禁未满足时停止 |
-| `/sdd-rewrite <能力名>` | 当前规格；代码和证据只用于一致性检查 | 只整理表达 | 不得改变 Requirement 语义；发现不一致时停止 |
-| `/ck-deploy` | 整个 Chart | 执行 [`openspec/checks/release.md`](checks/release.md) | 输出未通过项 |
-
-`/sdd-new` 必须指定 `change-id`、主要能力名和至少一个 `define名称=tpl文件` 映射。同时只有一个活动变更时，其他 change 命令可以省略 `change-id`；存在多个活动变更时必须指定，AI 不得猜测。
-
-开发检查清单和 Helm lint 是 `/sdd-apply`、`/sdd-verify` 的内部动作，不再作为会话快捷命令。用户文档同步是 `/sdd-spec` 的正式化步骤，不再单独触发。
-
-## 1. 新建或继续草案
-
-### 命令目标
-
-`/sdd-new` 的固定格式为：
+### 命令与目标
 
 ```text
 /sdd-new <change-id> <主要能力名> <define名称=目标tpl文件>...
 ```
 
-例如：
+- `change-id` 必须是 kebab-case。
+- 主要能力名是稳定行为领域，对应 `specs/<能力名>/spec.md`。
+- 至少提供一个目标；以第一个 `=` 分隔完整 define 名称和工作区相对 tpl 路径。
+- 路径必须位于 `templates/`，文件名以 `_` 开头并以 `.tpl` 结尾；命名空间、API 组目录和文件名必须一致。
+- 新 define 必须检查 Helm 全局命名空间重名；目标不得与其他活动变更冲突。
+- 参数非法时立即停止，不创建或覆盖 change。
 
-```text
-/sdd-new add-apps-deployment deployment apps.deployment=templates/api-resources/apps/_Deployment.tpl
-```
+继续未批准草案时，change-id 和主要能力必须一致。已有确认目标不得被静默删除或改写；新映射可以确认占位或追加目标。用户明确要求替换时直接修改对应 proposal 行，由 Git 保留历史，不在正文堆叠审计日志。
 
-各参数职责如下：
+### proposal 格式
 
-- `change-id` 标识本次变更并对应 `openspec/changes/<change-id>/`，必须使用 kebab-case。
-- 主要能力名表示首要规格归属并对应 `specs/<主要能力名>/spec.md`，应使用稳定的行为领域名称，不得使用 `add`、`modify`、`fix` 等纯操作词。
-- 每个目标参数以第一个 `=` 分隔完整 Helm `define` 名称和工作区相对 tpl 文件路径；必须至少提供一个，可以提供多个。
-- 多个目标可以归属同一主要能力，例如 `apps.deployment`、`apps.deploymentSpec` 和 `apps.deploymentStrategy`；分析发现的公共依赖使用自身能力规格，并追加到 proposal 的受影响能力与模板目标中。
-
-目标映射必须满足：
-
-- `define` 名称符合 [`Helm 模板工程规则`](rules/helm-templates.md) 的命名空间规则，同一命令中不得重复。
-- tpl 文件位于 `templates/` 下，使用工作区相对路径，文件名以 `_` 开头并以 `.tpl` 结尾；同一文件不得被冲突映射到无关能力。
-- `define` 命名空间、目标目录和文件名相互一致；新增定义必须检查 Helm 全局命名空间重名，修改已有定义必须核对真实文件位置。
-- 映射缺少任一侧、路径越出 `templates/`、目标含糊或与已有活动变更冲突时立即停止，不创建或覆盖变更材料。
-
-命令目标通过校验后，首次执行必须立即创建 `openspec/changes/<change-id>/proposal.md`，至少记录：
-
-- 当前状态为“草案”。
-- change-id、主要能力名以及按顺序列出的命令目标映射；分析追加的模板目标单独标明来源。
-- 已知目标、初始范围、非目标、基线状态和待确认项。
-- 当前已知的受影响能力；主要能力之外的依赖可在后续分析中追加。
-
-proposal 是目标和分析过程的审计入口。行为尚不明确时允许 proposal 保留待确认项并停止，但不得用占位 Requirement 或虚构 Scenario 创建变更规格。目标明确后，同一次或后续相同 `/sdd-new` 调用继续完成变更规格、design 和 tasks。
-
-`/sdd-new` 必须：
-
-1. 校验命令参数和目标映射，再确认 `change-id` 对应新变更还是已有未批准草案；已有有效批准时停止并路由到 apply 或 revise。
-2. 创建或更新 proposal，完整记录命令目标；继续草案时，命令目标与 proposal 中记录的原始命令目标不一致必须停止并说明差异，不得静默改写。分析追加的目标不参与这项输入一致性比较。
-3. 确认目标、范围、非目标、成功标准和能力归属；信息不足时把待确认项写入 proposal 后停止，不创建占位规格。
-4. 修改已有能力时读取 [`openspec/specs/<能力名>/spec.md`](specs/)；没有当前规格时明确“无基线”。
-5. 创建或更新只描述本次变化的变更规格，并在 proposal 中列出主要能力和其他受影响能力。
-6. 按下一节解决未知问题，按风险创建 design，并始终创建或更新 tasks。
-7. 核对 proposal、变更规格、design、tasks、模板目标和探索证据；存在未决用户选择或需要独立设计 Review 时提前停止。
-8. 没有未决问题时报告“可批准”并停止；不得自行执行 `/sdd-approve` 或修改正式代码。
-
-新增能力的最小变更规格：
+目标校验通过后立即创建或更新 proposal：
 
 ```markdown
-## Purpose
+# <变更名称>
 
-说明该能力解决什么问题、服务谁以及主要边界。
+- 状态：草案
+- change-id：`<id>`
+- 主要能力：`<能力>`
+- 命名模板：`<define 名称>`
+- 存放路径：`<工作区相对 tpl 路径>`
 
-## ADDED Requirements
+修改方法：编辑下面三节，或在会话中直接说明。
 
-### Requirement: 可观察行为名称
-模板 MUST 在明确输入下产生可验证的输出或失败结果。
+## 目标
 
-#### Scenario: 最小有效输入
-- **WHEN** 父 Chart 提供最小有效配置
-- **THEN** 模板渲染出预期字段
+- [x] `[稳定编号]` `define=tpl路径`
+- [ ] `[稳定编号]` `<父字段>` 子模板：`define=预计tpl路径`（占位，可修改或勾选）
 
-#### Scenario: 关键非法输入
-- **WHEN** 必填字段缺失或类型非法
-- **THEN** 渲染失败并指出字段路径
+## 需求
+
+直白描述输入、输出、必填、默认值和失败行为。
+
+## 约束
+
+只填写用户明确指定的本次变更特殊限制；没有则留空。AI 不得预填项目通用规则或推导约束。
 ```
 
-修改已有行为时，从当前规格复制完整 Requirement 和全部 Scenario，放入 `## MODIFIED Requirements` 后修改。不能只记录变化的一行，因为归档时整个 Requirement 会被替换。
+顶部摘要必须按 `/sdd-new` 的输入顺序列出命名模板及其存放路径；存在多个目标时成对重复“命名模板、存放路径”，不得只显示名称、文件名或无法对应的两组列表。“目标”节仍保存带稳定编号的完整映射及后续发现的子模板占位。
 
-## 2. 批准前准备
+proposal 不保存长篇基线、受影响能力表、方案比较、成功标准副本、任务或验证记录。
 
-探索、设计和任务拆分是 `/sdd-new` 的内部阶段，不要求用户逐项触发。
+### AI 同步
 
-### 探索未知问题
+AI 每次执行 `/sdd-new`：
 
-适用情况：
+1. 自动读取 `AGENTS.md`、proposal、当前规格、目标代码、适用规则、官方资料和已有 AI 产物；需要时查阅 Git 历史，不要求用户整理参考。
+2. 将会话中的用户输入合并进 proposal；“约束”只能写入用户明确表达的限制，不得自动生成。
+3. 把“需求”同步成 Requirement 与 WHEN/THEN Scenario；新能力使用 ADDED，修改现有能力使用完整 MODIFIED Requirement。
+4. 根据项目上下文把版本、分层、类型、安全、兼容性和实现边界补充到 spec 或简短 design，不回写 proposal “约束”。
+5. 生成简短 tasks，自动补充适用检查，覆盖目标确认、批准、父到子实施、验证、Review、文档和归档。
+6. 对 Helm 或 Kubernetes 客观行为的不确定性按需在 `/tmp/` 探索；影响实现的结论进入简短 design，临时资产完成后清理，不把探索结果当作正式验证。
 
-- Helm 或 Kubernetes 版本行为尚未确认。
-- 公共上下文、类型转换或合并语义存在不确定性。
-- 需要最小渲染实验才能确定可行边界。
+AI 产物首行必须指向 proposal 作为修改入口。用户输入变化后重新同步；不得要求用户跨文件修改。design、tasks、approval 和 verification 必须写入 `artifacts/`，不得回到 change 根目录。
 
-探索规则：
+### 子模板占位
 
-- 实验资产只创建于 `/tmp/`，不得把试验代码直接当作正式实现。
-- `verification.md` 记录问题、输入、命令、预期、实际结果和结论。
-- 结论可以修改未批准草案；未经 `/sdd-approve` 不得固化为当前规格、正式代码或公共规则。
-- 实验结束后立即清理 `/tmp/` 资产；未知问题没有证据结论时不得标记为可批准。
+父模板行为明确、子模板尚未确认时，在 proposal “目标”添加一行 `[ ]` 占位。完整定义只保留在这一行；spec、design 和 tasks 只引用稳定编号。
 
-### 设计与任务
+- 父规格只描述真实的委托、上下文隔离、最小返回契约和父级失败收口，不替子模板虚构字段行为。
+- 正式 `templates/` 不得创建空值或假数据占位 define。
+- 用户勾选该行、在会话中确认编号，或通过后续 `/sdd-new` 提供同一映射后，AI 展开该子模板并继续发现下一层占位。
+- 占位不会触发架构选择，也不会阻止父级规格、设计、任务和探索完成。
 
-以下情况创建 `design.md`：跨模板层级、公共能力、上下文重构、兼容性、安全、迁移、外部依赖或需要比较备选方案。
+### `/sdd-new` 停止状态
 
-`design.md` 只回答如何实现以及为什么这样选择；行为要求仍由变更规格定义。`tasks.md` 将已明确的工作拆成按依赖排序的复选项，每项必须有完成定义和验证方式。
+- 顶层行为仍不明确：在 proposal “需求”留下具体 `[待补充]`，停止，不创建虚构 Requirement。
+- 存在子模板占位：完成全部父级 AI 产物后，报告需要修改的 proposal 编号，状态保持草案。
+- 需要独立设计 Review：完成 design 后报告 Review 点，状态保持草案。
+- 没有 `[待补充]`、未勾选占位或设计 Review：报告“可批准”。
 
-设计需要独立人工 Review 时，`/sdd-new` 在 design 完成后停止；用户确认后使用相同 change-id、主要能力名和目标映射再次执行 `/sdd-new`，继续生成或更新 tasks。不得为简化调用顺序而跳过真实的设计决策门禁。
+AI 不得自行批准或在 `/sdd-new` 修改正式代码。
 
-## 3. 批准与冻结
+## 2. `/sdd-approve`：冻结行为
 
-`/sdd-approve` 只能由用户明确触发。执行前必须确认：
+只能由用户明确触发。批准前确认：
 
-- proposal 的范围、非目标和能力列表明确。
-- proposal 的主要能力和全部 `define名称=tpl文件` 映射明确，并与 design、tasks 一致。
+- proposal 的目标和需求明确，目标没有未勾选占位，需求没有 `[待补充]`；约束允许为空。
 - 每个 Requirement 至少有一个可验证 Scenario。
-- 重要未知问题已经解决；design 不含会改变行为或任务的未决问题。
-- tasks 覆盖实现、验证和文档同步。
+- proposal、全部变更规格、design 和 tasks 一致。
+- tasks 覆盖实施、验证、Review、文档和归档。
 
-`approval.md` 最小格式：
+`artifacts/approval.md` 记录状态、ISO 8601 时间、用户命令，并保存 proposal 与全部变更规格的 SHA-256。冻结后需求变化必须执行 `/sdd-revise`。
 
-```markdown
-# 变更批准
+## 3. `/sdd-apply` 与 `/sdd-revise`
 
-## 当前状态
+`/sdd-apply` 先核对 approval 和冻结摘要，再按 tasks 从父模板到子模板实施：
 
-- 状态：已批准
-- 批准时间：<ISO 8601>
-- 批准方式：用户执行 `/sdd-approve <change-id>`
+- 只能创建或修改已批准目标映射中的 define 和 tpl 文件。
+- 父模板可以先写出已批准的子模板 include；子模板完成前不以替身结果判定父模板通过验证。
+- 每级完成后执行当前能够执行的开发检查；完整渲染验证等待真实子模板实现完成。
+- 发现代码不符合规格时修代码；不按代码回写规格。
 
-## 冻结输入
+新增需求、条件、目标或外部约束时执行 `/sdd-revise`：将批准标记为“需重新批准”，在 proposal 三节中修改用户输入，由 AI 重新同步规格、design 和 tasks；重新批准前停止受影响实施。
 
-- `proposal.md`：`sha256:<摘要>`
-- `specs/<能力名>/spec.md`：`sha256:<摘要>`
+## 4. `/sdd-verify`：验证
 
-## 修订记录
-
-- 无。
-```
-
-冻结对象是 proposal 和所有变更规格。`design.md` 与 `tasks.md` 可以在不改变行为契约的前提下细化；一旦它们暴露出需求变化，必须转入 `/sdd-revise`。
-
-## 4. 实施与受控修订
-
-`/sdd-apply` 开始前重新计算冻结文件摘要；缺少 approval 或摘要不同必须停止。
-
-实施按 tasks 顺序修改代码并执行 [`openspec/checks/development.md`](checks/development.md)。模板变更在实现过程中运行固定 Helm CLI 的 lint 和必要的聚焦场景，将命令、输入和实际结果写入 `verification.md`；开发检查不能替代最终 `/sdd-verify`。
-
-实施只能创建或修改已批准 proposal 中的模板目标；发现必须新增、删除或改写 `define名称=tpl文件` 映射时进入 `/sdd-revise`，不得静默扩大实现范围。
-
-实施中按以下规则处理反馈：
-
-| 发现 | 处理 |
-|---|---|
-| 代码不符合已批准规格 | 修复代码，规格不变 |
-| 代码结构不合适但行为不变 | 修改 design、tasks 和代码 |
-| 新增条件、边界或业务需求 | `/sdd-revise`，重新批准后再实施 |
-| 规格矛盾或外部约束导致不可实现 | `/sdd-revise`，记录证据和影响 |
-| 与本 change 无关的新目标 | 新建另一个 change |
-
-`/sdd-revise` 必须把 approval 状态改为“需重新批准”，记录原因、受影响 Requirement、已完成代码和需作废的验证，再修改草案。重新批准前不得继续实现受影响部分。
-
-## 5. 验证
-
-`/sdd-verify` 以已批准规格为预期，不得为了让验证通过而按现有代码回写规格。
-
-模板变更至少验证：
+最终验证以冻结规格为预期，至少包括：
 
 - OpenSpec 严格校验。
 - `/opt/homebrew/bin/helm lint`。
-- 最小有效输入和较完整有效输入。
-- 每个关键失败 Scenario。
-- 受影响公共能力的回归场景。
+- 最小有效、较完整有效和全部关键失败 Scenario。
+- 受影响公共能力回归。
+- 使用真实子模板的完整渲染；不得依赖测试替身或残留未解析占位。
 
-`verification.md` 对每个场景记录环境、输入、命令、预期、实际结果和状态。静态代码审阅可以确定验证范围，但不能替代 Helm 渲染证据。
+`/sdd-verify` 只能在有效批准存在、正式目标全部实现、真实子模板可用且实施任务完成后执行。它根据当次实际检查创建或更新 `artifacts/verification.md`，记录环境、输入、命令、预期、实际和状态；不得写入草案推断、临时候选代码结果或测试替身结果。
 
-## 6. 正式化、文档与归档
+验证结果同时直接报告给用户。全部通过时勾选 `artifacts/tasks.md` 中对应验证任务；有失败或偏差时保留实际结果，但不得标记任务完成或进入归档。
 
-执行 `/sdd-spec` 前必须满足：
+## 5. 人工 Review 与 `/sdd-spec`
 
-- approval 存在、状态为“已批准”且冻结摘要仍匹配。
-- tasks 已完成，取消项有理由。
-- OpenSpec、Helm 和 Scenario 验证通过，无未解决偏差。
-- 代码、变更规格、design、tasks 和 verification 不冲突。
-- 人工 Review 已完成。
-- 通用工程结论已进入 [`openspec/rules/`](rules/)，能力专属行为保留在当前规格。
+`/sdd-spec` 前必须满足：冻结摘要匹配、tasks 完成、`artifacts/verification.md` 来自当前正式实现且无失败或偏差、无占位、人工 Review 完成、代码与全部材料一致；并重新执行关键验证，不能只根据已勾选任务推断当前结果。
 
 通过后：
 
-1. 将 ADDED、MODIFIED、REMOVED、RENAMED 变更合并到 `openspec/specs/<能力名>/spec.md`。
-2. 当前规格只保留行为契约和稳定验证基线，不引用活动变更或归档过程材料。
-3. 用户可见行为变化时依据合并后的当前规格和已验证样例同步 [`docs/`](../docs/)；不得引用尚未成为当前事实的活动材料。
-4. 重新执行 OpenSpec、文档链接和适用发布检查；失败时保留活动 change 并修复，不得归档。
-5. 将整个 change 移动到 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`。
+1. 将 ADDED、MODIFIED、REMOVED、RENAMED 合并到 `openspec/specs/<能力名>/spec.md`。
+2. 当前规格只保留已实现、已验证的行为契约。
+3. 同步 README、`docs/`、样例和适用通用规则。
+4. 重新执行 OpenSpec、文档链接和适用发布检查。
+5. 移动到 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`。
 
-归档记录解释为什么发生变化；当前规格回答系统现在必须怎样工作。
+## 6. 其他命令
 
-## 7. 独立维护
+- `/sdd-rewrite <能力名>`：只整理当前规格表达，不改变行为；发现实现不一致时停止。
+- `/ck-deploy`：执行 `openspec/checks/release.md`，不创建、批准、实施或归档 change。
 
-- `/sdd-rewrite <能力名>` 只整理当前规格的结构和表达，不改变 Requirement 或 Scenario 语义；代码和证据只用于发现不一致，不能反向生成新行为。
-- `/ck-deploy` 对整个 Chart 执行 [`openspec/checks/release.md`](checks/release.md)，不创建、批准、实施或归档 change。
+只有一个活动 change 时，除 `/sdd-new` 外的 change 命令可以省略 change-id；存在多个时必须显式指定，AI 不得猜测。

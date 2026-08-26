@@ -7,13 +7,26 @@
 | 项目 | 阶段 | 下一步 |
 |---|---|---|
 | [当前 Chart 规格](specs/) | 暂无 | 随第一个真实模板变更建立，不批量回填 |
-| [活动变更](changes/) | 暂无 | 使用 `/sdd-new <change-id> <主要能力名> <define名称=tpl文件>...` 新建草案 |
+| [`add-apps-deployment`](changes/add-apps-deployment/) | 草案，待确认子模板 | 修改 proposal 中的 `[DEP-002]`、`[DEP-003]` |
+
+## 用户只修改一个文件
+
+每个活动 change 的 `proposal.md` 是唯一用户入口，固定为“目标、需求、约束”。可以直接修改这三节，也可以在会话中描述，由 AI 更新并同步其他文件。
+
+proposal 顶部直接列出状态、change-id、主要能力、命名模板和存放路径；多个模板按顺序成对列出，打开文件即可确认本次变更写什么、写到哪里。
+
+项目规则、当前规格、目标代码和官方资料由 AI 自动读取；proposal 不设置“参考”节。用户主动提供的特殊依据直接归入需求或约束。
+
+“约束”只填写用户针对本次变更明确指定的特殊限制；没有时保持空白。版本基线、工程规则、安全边界和验证要求由 AI 自动补充到生成产物，不显示在 proposal 中。
+
+change 根目录只有 `proposal.md` 是用户编辑文件。变更规格放在 `specs/`，design、tasks、approval 和 verification 统一放在 `artifacts/`；这些都是 AI 产物，不要求用户理解内部格式，也不要在其中修改需求。verification 只在正式实现完成后的 `/sdd-verify` 阶段创建。
 
 ## 30 秒上手
 
 ```text
 需求不明确           → 先分析；目标参数合法时先创建 proposal
 新建或继续草案       → /sdd-new <change-id> <主要能力名> <define名称=tpl文件>...
+发现缺失子模板       → 在 proposal“目标”中修改对应 checkbox 占位
 草案已经准备完成     → /sdd-approve <change-id>
 变更已经批准         → /sdd-apply <change-id>
 实现发现新条件       → /sdd-revise <change-id>
@@ -21,15 +34,15 @@
 验证及人工 Review 完成 → /sdd-spec <change-id>
 ```
 
-不要根据“目录存在”判断下一步。继续变更时先进入其[活动变更目录](changes/)，读取 `proposal.md`、`tasks.md`、`approval.md`（若存在）和 `verification.md`：没有有效批准不能执行 `/sdd-apply`，没有完整验证和人工 Review 不能执行 `/sdd-spec`。
+不要根据“目录存在”判断下一步。继续变更时先读取 `proposal.md`、`specs/` 和 `artifacts/`：没有有效批准不能执行 `/sdd-apply`，没有基于当前正式实现的完整验证和人工 Review 不能执行 `/sdd-spec`。
 
 例如：
 
 ```text
-/sdd-new add-apps-deployment deployment apps.deployment=templates/api-resources/apps/_Deployment.tpl
+/sdd-new add-apps-deployment deployment apps.deployment=templates/api-resources/Apps/_Deployment.tpl
 ```
 
-`deployment` 是主要规格归属，`apps.deployment` 与 `_Deployment.tpl` 是显式绑定的 Helm 模板目标。命令可以追加多个 `define名称=tpl文件` 映射；首次执行在目标校验通过后先创建 proposal，行为不明确时只记录待确认项，不生成占位 Requirement。
+`deployment` 是主要规格归属，`apps.deployment` 与 `_Deployment.tpl` 是显式绑定的 Helm 模板目标。首次执行创建三节式 proposal，并由 AI 同步其余材料。父级行为明确但子模板缺失时，只在 proposal “目标”维护完整占位行；其他材料引用编号。用户修改 checkbox 行或通过后续 `/sdd-new` 确认映射后继续展开。
 
 日常只需理解三类内容：
 
@@ -41,14 +54,15 @@
 
 | 原 SDD 内容 | 新位置或步骤 |
 |---|---|
-| 需求 `spec.md` | `proposal.md` 记录范围，`specs/<能力名>/spec.md` 记录可验收行为 |
+| `目标、需求、约束` | 原样保留在 `proposal.md`，作为唯一用户入口 |
+| OpenSpec Requirement | AI 从 proposal 同步到 `specs/<能力名>/spec.md` |
 | `spec-code-plan` 的未知问题验证 | `/sdd-new` 批准前准备阶段的按需探索 |
-| `design-plan.md`、`design.md`、`plan.md` | 重要决策写入可选的 `design.md`，实施步骤写入 `tasks.md` |
-| `evidence.md` | `verification.md`，仍记录输入、命令、预期、实际结果和失败断言 |
+| `design-plan.md`、`design.md`、`plan.md` | 重要决策写入可选的 `artifacts/design.md`，实施步骤写入 `artifacts/tasks.md` |
+| `evidence.md` | 正式实现完成后由 `/sdd-verify` 创建 `artifacts/verification.md`；草案和提前探索不生成验证文件 |
 | 人工 Review 与正式化门禁 | `/sdd-verify` 后人工 Review，最后由 `/sdd-spec` 合并并归档 |
 | 正式 SDD | [`openspec/specs/<能力名>/spec.md`](specs/)，只保存当前有效契约 |
 
-原 `spec-plan-code` 是默认主线；原 `spec-code-plan` 不再作为独立命令，只保留为 `/sdd-new` 批准前准备阶段的局部探索。`design.md` 按风险创建，`tasks.md` 始终生成；需要独立设计 Review 时直接停止等待确认，不再使用额外命令或参数。
+原 `spec-plan-code` 是默认主线；原 `spec-code-plan` 不再作为独立命令，只保留为 `/sdd-new` 批准前准备阶段的局部探索。`artifacts/design.md` 按风险创建，`artifacts/tasks.md` 始终生成；需要独立设计 Review 时直接停止等待确认，不再使用额外命令或参数。
 
 ## 目录
 
