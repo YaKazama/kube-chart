@@ -1,6 +1,6 @@
 # Helm 模板编码片段
 
-本文件只提供与当前 base 实现或迁移前资源模板相连的局部模式，不替代规格、工程规则或渲染验证。`examples/tpls-bak/` 中的资源模板只用于迁移对照，不表示对应能力当前可由 Chart 调用。
+本文件只提供与当前 base 实现相连的局部模式，不替代规格、工程规则或渲染验证。片段中的资源模板名称仅用于说明调用形态，不表示对应能力已经实现。
 
 ## 模板注释
 
@@ -13,8 +13,6 @@
 示例：include "apps.deployment" $ctx
 */ -}}
 ```
-
-迁移前实现：[`examples/tpls-bak/_Deployment.tpl`](../../examples/tpls-bak/_Deployment.tpl)。
 
 ## 顶层 YAML 换行
 
@@ -38,8 +36,6 @@
 {{- include "base.field" (list "metadata" $value "base.map") -}}
 ```
 
-迁移前实现：[`examples/tpls-bak/_Deployment.tpl`](../../examples/tpls-bak/_Deployment.tpl)。
-
 ## 集合取值
 
 ```gotemplate
@@ -52,7 +48,7 @@
 
 list 使用 `fromYamlArray` 后，以 `base.isFromYamlArrayError` 和真实类型执行对应检查。
 
-参考实现：[`templates/base/_get.tpl`](../../templates/base/_get.tpl)；迁移前资源实现：[`examples/tpls-bak/_DeploymentSpec.tpl`](../../examples/tpls-bak/_DeploymentSpec.tpl)。
+参考实现：[`templates/base/_get.tpl`](../../templates/base/_get.tpl)。
 
 ## 隔离上下文
 
