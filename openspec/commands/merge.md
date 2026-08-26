@@ -11,8 +11,7 @@
 - 存在并被批准摘要冻结时，只为核对摘要读取 `plan/design.md`
 - 读取必需的 `records/verification.md`
 - 受影响的当前规格、正式实现、README、`docs/` 与样例
-- [`../rules/specifications.md`](../rules/specifications.md)、[`../rules/documentation.md`](../rules/documentation.md)
-- [`../checks/merge.md`](../checks/merge.md)
+- [`../rules/change-documents.md`](../rules/change-documents.md)、[`../rules/specifications.md`](../rules/specifications.md)、[`../rules/documentation.md`](../rules/documentation.md)
 
 不读取其他归档 change；只有处理明确的规格冲突时才读取相关活动 change。
 

@@ -8,12 +8,13 @@
 
 - `AGENTS.md`、`openspec/workflow.md`、本文件
 - `draft.md`、`records/approval.md`
+- [`../rules/change-documents.md`](../rules/change-documents.md)
 - 用户本次明确提供的修订内容
 
 ## 输出
 
-- 将用户确认的修订合并进 `draft.md`；AI 草拟但未确认的内容逐项标记 `[AI 推断]`。
-- 将 draft frontmatter `status` 直接改为 `draft`；既有 approval、plan 和 verification 因契约摘要变化自然失效，保留为待刷新 AI 产物，不改写验证证据。
-- 报告受影响的 draft 编号并提示执行 `/sdd-plan`。
+- 按变更文档规则将本轮修订写入 `draft.md`，并将 `status` 改为 `draft`，使既有批准立即失效。
+- 既有 approval、plan 和 verification 保留为待刷新或历史 AI 产物，不改写验证证据。
+- 报告受影响的 draft 条目并提示执行 `/sdd-plan`。
 
-既有 plan 保留为待刷新 AI 产物，不能继续作为实施依据。再次执行 `/sdd-plan` 时先重新检查技术目标，再刷新 plan。仍有歧义而无法写回的内容必须按保护规则输出明确修订建议。
+既有 plan 不能继续作为实施依据。仍有歧义而无法写回时，按变更文档规则输出修订建议。

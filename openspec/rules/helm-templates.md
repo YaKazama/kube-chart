@@ -57,7 +57,7 @@
 
 ## 目录、文件与模板命名
 
-- `/sdd-plan` 的技术目标预检负责解析并写入 template-name 与 target-path；目标文件必须位于 `templates/` 下，且命名空间、依赖域、目录和文件名符合本节规则。用户不需要在 `/sdd-draft` 时提供 `<define 名称>=<目标 tpl 文件>` 映射。
+- 模板目标产物必须记录 define 名称和 `templates/` 下的路径，并符合本节的命名空间、依赖域、目录和文件名规则。
 - 一级分类目录只使用 `base`、`api-resources`、`cloud` 和 `extensions`。`<APIGroup>` 使用 Kubernetes 官方 API group 的稳定目录名；`<Provider>` 与 `<Project>` 使用对应厂商或扩展项目的正式名称，禁止为同一来源创建大小写或别名不同的重复目录。`Definitions` 只允许出现在上表规定的同域共享结构层位置。
 - [`templates/`](../../templates/) 下除 `NOTES.txt` 外的文件必须以 `_` 开头。
 - `templates/base/` 文件使用 `_<小写能力名>.tpl`；资源、共享结构和 CRD 文件使用与 Kubernetes Kind 或结构名一致的 `_<名称>.tpl`，保留 `API` 等官方缩写，例如 `_Deployment.tpl` 和 `_APIGroup.tpl`。

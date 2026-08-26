@@ -17,14 +17,14 @@
 
 - `AGENTS.md`、`openspec/workflow.md`、本文件
 - `draft.md`、全部 `plan/`
+- 仅为复查目标冲突读取其他活动 change 的 draft frontmatter 和 `plan/spec.md` 的 `## 技术目标`
 - [`../rules/change-documents.md`](../rules/change-documents.md)、[`../rules/specifications.md`](../rules/specifications.md)
-- [`../checks/approval.md`](../checks/approval.md)
 
 不读取正式实现、归档历史或验证资料。
 
 ## 输出
 
-- 检查阶段：只输出简短批准检查报告，draft frontmatter `status` 保持 `planned`。
-- 确认阶段：创建人类可读的 `records/approval.md`，记录批准范围，并附带 `draft-content-sha256`、`plan/spec.md` 和存在的 `plan/design.md` 的 SHA-256；把 `status` 更新为 `approved`。
+- 检查阶段：审查 draft、技术目标、spec、可选 design 和 tasks 的一致性与完整性，并输出简短报告；状态保持 `planned`。
+- 确认阶段：按变更文档规则创建 `records/approval.md` 并进入 `approved`。
 
-待确认问题、`[待补充]`、`[AI 推断]`、来源混淆或草稿不一致均阻止批准。
+任何待确认问题、目标冲突或草稿不一致均阻止批准。

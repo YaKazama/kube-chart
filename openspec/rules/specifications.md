@@ -16,13 +16,12 @@
 - 新能力包含 `## Purpose`；修改已有能力不重复 Purpose。
 - Requirement 使用 MUST 或 SHALL，且至少包含一个 WHEN/THEN Scenario。
 - 只描述可观察的渲染或失败行为，不写实现步骤、任务或方案比较。
-- 每个 Requirement 必须引用至少一个已确认 draft 条目。项目规则和代码事实只能作为补充依据，不得独立生成 MUST 或 SHALL；静态代码事实不得表述为已验证行为。
-- 标记 `[AI 推断]` 的 draft 条目不得进入 Requirement；用户确认并移除标记后才能派生规范性行为。
+- Requirement 的来源遵循 [`openspec/rules/change-documents.md`](change-documents.md) 的 draft 保护规则；项目规则和代码事实不得独立扩张用户需求。
 - 未实现子模板只描述当前父模板可观察的调用和最小返回契约，不替子模板虚构行为。
 
 ## 当前规格
 
 - 只保留已批准、已应用、经真实项目命令验证并完成人工 Review 的行为；`/sdd-verify` 不可跳过。
 - 每个能力目录只保存一个 `spec.md`，包含 `## Purpose` 和 `## Requirements`。
-- 合并时移除草稿状态、来源提示、任务、临时假设和被否决方案。
-- `/sdd-rewrite` 只能整理结构和表达，不得改变 Requirement、Scenario、默认值或边界。
+- 合并时移除草稿状态、任务、临时假设和被否决方案。
+- 整理当前规格的结构和表达按普通编辑处理，不得改变 Requirement、Scenario、默认值或边界；发现与实现或验证证据不一致时停止。
