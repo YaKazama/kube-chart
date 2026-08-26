@@ -7,13 +7,13 @@
 | 项目 | 阶段 | 下一步 |
 |---|---|---|
 | [当前 Chart 规格](specs/) | 暂无 | 随第一个真实模板变更建立，不批量回填 |
-| [`refactor-api-resources`](changes/refactor-api-resources/proposal.md) | 批准前设计 Review | 确认缺失依赖的处理方式后继续执行 `/sdd-new refactor-api-resources` |
+| [活动变更](changes/) | 暂无 | 使用 `/sdd-new <change-id> <主要能力名> <define名称=tpl文件>...` 新建草案 |
 
 ## 30 秒上手
 
 ```text
-需求不明确           → 先分析，不创建文档
-新建或继续草案       → /sdd-new <change-id> [能力名]
+需求不明确           → 先分析；目标参数合法时先创建 proposal
+新建或继续草案       → /sdd-new <change-id> <主要能力名> <define名称=tpl文件>...
 草案已经准备完成     → /sdd-approve <change-id>
 变更已经批准         → /sdd-apply <change-id>
 实现发现新条件       → /sdd-revise <change-id>
@@ -22,6 +22,14 @@
 ```
 
 不要根据“目录存在”判断下一步。继续变更时先进入其[活动变更目录](changes/)，读取 `proposal.md`、`tasks.md`、`approval.md`（若存在）和 `verification.md`：没有有效批准不能执行 `/sdd-apply`，没有完整验证和人工 Review 不能执行 `/sdd-spec`。
+
+例如：
+
+```text
+/sdd-new add-apps-deployment deployment apps.deployment=templates/api-resources/apps/_Deployment.tpl
+```
+
+`deployment` 是主要规格归属，`apps.deployment` 与 `_Deployment.tpl` 是显式绑定的 Helm 模板目标。命令可以追加多个 `define名称=tpl文件` 映射；首次执行在目标校验通过后先创建 proposal，行为不明确时只记录待确认项，不生成占位 Requirement。
 
 日常只需理解三类内容：
 

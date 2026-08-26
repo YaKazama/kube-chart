@@ -16,8 +16,8 @@
 
 ## 快速开始
 
-- 需求不明确：先分析代码和选项，不创建占位规格。
-- 新建或继续未批准草案：`/sdd-new <change-id> [能力名]`。
+- 需求不明确：先分析代码和选项，不创建占位规格；`/sdd-new` 的目标参数合法时仍先创建 proposal 记录已知输入和待确认项。
+- 新建或继续未批准草案：`/sdd-new <change-id> <主要能力名> <define名称=tpl文件>...`。
 - 继续其他阶段：读取 `openspec/changes/<change-id>/`，再执行对应快捷命令。
 
 ```text
@@ -29,13 +29,13 @@
 → /sdd-spec
 ```
 
-`/sdd-new` 在批准前按需完成探索、设计和任务拆分；存在未决用户选择或需要独立设计 Review 时提前停止。完整流程、文件格式、批准冻结和返工规则只在 [`openspec/workflow.md`](openspec/workflow.md) 定义。收到任一 `/sdd-*` 或 `/ck-deploy` 命令时必须先读取该文件；这些是 AI 会话触发命令，不是 shell 命令。
+`/sdd-new` 先校验并记录主要能力及一个或多个 Helm 模板目标，再在批准前按需完成变更规格、探索、设计和任务拆分；存在未决用户选择或需要独立设计 Review 时保留 proposal 审计记录并提前停止。完整流程、文件格式、批准冻结和返工规则只在 [`openspec/workflow.md`](openspec/workflow.md) 定义。收到任一 `/sdd-*` 或 `/ck-deploy` 命令时必须先读取该文件；这些是 AI 会话触发命令，不是 shell 命令。
 
 ## 命令入口
 
 | 命令 | 目的 |
 |---|---|
-| `/sdd-new` | 新建或继续未批准草案，完成批准前准备，不修改正式代码。 |
+| `/sdd-new` | 按主要能力和 `define名称=tpl文件` 目标新建或继续未批准草案，完成批准前准备，不修改正式代码。 |
 | `/sdd-approve` | 由用户确认并冻结 proposal 与变更规格。 |
 | `/sdd-apply` | 按已批准规格实施。 |
 | `/sdd-revise` | 使批准失效，受控修改需求后重新批准。 |

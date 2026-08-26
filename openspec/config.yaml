@@ -11,8 +11,10 @@ context: |
 
 rules:
   proposal:
+    - /sdd-new 必须提供 change-id、主要能力名和至少一个 define名称=tpl文件 映射；映射通过校验后先创建 proposal 记录原始目标。
     - 一个变更只处理一个模板或一组不可分割的能力。
-    - 明确目标、非目标、受影响能力、模板路径、公共输入和兼容性影响。
+    - 明确目标、非目标、主要能力、受影响能力、define 与模板路径映射、公共输入和兼容性影响。
+    - 行为未明确时在 proposal 记录待确认项，不得创建占位 Requirement 或虚构 Scenario。
   specs:
     - 只描述可观察的渲染或失败行为，不写实现步骤。
     - 每个 Requirement 至少包含一个 WHEN/THEN Scenario。
@@ -24,5 +26,6 @@ rules:
     - 记录跨层级上下文、类型归一化、合并、兼容性和安全决策的理由与替代方案。
   tasks:
     - 包含批准、实现、文档同步和验证任务。
+    - 每个已确认的 define名称=tpl文件 映射都有对应实现和验证任务。
     - 模板变更包含 /opt/homebrew/bin/helm lint 和可复现的渲染检查。
     - 临时验证资产只能位于 /tmp，完成后必须清理。

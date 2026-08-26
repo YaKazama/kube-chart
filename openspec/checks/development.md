@@ -2,6 +2,7 @@
 
 - [ ] 已读取目标代码、当前规格、活动变更、[`openspec/workflow.md`](../workflow.md) 和适用规则。
 - [ ] proposal、变更规格、design 和 tasks 范围一致，无会改变行为的未决问题。
+- [ ] 实际创建或修改的 `define` 与 tpl 文件均存在于已批准 proposal 的目标映射中。
 - [ ] `approval.md` 状态为“已批准”，proposal 与全部变更规格的 SHA-256 摘要匹配。
 - [ ] 代码实现符合已批准 Requirement 和 Scenario；没有按现有代码反向改写规格。
 - [ ] 必填、类型、默认行为、零值和互斥关系符合规格。

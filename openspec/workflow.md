@@ -73,7 +73,7 @@ openspec/changes/<change-id>/
 
 | 命令 | 读取 | 写入或执行 | 停止条件 |
 |---|---|---|---|
-| `/sdd-new <change-id> [能力名]` | 当前规格、目标代码、适用规则、已有未批准草案 | proposal、变更规格、按需探索和 design、tasks | 存在未决用户选择或需要独立设计 Review 时提前停止；否则准备至可批准，不修改正式代码 |
+| `/sdd-new <change-id> <主要能力名> <define名称=tpl文件>...` | 当前规格、目标代码、适用规则、已有未批准草案 | 先创建或更新 proposal 记录模板目标，再生成变更规格、按需探索和 design、tasks | 目标参数非法时不落盘；存在未决用户选择或需要独立设计 Review 时保留 proposal 并提前停止；否则准备至可批准，不修改正式代码 |
 | `/sdd-approve [change-id]` | proposal、变更规格、design、tasks | 创建或更新 `approval.md`，冻结 proposal 与变更规格 | 只能由用户明确触发；AI 不得自行批准 |
 | `/sdd-apply [change-id]` | 全部变更材料、当前规格、实现规则 | 修改代码、勾选 tasks、执行开发检查并记录证据 | 批准缺失、摘要不匹配或出现规格问题时停止 |
 | `/sdd-revise [change-id]` | 已批准材料、新条件或新需求 | 使批准失效，记录原因，修订 proposal、变更规格和任务 | 返回 `/sdd-approve` 前停止，不继续写代码 |
@@ -82,21 +82,58 @@ openspec/changes/<change-id>/
 | `/sdd-rewrite <能力名>` | 当前规格；代码和证据只用于一致性检查 | 只整理表达 | 不得改变 Requirement 语义；发现不一致时停止 |
 | `/ck-deploy` | 整个 Chart | 执行 [`openspec/checks/release.md`](checks/release.md) | 输出未通过项 |
 
-`/sdd-new` 必须指定 `change-id`。同时只有一个活动变更时，其他 change 命令可以省略 `change-id`；存在多个活动变更时必须指定，AI 不得猜测。
+`/sdd-new` 必须指定 `change-id`、主要能力名和至少一个 `define名称=tpl文件` 映射。同时只有一个活动变更时，其他 change 命令可以省略 `change-id`；存在多个活动变更时必须指定，AI 不得猜测。
 
 开发检查清单和 Helm lint 是 `/sdd-apply`、`/sdd-verify` 的内部动作，不再作为会话快捷命令。用户文档同步是 `/sdd-spec` 的正式化步骤，不再单独触发。
 
 ## 1. 新建或继续草案
 
+### 命令目标
+
+`/sdd-new` 的固定格式为：
+
+```text
+/sdd-new <change-id> <主要能力名> <define名称=目标tpl文件>...
+```
+
+例如：
+
+```text
+/sdd-new add-apps-deployment deployment apps.deployment=templates/api-resources/apps/_Deployment.tpl
+```
+
+各参数职责如下：
+
+- `change-id` 标识本次变更并对应 `openspec/changes/<change-id>/`，必须使用 kebab-case。
+- 主要能力名表示首要规格归属并对应 `specs/<主要能力名>/spec.md`，应使用稳定的行为领域名称，不得使用 `add`、`modify`、`fix` 等纯操作词。
+- 每个目标参数以第一个 `=` 分隔完整 Helm `define` 名称和工作区相对 tpl 文件路径；必须至少提供一个，可以提供多个。
+- 多个目标可以归属同一主要能力，例如 `apps.deployment`、`apps.deploymentSpec` 和 `apps.deploymentStrategy`；分析发现的公共依赖使用自身能力规格，并追加到 proposal 的受影响能力与模板目标中。
+
+目标映射必须满足：
+
+- `define` 名称符合 [`Helm 模板工程规则`](rules/helm-templates.md) 的命名空间规则，同一命令中不得重复。
+- tpl 文件位于 `templates/` 下，使用工作区相对路径，文件名以 `_` 开头并以 `.tpl` 结尾；同一文件不得被冲突映射到无关能力。
+- `define` 命名空间、目标目录和文件名相互一致；新增定义必须检查 Helm 全局命名空间重名，修改已有定义必须核对真实文件位置。
+- 映射缺少任一侧、路径越出 `templates/`、目标含糊或与已有活动变更冲突时立即停止，不创建或覆盖变更材料。
+
+命令目标通过校验后，首次执行必须立即创建 `openspec/changes/<change-id>/proposal.md`，至少记录：
+
+- 当前状态为“草案”。
+- change-id、主要能力名以及按顺序列出的命令目标映射；分析追加的模板目标单独标明来源。
+- 已知目标、初始范围、非目标、基线状态和待确认项。
+- 当前已知的受影响能力；主要能力之外的依赖可在后续分析中追加。
+
+proposal 是目标和分析过程的审计入口。行为尚不明确时允许 proposal 保留待确认项并停止，但不得用占位 Requirement 或虚构 Scenario 创建变更规格。目标明确后，同一次或后续相同 `/sdd-new` 调用继续完成变更规格、design 和 tasks。
+
 `/sdd-new` 必须：
 
-1. 确认 `change-id` 对应新变更还是已有未批准草案；已有有效批准时停止并路由到 apply 或 revise。
-2. 确认目标、范围、非目标、成功标准和能力名；信息不足时先分析和提问，不创建占位规格。
-3. 修改已有能力时读取 [`openspec/specs/<能力名>/spec.md`](specs/)；没有当前规格时明确“无基线”。
-4. 创建或更新 proposal，列出新能力或被修改的现有能力。
-5. 创建或更新只描述本次变化的变更规格。
+1. 校验命令参数和目标映射，再确认 `change-id` 对应新变更还是已有未批准草案；已有有效批准时停止并路由到 apply 或 revise。
+2. 创建或更新 proposal，完整记录命令目标；继续草案时，命令目标与 proposal 中记录的原始命令目标不一致必须停止并说明差异，不得静默改写。分析追加的目标不参与这项输入一致性比较。
+3. 确认目标、范围、非目标、成功标准和能力归属；信息不足时把待确认项写入 proposal 后停止，不创建占位规格。
+4. 修改已有能力时读取 [`openspec/specs/<能力名>/spec.md`](specs/)；没有当前规格时明确“无基线”。
+5. 创建或更新只描述本次变化的变更规格，并在 proposal 中列出主要能力和其他受影响能力。
 6. 按下一节解决未知问题，按风险创建 design，并始终创建或更新 tasks。
-7. 核对 proposal、变更规格、design、tasks 和探索证据；存在未决用户选择或需要独立设计 Review 时提前停止。
+7. 核对 proposal、变更规格、design、tasks、模板目标和探索证据；存在未决用户选择或需要独立设计 Review 时提前停止。
 8. 没有未决问题时报告“可批准”并停止；不得自行执行 `/sdd-approve` 或修改正式代码。
 
 新增能力的最小变更规格：
@@ -147,13 +184,14 @@ openspec/changes/<change-id>/
 
 `design.md` 只回答如何实现以及为什么这样选择；行为要求仍由变更规格定义。`tasks.md` 将已明确的工作拆成按依赖排序的复选项，每项必须有完成定义和验证方式。
 
-设计需要独立人工 Review 时，`/sdd-new` 在 design 完成后停止；用户确认后再次执行同一 `/sdd-new <change-id>` 继续生成或更新 tasks。不得为简化调用顺序而跳过真实的设计决策门禁。
+设计需要独立人工 Review 时，`/sdd-new` 在 design 完成后停止；用户确认后使用相同 change-id、主要能力名和目标映射再次执行 `/sdd-new`，继续生成或更新 tasks。不得为简化调用顺序而跳过真实的设计决策门禁。
 
 ## 3. 批准与冻结
 
 `/sdd-approve` 只能由用户明确触发。执行前必须确认：
 
 - proposal 的范围、非目标和能力列表明确。
+- proposal 的主要能力和全部 `define名称=tpl文件` 映射明确，并与 design、tasks 一致。
 - 每个 Requirement 至少有一个可验证 Scenario。
 - 重要未知问题已经解决；design 不含会改变行为或任务的未决问题。
 - tasks 覆盖实现、验证和文档同步。
@@ -186,6 +224,8 @@ openspec/changes/<change-id>/
 `/sdd-apply` 开始前重新计算冻结文件摘要；缺少 approval 或摘要不同必须停止。
 
 实施按 tasks 顺序修改代码并执行 [`openspec/checks/development.md`](checks/development.md)。模板变更在实现过程中运行固定 Helm CLI 的 lint 和必要的聚焦场景，将命令、输入和实际结果写入 `verification.md`；开发检查不能替代最终 `/sdd-verify`。
+
+实施只能创建或修改已批准 proposal 中的模板目标；发现必须新增、删除或改写 `define名称=tpl文件` 映射时进入 `/sdd-revise`，不得静默扩大实现范围。
 
 实施中按以下规则处理反馈：
 

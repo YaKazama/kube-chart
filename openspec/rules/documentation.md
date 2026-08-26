@@ -21,6 +21,8 @@
 
 ## 变更规格
 
+- `/sdd-new` 首次执行在目标映射通过校验后先创建 proposal；主要能力决定首要变更规格目录，其他受影响能力由分析结果追加，不能把所有被引用模板强行归入主要能力。
+- proposal 必须保存命令提供的 `change-id`、主要能力名及全部 `define名称=tpl文件` 映射，并明确后续发现的目标或能力；行为未知只记录待确认项，不创建占位 Requirement。
 - 新行为放入 `## ADDED Requirements`。
 - 修改行为放入 `## MODIFIED Requirements`，必须复制并给出完整的新 Requirement 和全部 Scenario。
 - 删除行为放入 `## REMOVED Requirements`，记录 `Reason` 和 `Migration`。
