@@ -1,15 +1,16 @@
 # Kubernetes 官方参考
 
-- [Kubernetes 文档](https://kubernetes.io/docs/)
+只保留直接支撑 API 契约、对象约定和安全默认值的长期入口；具体资源字段、版本和 CRD 必须按当前变更目标查阅对应官方 API 页面，不在此静态枚举。
+
 - [Kubernetes API 参考](https://kubernetes.io/docs/reference/kubernetes-api/)
-- [API 概念](https://kubernetes.io/docs/reference/using-api/)
-- [Deployment v1](https://kubernetes.io/docs/reference/kubernetes-api/apps/deployment-v1/)
-- [Pod v1](https://kubernetes.io/docs/reference/kubernetes-api/core/pod-v1/)
-- [Service v1](https://kubernetes.io/docs/reference/kubernetes-api/core/service-v1/)
-- [ConfigMap v1](https://kubernetes.io/docs/reference/kubernetes-api/core/config-map-v1/)
-- [Secret v1](https://kubernetes.io/docs/reference/kubernetes-api/core/secret-v1/)
-- [Label 与 Selector](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
-- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
-- [Security Context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-- [资源管理](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
-- [探针](https://kubernetes.io/docs/concepts/workloads/pods/probes/)
+- [Kubernetes API v1.36](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/)
+- [对象名称](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/)
+- [命名空间](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
+- [标签和选择算符](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
+- [注解](https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/)
+- [字段选择器](https://kubernetes.io/docs/concepts/overview/working-with-objects/field-selectors/)
+- [推荐使用的标签](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/)
+- [Pod 安全性标准](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [为 Pod 或容器配置安全上下文](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [为 Pod 和容器管理资源](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [存活、就绪和启动探针](https://kubernetes.io/docs/concepts/workloads/pods/probes/)

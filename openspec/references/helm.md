@@ -1,12 +1,13 @@
 # Helm 官方参考
 
-- [Helm 文档](https://helm.sh/docs/)
-- [Chart 开发](https://helm.sh/docs/topics/charts/)
+只保留直接支撑 library Chart 结构、模板实现和真实命令验证的长期入口；具体问题按变更范围继续查阅对应官方页面。
+
 - [Library Charts](https://helm.sh/docs/topics/library_charts/)
-- [模板函数列表](https://helm.sh/docs/chart_template_guide/function_list/)
-- [命名模板](https://helm.sh/docs/chart_template_guide/named_templates/)
-- [流程控制](https://helm.sh/docs/chart_template_guide/control_structures/)
-- [Values 文件](https://helm.sh/docs/chart_template_guide/values_files/)
-- [Chart Schema](https://helm.sh/docs/topics/charts/#schema-files)
+- [Charts](https://helm.sh/docs/topics/charts/)
+- [Template Function List](https://helm.sh/docs/chart_template_guide/function_list/)
+- [Named Templates](https://helm.sh/docs/chart_template_guide/named_templates/)
+- [Flow Control](https://helm.sh/docs/chart_template_guide/control_structures/)
+- [Values Files](https://helm.sh/docs/chart_template_guide/values_files/)
+- [Schema Files](https://helm.sh/docs/topics/charts/#schema-files)
 - [helm lint](https://helm.sh/docs/helm/helm_lint/)
 - [helm template](https://helm.sh/docs/helm/helm_template/)

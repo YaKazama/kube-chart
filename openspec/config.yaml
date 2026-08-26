@@ -3,14 +3,15 @@ schema: spec-driven
 context: |
   项目：kube-chart，Helm library Chart。
   Kubernetes API 基线：>= v1.36.0。
-  Helm 基线：>= v4.0.0；推荐和验证目标为 4.2.2。
+  Helm 基线：>= 4.0.0；推荐和验证目标为 4.2.2。
   仅使用 Helm 内置函数、Go Template、Sprig 与 Helm 特有函数。
   只为真实变更触及并验证的行为建立规格，不批量回填。
 
 rules:
   draft:
-    - 用户唯一输入为 openspec/changes/<change-id>/draft.md；轻量保存目标、需求、非目标、验收和明确约束。
-    - frontmatter 是 change 身份、目标文件和当前阶段的唯一状态源。
+    - 用户唯一输入为 openspec/changes/<change-id>/draft.md 正文；只轻量保存目标、需求、非目标、验收和明确约束。
+    - frontmatter 由 AI 维护，是 change 身份、技术目标和当前阶段的唯一状态源。
+    - /sdd-draft 不强制用户提供主要能力、define 名称或目标路径；/sdd-plan 生成 plan 前必须先解析并校验，无法唯一确定时保持 draft。
     - AI 草拟内容必须标记 [AI 推断]；用户明确内容优先，未经确认不得进入 spec 的 MUST 条目。
     - 每次会话结束前，本次变更意图的新增、修改或删除必须写回 draft；未确认、歧义或冻结内容必须生成明确修订建议。
     - 不把项目背景、代码事实、历史决定或无关上下文补写为本次需求。
@@ -23,4 +24,8 @@ rules:
     - 仅有重要技术决策时写入 plan/design.md，不重复需求或通用规则。
   tasks:
     - 任务写入 plan/tasks.md，保持简短；/sdd-apply 后不改写已冻结 plan。
-    - /sdd-apply 必须创建或更新 records/verification.md 的实施检查；/sdd-verify 只补充可选独立验证。
+  workflow:
+    - 状态只允许 draft、planned、approved、applied、verified 和 merged；等待确认、执行中、失败或修订不创建额外状态。
+  verification:
+    - /sdd-apply 只修改正式代码并运行真实项目命令获得反馈，不创建验证记录。
+    - /sdd-verify 必须重新执行完整真实命令矩阵，并将人类可读证据写入 records/verification.md；Markdown checklist 不构成通过证据。

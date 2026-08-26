@@ -2,19 +2,19 @@
 
 ## draft.md 保护规则
 
-1. `draft.md` 是用户唯一输入入口；frontmatter 是 change 身份、目标文件和当前阶段的唯一状态源。
+1. `draft.md` 是用户唯一输入入口；用户只维护表达意图的正文，frontmatter 由 AI 维护，是 change 身份、技术目标和当前阶段的唯一状态源。
 2. AI 可以生成草稿，但不得覆盖、弱化或静默改写用户已确认的意图。
 3. 用户明确写出或在会话中确认的内容优先于 AI 推断。
 4. AI 推断内容必须逐项标记 `[AI 推断]`；不得伪装成用户需求或明确约束。
 5. 未经用户确认，AI 推断不得进入 `plan/spec.md` 的 MUST 或 SHALL 条目。
 6. 每次会话结束前，本次变更意图的新增、修改或删除必须写回 `draft.md`；尚未确认、存在歧义或冻结状态不允许写回时，必须输出明确修订建议。
-7. `/sdd-plan` 只能基于 `draft.md` 派生需求；代码、规则和当前规格只用于校验、解释或识别冲突，不得从无关上下文补全需求。
+7. `/sdd-plan` 只能基于 `draft.md` 派生需求；代码、规则和当前规格可以用于提前解析技术目标、校验、解释或识别冲突，但不得从无关上下文补全需求。
 
 处于冻结阶段、修改仍有歧义或当前操作不允许写 draft 时，AI 必须输出以下格式，不能让修改只停留在会话中：
 
 ```text
 修订建议
-- 目标章节：<目标/需求/约束/非目标/验收/frontmatter>
+- 目标章节：<目标/需求/约束/非目标/验收>
 - 建议文本：<可直接写入 draft.md 的内容>
 - 原因：<未直接写回的原因>
 - 下一步：/sdd-revise <change-id> 或等待用户确认
@@ -24,16 +24,12 @@
 
 ## draft.md 格式
 
-模板 change 每次只包含一个主要命名模板；其他模板作为依赖或独立 change 处理。
+模板 change 每次只包含一个主要命名模板；其他模板作为依赖或独立 change 处理。用户不需要在 `/sdd-draft` 时提供主要能力、define 名称或目标路径，这些技术字段由 `/sdd-plan` 提前解析并校验。
 
 ```markdown
 ---
 status: draft
 change-id: <kebab-case>
-capability: <能力名>
-artifact-type: template
-template-name: <define 名称>
-target-path: <工作区相对 tpl 路径>
 ---
 
 # <变更名称>
@@ -45,7 +41,7 @@ target-path: <工作区相对 tpl 路径>
 ## 目标
 
 - `[G-001]` <目标>
-- `[D-001]` 依赖 `<define名称>=<tpl路径>`，不属于当前实现范围。
+- `[D-001]` 依赖 `<外部能力>`，不属于当前实现范围。
 
 ## 需求
 
@@ -65,8 +61,9 @@ target-path: <工作区相对 tpl 路径>
 - `[A-001]` <可观察且可判定的结果>
 ```
 
-- frontmatter 的 `status` 由 AI 按工作流维护；其他字段是变更意图的一部分，修改时同样遵守保护规则。
-- `status` 只允许 `draft`、`planned`、`approval-pending`、`approved`、`implementing`、`implemented`、`verified`、`revision` 或 `merged`。
+- 新建 draft 的 frontmatter 只要求 `status` 和 `change-id`。通过技术目标预检后，`/sdd-plan` 必须补充 `capability`、`artifact-type`、`template-name` 和 `target-path`；这些字段是 AI 维护的技术路由元数据，不要求用户编辑。
+- `/sdd-plan` 必须在创建或刷新 plan 前验证技术目标唯一、合法且没有活动 change 冲突。无法唯一确定时不得写入猜测值或生成 plan，应保持 `draft` 并报告候选项与待确认问题。
+- `status` 只允许 `draft`、`planned`、`approved`、`applied`、`verified` 或 `merged`。
 - 编号创建后保持稳定；删除内容时不得复用编号。
 - “约束”允许为空。项目基线、通用规则、代码事实或历史决定不得作为普通条目写入；AI 建议只能标记为 `[AI 推断]`。
 - 依赖只声明当前目标调用所需的边界；不展开未实现子模板的字段或任务。
@@ -74,14 +71,14 @@ target-path: <工作区相对 tpl 路径>
 
 ## AI 产物
 
-AI 派生结论使用以下来源标记之一：
+AI 派生的需求或设计结论使用以下来源标记之一：
 
 - `来源：draft [R-001]`
 - `来源：项目规则 openspec/rules/<file>.md`
 - `来源：代码事实 <path>`
 - `来源：AI 推断，待确认`
 
-只有未标记 `[AI 推断]` 的 draft 条目可以派生 MUST 或 SHALL。项目规则和代码事实不得独立扩张用户需求；发现必要的新行为时写回 `[AI 推断]` 或输出修订建议。
+只有未标记 `[AI 推断]` 的 draft 条目可以派生 MUST 或 SHALL。项目规则和代码事实可以解析 capability、artifact-type、template-name 和 target-path，但不得独立扩张用户需求；发现必要的新行为时写回 `[AI 推断]` 或输出修订建议。
 
 不得把 Git 历史、归档 change 或旧 design 当作当前约束。当前规格可用于识别现行契约与冲突，但不能覆盖本次 draft 的明确变更。
 
@@ -91,24 +88,35 @@ AI 派生结论使用以下来源标记之一：
 
 plan 和 approval 使用 `draft-content-sha256`：计算 `draft.md` 时只忽略 frontmatter 中唯一的 `status:` 行，其余 frontmatter 和正文全部参与 SHA-256。这样阶段变化不会改变契约摘要，任何用户意图变化都会使 plan 失效。
 
-批准记录保存 `draft-content-sha256`、`plan/spec.md` 和存在的 `plan/design.md` 摘要；验证记录只保存实际验证证据，不重复用户需求正文。
+批准记录保存人类可读的冻结范围，并附带 `draft-content-sha256`、`plan/spec.md` 和存在的 `plan/design.md` 摘要。摘要只用于完整性核对，不能代替人工批准或真实验证证据。
 
-`records/verification.md` 在 `/sdd-apply` 完成正式实现后创建，固定包含：
+`records/verification.md` 只由 `/sdd-verify` 根据当前正式实现和当轮真实命令创建或覆盖，固定使用人类可读的 Markdown，不使用 YAML 保存证据：
 
 ```markdown
 # 验证记录
 
-## 契约与实现摘要
+## 验证范围
 
-记录冻结契约摘要、正式目标文件及直接依赖摘要。
+- change、冻结契约摘要、目标文件和直接依赖及其 SHA-256。摘要用于确认验证对象未变化，不代替命令证据。
+- 总结论：通过或失败。
 
-## 实施检查（必须）
+## 环境
 
-记录环境、场景或命令、预期、实际和结论。只有全部通过才能进入 implemented。
+- 实际工具及版本。
+- 与结果相关的运行环境。
 
-## 独立验证（可选）
+## 场景 `<编号和名称>`
 
-状态为未执行、通过、失败或失效；仅由 /sdd-verify 写入实际独立验证结果。
+- 命令：仓库真实存在并在当轮实际执行的完整命令。
+- 输入：测试值或 fixture。
+- 退出码：实际退出码。
+- 预期：冻结 Scenario 对应结果。
+- 实际：stdout/stderr 的必要摘要。
+- 结论：通过或失败。
+
+## Fixtures 与限制
+
+- 记录临时 fixture、隔离验证边界和未覆盖内容；没有时明确写“无”。
 ```
 
-实现或直接依赖变化时，`/sdd-apply` 必须刷新实施检查，并把旧独立验证标记为“失效”或“未执行”。`/sdd-merge` 必须读取本文件；实施检查不通过、摘要不匹配，或已执行的独立验证失败/失效时不得合并。
+checklist、静态推断、预期描述、摘要值或旧命令结果均不能形成通过结论。`/sdd-apply` 和 `/sdd-revise` 不得改写验证记录；实现、直接依赖或冻结摘要变化时，既有记录自然失效，必须重新执行 `/sdd-verify`。`/sdd-merge` 只接受当前摘要匹配且全部真实命令通过的验证记录。

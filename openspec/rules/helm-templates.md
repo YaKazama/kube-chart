@@ -57,7 +57,7 @@
 
 ## 目录、文件与模板命名
 
-- `/sdd-draft` 中的模板目标使用 `<define 名称>=<目标 tpl 文件>` 显式绑定；`/sdd-plan` 校验目标文件位于 `templates/` 下，且命名空间、依赖域、目录和文件名符合本节规则。
+- `/sdd-plan` 的技术目标预检负责解析并写入 template-name 与 target-path；目标文件必须位于 `templates/` 下，且命名空间、依赖域、目录和文件名符合本节规则。用户不需要在 `/sdd-draft` 时提供 `<define 名称>=<目标 tpl 文件>` 映射。
 - 一级分类目录只使用 `base`、`api-resources`、`cloud` 和 `extensions`。`<APIGroup>` 使用 Kubernetes 官方 API group 的稳定目录名；`<Provider>` 与 `<Project>` 使用对应厂商或扩展项目的正式名称，禁止为同一来源创建大小写或别名不同的重复目录。`Definitions` 只允许出现在上表规定的同域共享结构层位置。
 - [`templates/`](../../templates/) 下除 `NOTES.txt` 外的文件必须以 `_` 开头。
 - `templates/base/` 文件使用 `_<小写能力名>.tpl`；资源、共享结构和 CRD 文件使用与 Kubernetes Kind 或结构名一致的 `_<名称>.tpl`，保留 `API` 等官方缩写，例如 `_Deployment.tpl` 和 `_APIGroup.tpl`。
@@ -69,7 +69,7 @@
 ## 模板定义与排版
 
 - 禁止创建未定义或仅占位的模板。
-- 实施父模板时，使用冻结契约声明的真实子模板 `include` 引用；该依赖不授权当前 change 创建或修改子模板，正式 `templates/` 中仍禁止空值或假数据占位 `define`。验证当前父模板时假设未实现子模板满足冻结的最小正确返回契约；如 Helm 渲染需要，可在 `/tmp/` 测试 Chart 中提供同名最小 `define`，不得将其当作真实集成结果。
+- 实施父模板时，使用冻结契约声明的真实子模板 `include` 引用；该依赖不授权当前 change 创建或修改子模板，正式 `templates/` 中仍禁止空值或假数据占位 `define`。隔离验证父模板时可以在 `/tmp/` 测试 Chart 中提供同名最小 `define` fixture，但必须运行真实 Helm 命令，并在 `records/verification.md` 中记录 fixture、验证边界和限制；不得将其当作真实集成结果。冻结契约要求真实集成时，fixture 结果不能得出通过结论。
 - 每个 `define` 块使用中文注释说明功能、边界、入参、返回值和最小示例。
 - 模板定义使用 `{{- define "x.y" -}}` 与 `{{- end }}`；使用 2 空格缩进，必要时使用 `{{- nindent 0 "" -}}` 显式建立换行，避免空白裁剪导致相邻 YAML 字段粘连；禁止一行定义。
 - 代码按功能块以空行分隔；`{{- else if }}` 与 `{{- else }}` 前保留一个空行。
@@ -91,5 +91,5 @@
 
 - Pod 安全相关模板默认启用 `runAsNonRoot: true` 和 `readOnlyRootFilesystem: true`，默认禁用 `privileged`、`hostNetwork` 等高危权限。
 - values、样例和文档不得硬编码密钥、令牌、证书或私钥。
-- 所有模板修改必须执行 `/opt/homebrew/bin/helm lint`，并验证最小有效输入、较完整有效输入和关键失败输入。
+- 所有模板修改必须实际执行 `/opt/homebrew/bin/helm lint`，并用真实 Helm 命令验证最小有效输入、较完整有效输入和关键失败输入。Markdown checklist、静态推断或臆造的校验器不得作为通过证据。
 - 临时验证文件只能创建于 `/tmp/`，完成后必须清理。
