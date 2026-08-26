@@ -6,20 +6,19 @@
 
 ## 读取
 
-- `AGENTS.md`、`openspec/workflow.md`、本文件
-- `draft.md`、`records/approval.md` 和全部 `plan/`
+- `draft.md` frontmatter、`records/approval.md` 和全部 `plan/`
 - 当前状态为 `applied` 时，只读既有 `records/verification.md` 以定位上次验证失败；不得改写或把旧结果当作当前反馈
 - 目标代码和直接依赖的当前规格
-- [`../rules/change-documents.md`](../rules/change-documents.md)
 - 仅按修改范围读取 `AGENTS.md` 路由的实现规则
 
 只接受 `approved` 或 `applied`。不读取其他 change、归档记录或无关验证资料。
 
 ## 输出
 
-- 只修改冻结目标授权的正式代码、必要样例或测试资产。
-- 运行仓库真实存在且与修改直接相关的最短反馈命令；具体工程门禁由适用规则定义。
+- 只修改冻结契约列为本 change 目标产物的正式代码、必要样例或测试资产。父模板依赖的子模板不属于当前目标时，只在冻结契约指定的字段或调用位置写入精确的 `include` 引用，不创建或修改子模板；不得在正式 `templates/` 中创建用于绕过缺失依赖的空实现、固定值或假数据 `define`。冻结契约未明确子模板的 `define` 名称、调用位置、传入上下文或最小返回边界时视为契约缺陷，停止并要求 `/sdd-revise`。
+- 运行仓库真实存在且与修改直接相关的最短反馈命令；模板变更至少运行真实的 `/opt/homebrew/bin/helm lint`。不得臆造 `make`、Helm、npm 或其他命令，不得把静态推断或预期描述当作命令结果。
+- 开发反馈显示实现与冻结契约不一致时必须停止完成结论；会话必须报告已通过的反馈、失败命令或 Scenario 的输入与退出码、冻结预期与真实结果的差异、已完成的正式修改、剩余项和临时 fixture 清理结果。不得为得出通过结论而改写命令输出、降低 Scenario 断言或将实际失败等价为预期失败。
 - 不创建或更新 `records/verification.md`；正式验证必须由后续 `/sdd-verify` 基于当前实现重新执行并记录。
-- 不改写已冻结 plan。全部实现和必要开发反馈完成后进入或保持 `applied`；否则按状态机保持进入命令前的状态并报告实际失败和剩余项。
+- 不改写已冻结 plan。全部实现和必要开发反馈完成后进入或保持 `applied`；否则按状态机保持进入命令前的状态并报告实际失败和剩余项。确认为实现缺陷时由后续 `/sdd-apply` 继续修正；确认为契约不可实现、目标事实错误或需求需变更时要求 `/sdd-revise`，不得由 `/sdd-apply` 自行选择新边界。
 
-先按变更文档规则核对批准有效性。批准失效、发现契约缺陷或出现新增需求时停止并要求 `/sdd-revise`；不得按代码反写 plan。
+先核对 `records/approval.md` 中记录的 `plan/spec.md` 和存在的 `plan/design.md` 摘要；不匹配时立即停止并要求 `/sdd-revise`。发现契约缺陷或新增需求时停止并要求 `/sdd-revise`；不得按代码反写 plan。

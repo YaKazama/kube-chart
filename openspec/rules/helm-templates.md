@@ -7,13 +7,14 @@
 - 尽早报错：必填缺失、类型非法或无法消解的冲突必须通过 `required` 或 `fail` 中断渲染。
 - 类型稳定：新 values 字段只定义一种公共类型；已有明确支持多类型的字段必须在上层归一化为 dict 后再委托。
 - 最小传参：单值传标量，同构集合传 list，多维状态传 dict；业务模板不得无意义透传 `.`，base 工具可按契约接收根上下文。
-- 状态隔离：修改 dict、list、上下文或执行合并前，必须使用 `mustDeepCopy` 隔离，严禁污染 `.Values` 和共享输入。
+- 状态隔离：修改或合并所有权不属于当前模板的 dict、list 或上下文前使用 `mustDeepCopy`；只读透传不复制，调用链不得修改 `.Values` 或跨资源共享输入。需求或冻结契约显式声明向上下文注入或覆盖控制变量时，该写入属于上下文调用契约，不得仅因“修改上下文”判定为违反状态隔离；规划必须明确上下文所有权和允许写入的键，资源专用或父 Chart 构造的局部 map 可按契约原地写入且不使用 `mustDeepCopy`。
 - 正则集中：正则统一定义于 [`templates/base/_env.tpl`](../../templates/base/_env.tpl)，使用全大写下划线嵌套键；简单正则可由父模板解析，复杂正则在对应子模板逐级解析。
 
 ## 取值与渲染
 
 - 多层字段统一使用 `base.get`；别名字段使用 `base.getWithAlias`，别名优先。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
+- `include` 返回字符串。map/list 子模板必须按“`include` → 按必填条件检查空值 → `fromYaml`/`fromYamlArray` → `base.isFromYamlError`/`base.isFromYamlArrayError` → `kindIs` → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
 - 正则捕获使用 `mustRegexReplaceAll` 后必须 `trim`。
 - 优先使用 Helm/Sprig 已提供的 `must*` 变体；使用前必须确认函数真实存在于适配版本。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
@@ -68,24 +69,29 @@
 
 ## 模板定义与排版
 
-- 禁止创建未定义或仅占位的模板。
-- 实施父模板时，使用冻结契约声明的真实子模板 `include` 引用；该依赖不授权当前 change 创建或修改子模板，正式 `templates/` 中仍禁止空值或假数据占位 `define`。隔离验证父模板时可以在 `/tmp/` 测试 Chart 中提供同名最小 `define` fixture，但必须运行真实 Helm 命令，并在 `records/verification.md` 中记录 fixture、验证边界和限制；不得将其当作真实集成结果。冻结契约要求真实集成时，fixture 结果不能得出通过结论。
-- 每个 `define` 块使用中文注释说明功能、边界、入参、返回值和最小示例。
+- 规划包含直接 `include` 的命名模板时，必须确定每个被调用模板的 `define` 名称、调用位置、传入上下文和最小返回边界；前三项写入 `plan/design.md`，可观察的返回边界写入 `plan/spec.md`。无法唯一确定或存在冲突时保持 `draft`。
+- 新增或修改的直接 `include` 必须由当前规格或冻结变更契约声明。可以引用尚未实现的被调用模板，但不得在当前 change 中创建未经授权的实现或占位 `define`。
+- 隔离验证调用方模板时，可以在 `/tmp/` 测试 Chart 中提供同名最小 fixture；结果不得作为真实依赖集成通过的证据。
+- 每个命名模板的整体契约使用中文注释说明功能、边界、入参、返回值和最小示例。该注释必须紧邻并写在对应 `{{- define "x.y" -}}` 之前，不得写入 `define` 块内。
+- 规划直接渲染 Kubernetes API 字段的命名模板时，`plan/design.md` 必须按目标 API 字段顺序逐项记录该模板直接负责的字段名称或路径、Kubernetes 官方 API 文档类型和功能说明；委托给子模板的字段只记录当前层字段及官方 API 类型，不展开子模板内部字段。
+- 实现上述命名模板时，每个 API 字段的中文注释必须写在 `define` 块内，紧邻并位于对应字段处理闭环之前；不得集中写入 `define` 之前的整体契约注释，也不得与实际处理字段分离。字段注释必须包含字段名称或路径、Kubernetes 官方 API 文档类型和功能说明；类型使用 `string`、`ObjectMeta`、`DeploymentSpec` 等官方类型名称，不得以 Helm/Sprig 的运行时 `kind` 代替 API 类型。
 - 模板定义使用 `{{- define "x.y" -}}` 与 `{{- end }}`；使用 2 空格缩进，必要时使用 `{{- nindent 0 "" -}}` 显式建立换行，避免空白裁剪导致相邻 YAML 字段粘连；禁止一行定义。
 - 代码按功能块以空行分隔；`{{- else if }}` 与 `{{- else }}` 前保留一个空行。
 - 具有稳定业务语义、会在当前功能块内持续参与判断、合并或输出的局部变量使用 `$<name>`，例如 `$selector`。
 - 临时变量以 `$_` 或 `$__` 开头，例如 `$_raw`、`$__parsed`；适用于 `base.get` 或 `include` 的原始输出、YAML 解析与类型转换中间值、正则捕获、兼容性或错误探测、循环内暂存，以及合并前后的过渡值。
 - `$_<name>` 用于当前处理步骤的一次中间结果；同一语义需要第二级中间结果或嵌套作用域存在重名风险时使用 `$__<name>`。临时变量必须限制在最小可用作用域，完成校验或归一化后应赋给具有业务语义的 `$<name>`，不得跨无关功能块复用。
 - 不需要读取返回值的 `set`、`unset` 或纯校验调用使用 `$_` 接收；`$_` 仅表示显式丢弃返回值，不得随后读取。
-- 字段按 Kubernetes API 顺序形成处理与渲染闭环；仅关联字段可集中处理后按 API 顺序输出。
+- 字段按 Kubernetes API 顺序完成“取值/调用 → 解析 → 错误与类型检查 → 归一化 → `base.field` 渲染”闭环后再处理下一字段；仅关联字段可集中处理。
 - 库 Chart 命名模板首尾不得输出 `---`，不得通过 `range` 自行拼接多个独立资源。
 
 ## 资源与父 Chart 边界
 
 - Kubernetes 名称和标签使用 [`核心模板能力调用规则`](core-capabilities.md) 中的共用入口，不得在资源模板重复实现。
 - library Chart 负责单个资源渲染和嵌套资源上下文隔离；父 Chart 负责跨资源编排与 Helm Hooks。
+- 父 Chart 必须以可写 map 构造局部 `$ctx` 并将其作为顶层资源模板的上下文；顶层资源模板依赖该调用契约，不重复使用 `kindIs "map"` 等入口类型门禁。该约定不适用于 `include` 返回字符串的结构恢复，子模板输出仍须执行 YAML 错误保护和真实类型检查。
+- `_kind` 是资源身份控制键，通常只由顶层资源模板或明确拥有当前资源的特定资源模板写入；不拥有当前资源的下游定义和子模板只读使用或继续传递，不得自行新增或覆盖。当前需求或冻结契约明确要求设置 `_kind` 时，拥有当前资源的模板可以原地覆盖已有值并继续传递同一上下文；该契约写入不要求使用 `mustDeepCopy`。
 - 二级嵌套资源在子模板入口使用 `mustDeepCopy` 与 `mustMergeOverwrite` 构造隔离上下文。
-- 父 Chart 构造局部 `$ctx` 注入业务配置，不得直接修改全局上下文。
+- 父 Chart 通过局部 `$ctx` 注入业务配置，不得直接修改全局上下文。
 
 ## 安全与验证
 

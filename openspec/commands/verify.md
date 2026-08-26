@@ -6,9 +6,8 @@
 
 ## 读取
 
-- `AGENTS.md`、`openspec/workflow.md`、本文件
-- `draft.md`、`records/approval.md`、存在的 `records/verification.md`、`plan/spec.md`
-- 存在并被批准摘要冻结时，只为核对摘要读取 `plan/design.md`
+- `draft.md` frontmatter、`records/approval.md`、`plan/spec.md`
+- 按批准记录检查 `plan/design.md` 的存在性并计算普通 SHA-256；只核对摘要，不读取正文
 - 正式实现、直接依赖的当前规格
 - [`../rules/change-documents.md`](../rules/change-documents.md)
 - 仅按验证场景读取必要实现规则

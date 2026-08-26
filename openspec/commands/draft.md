@@ -12,9 +12,6 @@
 
 ## 读取
 
-- `AGENTS.md`
-- `openspec/workflow.md`
-- 本文件
 - [`../rules/change-documents.md`](../rules/change-documents.md)
 - 继续草案时的 `draft.md`
 

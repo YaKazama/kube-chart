@@ -41,13 +41,13 @@ change 根目录只保留 `draft.md`、`plan/` 和按需创建的 `records/`；�
 ```text
 draft ──/sdd-plan（有阻塞项）──→ draft
 draft ──/sdd-plan（无阻塞项）──→ planned → approved → applied → verified → merged
-任一已批准未合并阶段的需求修订 ──/sdd-revise──→ draft
+任一未合并状态 ──/sdd-revise──→ draft
 ```
 
 ## 通用门禁
 
 - 未批准不得执行 `/sdd-apply`。
-- 冻结后需求变化必须执行 `/sdd-revise`，不得直接修改 plan 来绕过重新批准。
+- `/sdd-revise` 只将 `draft.md` 的 `status` 重置为 `draft`，不检查 approval，也不修改 draft 正文或其他文件；冻结后需求变化必须先执行该命令，不得直接修改 plan 来绕过重新批准。
 - `/sdd-plan` 可以在技术目标、用户意图、设计选择或验收仍待确认时生成草稿，但只有全部解决后才能进入 `planned`。
 - `approved`、`applied` 和 `verified` 阶段必须保持批准记录有效；有效性按 [`rules/change-documents.md`](rules/change-documents.md) 的冻结摘要规则判断。
 - `/sdd-apply` 未完成或开发反馈失败时保持进入命令前的状态；`/sdd-verify` 失败时保持 `applied`。

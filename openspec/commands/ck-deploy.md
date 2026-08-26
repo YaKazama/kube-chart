@@ -6,7 +6,6 @@
 
 ## 读取
 
-- `AGENTS.md`、`openspec/workflow.md`、本文件
 - `Chart.yaml`、正式模板、values、Schema、当前规格、用户文档与稳定样例
 - 检查项明确要求的工程规则
 

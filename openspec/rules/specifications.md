@@ -16,7 +16,7 @@
 - 新能力包含 `## Purpose`；修改已有能力不重复 Purpose。
 - Requirement 使用 MUST 或 SHALL，且至少包含一个 WHEN/THEN Scenario。
 - 只描述可观察的渲染或失败行为，不写实现步骤、任务或方案比较。
-- Requirement 的来源遵循 [`openspec/rules/change-documents.md`](change-documents.md) 的 draft 保护规则；项目规则和代码事实不得独立扩张用户需求。
+- Requirement 的来源遵循 [`openspec/rules/change-documents.md`](change-documents.md) 的 draft 保护规则；项目规则和代码事实不得独立扩张用户需求。该限制不允许忽略适用工程规则：规则对既定需求形成的可观察行为或失败边界必须写入 Requirement，纯实现约束按变更文档规则写入 design 或 tasks。
 - 未实现子模板只描述当前父模板可观察的调用和最小返回契约，不替子模板虚构行为。
 
 ## 当前规格

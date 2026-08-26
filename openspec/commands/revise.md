@@ -2,19 +2,14 @@
 
 ## 职责
 
-只使现有批准失效并受控更新用户 draft，不重新生成 plan，不修改正式代码。
+只将当前未合并 change 的 `draft.md` frontmatter `status` 改为 `draft`。该操作是幂等的；不校验进入命令前的状态、approval 是否存在或摘要是否有效。
 
 ## 读取
 
-- `AGENTS.md`、`openspec/workflow.md`、本文件
-- `draft.md`、`records/approval.md`
-- [`../rules/change-documents.md`](../rules/change-documents.md)
-- 用户本次明确提供的修订内容
+- `draft.md` frontmatter
 
 ## 输出
 
-- 按变更文档规则将本轮修订写入 `draft.md`，并将 `status` 改为 `draft`，使既有批准立即失效。
-- 既有 approval、plan 和 verification 保留为待刷新或历史 AI 产物，不改写验证证据。
-- 报告受影响的 draft 条目并提示执行 `/sdd-plan`。
-
-既有 plan 不能继续作为实施依据。仍有歧义而无法写回时，按变更文档规则输出修订建议。
+- 只将 `draft.md` frontmatter 中的 `status` 改为 `draft`；正文和其他 frontmatter 字段保持不变。
+- 除命令入口和 `draft.md` 外，不读取其他 change 内容；不修改 draft 正文、plan、approval、verification、规格、规则或正式代码，既有 plan 不能继续作为实施依据。
+- 报告状态已重置，并提示用户完成需求修订后执行 `/sdd-plan`。
