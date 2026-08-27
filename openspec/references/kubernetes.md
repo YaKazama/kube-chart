@@ -2,10 +2,8 @@
 
 只保留直接支撑 API 契约、对象约定和安全默认值的长期入口；具体资源字段、版本和 CRD 必须按当前变更目标查阅对应官方 API 页面，不在此静态枚举。
 
-`Kubernetes API v1.36` 先查本地文件，必要时再查 `https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/`。
-
 - [Kubernetes API 参考](https://kubernetes.io/docs/reference/kubernetes-api/)
-- [Kubernetes API v1.36](./kubernetes-api-v1.36.html)
+- [Kubernetes API v1.36（本地快照）](./kubernetes-api-v1.36.html)：优先用于版本特定 API 事实核对；本地内容不足时查询[官方在线文档](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/)。
 - [对象名称](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/)
 - [命名空间](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/)
 - [标签和选择算符](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
