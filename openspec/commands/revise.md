@@ -4,9 +4,23 @@
 
 幂等重置当前未合并 change：将状态改为 `draft`，移除其 `plan/` 与 `records/`，防止旧产物污染下次 `/sdd-plan`；不检查原状态、approval 是否存在或摘要是否有效。
 
+```text
+/sdd-revise <change-id>
+```
+
 ## 读取
 
-- `draft.md` frontmatter
+### 固定读取
+
+- 当前 change 的 `draft.md` frontmatter
+
+### 条件读取
+
+- 只检查当前 change 根目录下确切的 `plan/` 与 `records/` 是否存在，不读取其中内容。
+
+### 禁止读取
+
+- 不读取 draft 正文、plan 或 records 内容、其他 change、归档、规格、规则、正式代码、参考资料或外部资源。
 
 ## 输出
 

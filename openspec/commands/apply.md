@@ -4,14 +4,31 @@
 
 首次或重复按冻结契约生成正式代码、更新实施任务并在会话中输出摘要；不验证、不创建阶段记录，也不修改规格或用户文档。
 
+```text
+/sdd-apply <change-id>
+```
+
 ## 读取
 
-- `draft.md` frontmatter、`records/approval.md` 和全部 `plan/`
-- 目标代码及直接依赖的当前规格
-- [`../rules/change-documents.md`](../rules/change-documents.md)
-- 仅按修改范围读取 `AGENTS.md` 路由的实现规则
+### 固定读取
 
-只接受 `approved` 或 `applied`；不读取其他 change、归档记录或无关验证资料。执行前核对批准记录中的 `plan/spec.md` 及可选 `plan/design.md` 摘要；不匹配时停止并要求 `/sdd-revise`。
+- `draft.md` frontmatter、`records/approval.md` 和全部 `plan/`
+- 冻结契约明确列出的确切目标文件；文件不存在时只确认该确切路径不存在
+- 冻结契约明确列出且真实存在的受影响当前规格与直接依赖当前规格
+- [`../rules/change-documents.md`](../rules/change-documents.md)
+- 仅按冻结契约中的目标文件类型，从 `AGENTS.md` 路由读取直接匹配修改范围的确切实现规则；一个目标未涉及的规则不得因其他目标或目录邻近关系被读取
+
+### 条件读取
+
+- 只有目标文件中的已知声明需要定位时，才在该文件内搜索冻结契约给出的确切标识符。
+- 只有目标文件直接引用且冻结契约明确要求修改的同一目标产物被拆分到其他文件时，才读取契约列出的确切文件；不得沿 `include`、调用方或目录结构扩张读取。
+
+### 禁止读取
+
+- 不读取其他 change、归档记录、参考资料、外部资源、调用方、依赖实现或无关验证资料。
+- 冻结契约没有给出依赖的确切名称、调用位置、入参和最小返回边界时直接停止并要求 `/sdd-revise`；不得读取依赖实现替冻结契约补设计。
+
+只接受 `approved` 或 `applied`；执行前核对批准记录中的 `plan/spec.md` 及可选 `plan/design.md` 摘要；不匹配时停止并要求 `/sdd-revise`。
 
 ## 输出
 
