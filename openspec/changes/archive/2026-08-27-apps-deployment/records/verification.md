@@ -3,7 +3,7 @@
 ## 验证范围
 
 - change：`apps-deployment`
-- 冻结契约：`plan/spec.md` 存在，SHA-256 为 `fa464411607273bfb4d45b9fb412ec764e9c24d962acfc081c46feae3d14b188`；`plan/design.md` 存在，SHA-256 为 `fb3aec549ece5c2d0a76558c5eec8e00ed65a20433fc61d772a6e825841097c1`。两者与批准记录一致。
+- 契约：`plan/spec.md` 存在，SHA-256 为 `fa464411607273bfb4d45b9fb412ec764e9c24d962acfc081c46feae3d14b188`。
 - 目标文件：`templates/api-resources/Apps/_Deployment.tpl`，SHA-256 为 `b487fedb4a9ba30d94ea82e14a09de42e319bc550cdc79b8e8409bf7a6a087c0`。
 - 直接依赖 `definitions.objectMeta`：当前无正式 `define`，无正式文件 SHA-256；本轮使用同名隔离 fixture。
 - 直接依赖 `apps.deploymentSpec`：当前无正式 `define`，无正式文件 SHA-256；本轮使用同名隔离 fixture。
