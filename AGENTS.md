@@ -23,13 +23,13 @@
 ## 命令入口
 
 ```text
-/sdd-draft → /sdd-plan → /sdd-approve → /sdd-apply
-                                            ↓
-                                      /sdd-verify
-                                            ↓
-                                       人工 Review
-                                            ↓
-                                       /sdd-merge
+/sdd-draft
+  → /sdd-plan
+  → /sdd-approve
+  → /sdd-apply（可重复执行）
+  → /sdd-verify（可独立、可重复执行）
+  → 人工 Review
+  → /sdd-merge
 ```
 
 | 命令 | 唯一定义文件 | 唯一主要职责 |
@@ -37,10 +37,10 @@
 | `/sdd-draft` | [`openspec/commands/draft.md`](openspec/commands/draft.md) | 新建或继续只表达意图的轻量 `draft.md`。 |
 | `/sdd-plan` | [`openspec/commands/plan.md`](openspec/commands/plan.md) | 从 draft 生成或刷新包含技术目标的 `plan/` 草稿。 |
 | `/sdd-approve` | [`openspec/commands/approve.md`](openspec/commands/approve.md) | 单步审查并冻结变更契约；门禁失败时保持 `planned`。 |
-| `/sdd-apply` | [`openspec/commands/apply.md`](openspec/commands/apply.md) | 按冻结契约修改正式代码，并通过真实项目命令获得开发反馈。 |
-| `/sdd-verify` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 执行真实项目命令并将结果写入人类可读的验证记录。 |
-| `/sdd-revise` | [`openspec/commands/revise.md`](openspec/commands/revise.md) | 只将未合并 change 的 `draft.md` 状态重置为 `draft`。 |
-| `/sdd-merge` | [`openspec/commands/merge.md`](openspec/commands/merge.md) | 合并规格、同步用户文档并归档。 |
+| `/sdd-apply` | [`openspec/commands/apply.md`](openspec/commands/apply.md) | 可重复按冻结契约生成代码、更新任务并输出变更摘要。 |
+| `/sdd-verify` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 独立执行真实验证、生成验证记录并更新验证状态。 |
+| `/sdd-revise` | [`openspec/commands/revise.md`](openspec/commands/revise.md) | 重置未合并 change，并移除既有 plan 与阶段记录。 |
+| `/sdd-merge` | [`openspec/commands/merge.md`](openspec/commands/merge.md) | 检查验证证据、合并规格、同步用户文档并归档。 |
 | `/ck-deploy` | [`openspec/commands/ck-deploy.md`](openspec/commands/ck-deploy.md) | 对整个 Chart 执行发布检查。 |
 
 收到任一命令时，先读取精简状态机 [`openspec/workflow.md`](openspec/workflow.md)，再只读取 [`openspec/commands/`](openspec/commands/) 中对应命令文件列出的上下文。命令是 AI 会话触发命令，不是 shell 命令。

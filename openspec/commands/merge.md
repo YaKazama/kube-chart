@@ -2,7 +2,7 @@
 
 ## 职责
 
-只将已完成变更合并为当前规格、同步用户文档并归档，不新增实现行为。
+只检查既有验证证据，将已验证变更合并为当前规格、同步用户文档并归档；不新增实现行为，不重新执行完整验证。
 
 ## 读取
 
@@ -19,6 +19,7 @@
 - 合并 `plan/spec.md` 到 `openspec/specs/<能力>/spec.md`。
 - 同步受影响的 README、`docs/` 和稳定样例。
 - 核对 `records/verification.md` 中记录的真实命令矩阵全部通过，且对应当前冻结契约和正式实现。
+- 不执行 lint、测试、渲染、Scenario 或验证矩阵中的任何命令；证据缺失、失败、过期或无法对应当前冻结契约与正式实现时停止合并并保持 `verified`。
 - 把 draft frontmatter `status` 更新为 `merged`，移动到 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`。
 
-只接受 `status: verified`。必须有有效批准、当前正式实现和通过的 `records/verification.md`；用户执行本命令即确认人工 Review 已完成，AI 不得自行触发，也不得跳过 `/sdd-verify`。
+只接受 `status: verified`。必须有有效批准、当前正式实现和通过的 `records/verification.md`；用户执行本命令即确认人工 Review 已完成，AI 不得自行触发，也不得跳过 `/sdd-verify` 或以 `/sdd-merge` 重跑验证代替既有证据。

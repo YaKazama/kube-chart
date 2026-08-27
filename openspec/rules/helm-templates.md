@@ -15,6 +15,8 @@
 - 多层字段统一使用 `base.get`；别名字段使用 `base.getWithAlias`，别名优先。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
 - `include` 返回字符串。map/list 子模板必须按“`include` → 按必填条件检查空值 → `fromYaml`/`fromYamlArray` → `base.isFromYamlError`/`base.isFromYamlArrayError` → `kindIs` → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数。
+- 可选 map/list 字段的调用方必须在字段闭环中保留“是否生效”的上下文：完成解析错误保护与真实类型检查后，按规格对恢复后的集合判断空值，只有生效时才交给 `base.field`。当缺失、`null` 或空集合按规格不应输出时，不得把空 map/list 交给 `base.field` 后依赖渲染器省略字段。
+- 不得通过将 `include` 或 `base.get` 的原始字符串与 `"{}"`、`"[]"`、`"null"` 精确比较来判断集合是否为空；YAML 序列化的空白与换行不属于字段生效语义。集合必须先恢复、排除解析错误并验证真实类型；之后可以直接将集合用于 `if` 条件，或按表达需要使用 `empty`、`len` 判断空值。缺失与 `null` 按被调用模板的返回契约单独处理。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
 - 正则捕获使用 `mustRegexReplaceAll` 后必须 `trim`。
 - 优先使用 Helm/Sprig 已提供的 `must*` 变体；使用前必须确认函数真实存在于适配版本。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
@@ -26,7 +28,7 @@
 - 非法枚举值必须失败并给出合法范围。
 - 类型不匹配时只允许规格明确的安全转换；无法转换必须失败。
 - 字段冲突或互斥按当前规格的优先级处理；未定义优先级时必须失败。
-- 空值和零值是否输出由字段的生效条件决定。
+- 空值和零值是否输出由字段的生效条件决定；该条件属于调用方字段上下文，不得下推给只接收 key/value 的通用渲染器猜测。
 - map/dict 解析必须使用 `base.isFromYamlError` 拦截 `fromYaml` 的错误 map，并验证真实类型。
 - slice/list 解析必须使用 `base.isFromYamlArrayError` 拦截 `fromYamlArray` 的异常结果，并验证真实类型。
 - string、map、list 等多类型输入必须先排除解析错误，再判断真实类型。

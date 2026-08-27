@@ -31,8 +31,8 @@ change 根目录只保留 `draft.md`、`plan/` 和按需创建的 `records/`；�
 |---|---|---|
 | `draft` | 用户正在整理目标 | `/sdd-plan` |
 | `planned` | AI 草稿无阻塞项，可以批准 | `/sdd-approve` |
-| `approved` | 契约已冻结 | `/sdd-apply` |
-| `applied` | 正式代码已按冻结契约完成修改 | `/sdd-verify` |
+| `approved` | 契约已冻结 | `/sdd-apply`；当前实现已就绪时也可独立执行 `/sdd-verify` |
+| `applied` | 正式代码已处于可验证状态，但尚无有效的通过证据 | 可重复执行 `/sdd-apply`，或执行 `/sdd-verify` |
 | `verified` | 真实项目命令验证通过并已记录证据 | 人工 Review 后 `/sdd-merge` |
 | `merged` | 当前规格和用户文档已同步，change 已归档 | 无 |
 
@@ -41,15 +41,18 @@ change 根目录只保留 `draft.md`、`plan/` 和按需创建的 `records/`；�
 ```text
 draft ──/sdd-plan（有阻塞项）──→ draft
 draft ──/sdd-plan（无阻塞项）──→ planned → approved → applied → verified → merged
+applied ──/sdd-apply（重复执行）──→ applied
+approved ──/sdd-verify（独立验证通过）──→ verified
 任一未合并状态 ──/sdd-revise──→ draft
 ```
 
 ## 通用门禁
 
 - 未批准不得执行 `/sdd-apply`。
-- `/sdd-revise` 只将 `draft.md` 的 `status` 重置为 `draft`，不检查 approval，也不修改 draft 正文或其他文件；冻结后需求变化必须先执行该命令，不得直接修改 plan 来绕过重新批准。
+- `/sdd-revise` 将 `draft.md` 的 `status` 重置为 `draft`，并移除当前 change 的 `plan/` 与 `records/`；不检查 approval，不修改 draft 正文、正式代码或 change 外的文件。冻结后需求变化必须先执行该命令，不得直接修改 plan 来绕过重新批准。
 - `/sdd-plan` 可以在技术目标、用户意图、设计选择或验收仍待确认时生成草稿，但只有全部解决后才能进入 `planned`。
 - `approved`、`applied` 和 `verified` 阶段必须保持批准记录有效；有效性按 [`rules/change-documents.md`](rules/change-documents.md) 的冻结摘要规则判断。
-- `/sdd-apply` 未完成或开发反馈失败时保持进入命令前的状态；`/sdd-verify` 失败时保持 `applied`。
-- `/sdd-merge` 只接受 `verified`；用户执行该命令即确认人工 Review 已完成。
+- `/sdd-apply` 可从 `approved` 首次执行，也可从 `applied` 重复执行；每次都以当前正式代码、冻结契约和任务状态为基础幂等续作。该命令只生成代码、更新实施任务并输出变更摘要，不执行 lint、测试、渲染或 Scenario。代码或实施任务未完成时保持进入命令前的状态。
+- `/sdd-verify` 可从 `approved`、`applied` 或 `verified` 独立执行，不依赖 `/sdd-apply` 的会话或输出。验证通过时进入或保持 `verified`；失败时不得保留本轮通过结论，从 `verified` 重置为 `applied`，其他状态保持不变。
+- `/sdd-merge` 只接受 `verified`；用户执行该命令即确认人工 Review 已完成。该命令只检查既有验证证据，不重新执行完整验证。
 - 只有一个活动 change 时可省略 change-id；存在多个时必须显式指定，AI 不得猜测。
