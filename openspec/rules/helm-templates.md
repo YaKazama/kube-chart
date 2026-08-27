@@ -1,25 +1,23 @@
 # Helm 模板工程规则
 
-本文件定义 Helm 模板的通用工程约束；核心命名模板的调用契约由 [`openspec/rules/core-capabilities.md`](core-capabilities.md) 定义。当前规格定义可观察行为；规格、核心能力规则或本文件与实现冲突时停止实现并修正规格或设计，不得自行选择。
+本文件定义 Helm 模板的通用工程约束；核心命名模板调用契约见 [`openspec/rules/core-capabilities.md`](core-capabilities.md)，可观察行为由当前规格定义。任一契约与实现冲突时停止实现并修正规格或设计，不得自行选择。
 
 ## 设计原则
 
 - 尽早报错：必填缺失、类型非法或无法消解的冲突必须通过 `required` 或 `fail` 中断渲染。
 - 类型稳定：新 values 字段只定义一种公共类型；已有明确支持多类型的字段必须在上层归一化为 dict 后再委托。
 - 最小传参：单值传标量，同构集合传 list，多维状态传 dict；业务模板不得无意义透传 `.`，base 工具可按契约接收根上下文。
-- 状态隔离：修改或合并所有权不属于当前模板的 dict、list 或上下文前使用 `mustDeepCopy`；只读透传不复制，调用链不得修改 `.Values` 或跨资源共享输入。需求或冻结契约显式声明向上下文注入或覆盖控制变量时，该写入属于上下文调用契约，不得仅因“修改上下文”判定为违反状态隔离；规划必须明确上下文所有权和允许写入的键，资源专用或父 Chart 构造的局部 map 可按契约原地写入且不使用 `mustDeepCopy`。
+- 状态隔离：修改或合并非当前模板所有的 dict、list 或上下文前使用 `mustDeepCopy`；只读透传不复制，调用链不得修改 `.Values` 或跨资源共享输入。需求或冻结契约明确允许注入、覆盖控制变量时不违反隔离，但规划必须注明上下文所有权和可写键；资源专用或父 Chart 构造的局部 map 可按契约原地写入，无需 `mustDeepCopy`。
 - 正则集中：正则统一定义于 [`templates/base/_env.tpl`](../../templates/base/_env.tpl)，使用全大写下划线嵌套键；简单正则可由父模板解析，复杂正则在对应子模板逐级解析。
 
 ## 取值与渲染
 
 - 多层字段统一使用 `base.get`；别名字段使用 `base.getWithAlias`，别名优先。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
-- `include` 返回字符串。map/list 子模板必须按“`include` → 按必填条件检查空值 → `fromYaml`/`fromYamlArray` → `base.isFromYamlError`/`base.isFromYamlArrayError` → `kindIs` → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数。
-- 可选 map/list 字段的调用方必须在字段闭环中保留“是否生效”的上下文：完成解析错误保护与真实类型检查后，按规格对恢复后的集合判断空值，只有生效时才交给 `base.field`。当缺失、`null` 或空集合按规格不应输出时，不得把空 map/list 交给 `base.field` 后依赖渲染器省略字段。
-- 不得通过将 `include` 或 `base.get` 的原始字符串与 `"{}"`、`"[]"`、`"null"` 精确比较来判断集合是否为空；YAML 序列化的空白与换行不属于字段生效语义。集合必须先恢复、排除解析错误并验证真实类型；之后可以直接将集合用于 `if` 条件，或按表达需要使用 `empty`、`len` 判断空值。缺失与 `null` 按被调用模板的返回契约单独处理。
+- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → 必填空值检查 → `fromYaml`/`fromYamlArray` → 错误保护 → `kindIs` → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数，也不得用原始 YAML 字符串判断集合空值。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
 - 正则捕获使用 `mustRegexReplaceAll` 后必须 `trim`。
-- 优先使用 Helm/Sprig 已提供的 `must*` 变体；使用前必须确认函数真实存在于适配版本。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
+- 优先使用适配版本中真实存在的 Helm/Sprig `must*` 变体；使用前必须确认。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
 
 ## 边界与 Helm 4.2.2
 
@@ -28,10 +26,7 @@
 - 非法枚举值必须失败并给出合法范围。
 - 类型不匹配时只允许规格明确的安全转换；无法转换必须失败。
 - 字段冲突或互斥按当前规格的优先级处理；未定义优先级时必须失败。
-- 空值和零值是否输出由字段的生效条件决定；该条件属于调用方字段上下文，不得下推给只接收 key/value 的通用渲染器猜测。
-- map/dict 解析必须使用 `base.isFromYamlError` 拦截 `fromYaml` 的错误 map，并验证真实类型。
-- slice/list 解析必须使用 `base.isFromYamlArrayError` 拦截 `fromYamlArray` 的异常结果，并验证真实类型。
-- string、map、list 等多类型输入必须先排除解析错误，再判断真实类型。
+- 空值和零值是否输出由调用方字段生效条件决定，不得交给只接收 key/value 的通用渲染器猜测。结构与多类型输入的解析、错误拦截和真实类型检查遵循核心能力规则。
 
 ## 分层与依赖
 
@@ -51,8 +46,8 @@
 | 云厂商 | `cloud/<Provider>` | `cloud/<Provider>/Definitions` |
 | 扩展项目 | `extensions/<Project>` | `extensions/<Project>/Definitions` |
 
-- `base` 提供无状态原子能力和项目级基础类型，包括取值、校验、转换、序列化、路径、错误及 Kubernetes 基础值；只能依赖 `base` 内其他模板，不得感知具体资源、CRD 或云厂商。
-- 每个 `Definitions` 只保存所属依赖域内可跨资源复用的结构；可以依赖 `base` 和同一 Definitions 内其他模板，不得依赖资源模板、其他依赖域的 Definitions 或执行跨资源编排。
+- `base` 提供取值、校验、转换、序列化、路径、错误及 Kubernetes 基础值等无状态原子能力和项目级基础类型；只能依赖 `base` 内模板，不得感知具体资源、CRD 或云厂商。
+- 每个 `Definitions` 只保存所属域内可跨资源复用的结构；可依赖 `base` 和同一 Definitions 内模板，不得依赖资源模板、其他域的 Definitions 或执行跨资源编排。
 - `api-resources/<APIGroup>` 对齐 Kubernetes 官方 API；可以依赖 `base`、`api-resources/Definitions` 和同 API 组模板。只有目标 API 字段确实嵌套其他 API 组结构时才允许跨组依赖，不得借此组合多个独立资源。
 - `cloud/<Provider>` 可以依赖 `base` 和本厂商的 `cloud/<Provider>/Definitions`；`extensions/<Project>` 可以依赖 `base` 和本项目的 `extensions/<Project>/Definitions`。禁止跨云厂商、跨扩展项目或借用 `api-resources/Definitions` 作为自身共享结构层。
 - cloud 或 extensions 的 API schema 明确嵌套 Kubernetes 原生类型时，可以依赖对应的 `api-resources/<APIGroup>` 类型模板；该依赖不得用于组合独立资源。extensions 模板必须明确对应的 CRD API group 和 version。
@@ -66,7 +61,7 @@
 - `templates/base/` 文件使用 `_<小写能力名>.tpl`；资源、共享结构和 CRD 文件使用与 Kubernetes Kind 或结构名一致的 `_<名称>.tpl`，保留 `API` 等官方缩写，例如 `_Deployment.tpl` 和 `_APIGroup.tpl`。
 - 命名模板使用稳定命名空间：base 为 `base.<能力>`；Kubernetes 共享结构与资源分别为 `definitions.<能力>` 和 `<小写 API 组>.<能力>`；云厂商资源与共享结构分别为 `cloud.<小写厂商>.<能力>` 和 `cloud.<小写厂商>.definitions.<能力>`；扩展项目资源与共享结构分别为 `extensions.<小写项目>.<能力>` 和 `extensions.<小写项目>.definitions.<能力>`。
 - 能力名使用小驼峰；官方缩写可以保留大写，例如 `apps.deployment`、`definitions.objectMeta` 和 `definitions.APIGroup`。
-- Helm 命名模板位于全局命名空间；新增 `define` 前必须检查重名。已发布的模板名属于调用契约，未经规格迁移不得改名或复用为其他语义。
+- Helm 命名模板位于全局命名空间；新增 `define` 前必须查重。已发布名称属于调用契约，未经规格迁移不得改名或复用为其他语义。
 - 非 base 文件围绕与文件名对应的主模板组织；辅助模板沿用同一命名空间和能力前缀，不得在同一文件混入无关能力。
 
 ## 模板定义与排版
