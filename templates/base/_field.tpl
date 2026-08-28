@@ -1,5 +1,5 @@
 {{- /*
-  安全渲染 YAML 键值对，统一处理引号、枚举校验与多种类型输出。
+  渲染 YAML 键值对，统一处理引号、枚举校验与多种类型输出。
 
   行为:
     - 入参必须为长度为 2-4 的 slice，否则快速失败
@@ -8,15 +8,11 @@
     - 指定 allows 时强制使用 base.string 作为渲染模板, 渲染前先做枚举校验
     - 渲染后仅当 val 非空时输出; 单行引号 / 多行块标量 / 复杂类型按需切换输出格式
 
-  入参: list <key> <value> [渲染模板] [允许值列表枚举]
-    key               键名, 字符串, 必填且非空
-    value             需要渲染的值, 任意类型, 必填
-    渲染模板          处理 value 的命名模板, 可选
-                      - "base.string": 默认值, 执行 trim / 零折叠 / 特殊格式直通
-                      - "quote": 强制添加双引号 (内部映射为 base.string + 引号)
-                      - "containers.env": 容器 env 变量专用, 为非字符串类型值自动添加双引号
-                      - 其他模板名: 调用对应模板处理
-    允许值列表枚举    枚举校验列表, 可选; 指定时强制使用 base.string, 值不在列表中则报错
+  入参: list [键名, 原始值, 渲染模板, 允许值列表]；前两项必填，后两项可选。
+
+  边界:
+    - 只处理单个键值对，不负责上层字段的取值、默认值或跨字段校验。
+    - 渲染模板可使用 base.string、quote、containers.env 或其他已定义的命名模板。
 
   返回值: 序列化后的 YAML 键值对 (key: value 形式, 复杂类型换行缩进, 多行字符串使用 |- 块标量)
 
@@ -119,7 +115,7 @@
 
 
 {{- /*
-  特定定义：专用于处理 containers.env 中的 value 引号问题, 由 base.field 路由调用。
+  处理 containers.env 中的 value 引号问题，由 base.field 路由调用。
 
   行为:
     - 入参必须为 slice, 否则快速失败
@@ -128,11 +124,11 @@
     - valueFrom 字段保持原样; 同时缺少 value 和 valueFrom 时快速失败
     - value 与 valueFrom 互斥, 优先处理 value
 
-  入参: slice 容器环境变量列表
-    每个元素为 dict, 包含以下字段:
-      - name        变量名, 字符串, 必填
-      - value       变量值, 任意类型, 与 valueFrom 互斥
-      - valueFrom   变量引用源, 字典, 与 value 互斥, 原样透传
+  入参: EnvVar Map 组成的 slice；每项必须包含 name 与 value 或 valueFrom。
+
+  边界:
+    - 只处理 EnvVar 列表，不校验 valueFrom 的内部结构。
+    - 仅由 base.field 的 containers.env 路由调用。
 
   返回值: toYamlPretty 格式化后的环境变量 YAML 列表
 

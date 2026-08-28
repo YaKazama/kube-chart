@@ -1,9 +1,22 @@
 {{- /*
-  功能：渲染单个 Kubernetes apps/v1 Deployment 资源。
-  边界：固定资源身份，metadata 与 spec 委托给对应子模板；不输出 status、文档分隔符或其他资源。
-  入参：父模板当前的可写 map 上下文 .；原地覆盖 _kind 后直接传递给 definitions.objectMeta 与 apps.deploymentSpec。
-  返回值：包含 apiVersion、kind、metadata 与 spec 的单个 Deployment YAML 字符串。
-  最小示例：{{ include "apps.deployment" . }}
+  渲染 Kubernetes apps/v1 Deployment 资源。
+
+  行为 (按 K8s API 规范字段顺序):
+    - apiVersion (string, 必填): 固定渲染为 apps/v1。
+    - kind (string, 必填): 固定渲染为 Deployment。
+    - metadata (ObjectMeta, 必填): 委托 definitions.objectMeta 渲染，并校验返回值为非空 YAML map。
+    - spec (DeploymentSpec, 必填): 委托 apps.deploymentSpec 渲染，并校验返回值为非空 YAML map。
+
+  边界:
+    - 固定资源身份并将 _kind 原地设置为 Deployment；不输出 status、文档分隔符或其他资源。
+    - metadata 与 spec 的字段内容、必填约束和类型校验由下层模板收口。
+
+  入参: 可写 map 上下文，包含 definitions.objectMeta 与 apps.deploymentSpec 所需字段。
+
+  返回值: 包含 apiVersion、kind、metadata 与 spec 的 Deployment YAML 字符串。
+
+  示例:
+    {{- include "apps.deployment" . }}
 */ -}}
 {{- define "apps.deployment" -}}
   {{- $_ := set . "_kind" "Deployment" -}}

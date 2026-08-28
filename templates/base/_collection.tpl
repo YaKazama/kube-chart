@@ -1,12 +1,13 @@
 {{- /*
-  嵌套字典取值：使用点分路径（a.b.c）从 Map 中提取值，类似 dig 函数。
+  使用点分路径（a.b.c）从嵌套 Map 中提取值。
 
-  入参: list [map, keyPath(string), default(string)]
-    map       Map 数据源，必填
-    keyPath   点分路径字符串（如 "a.b.c"），必填，分隔符使用 base.env 中的 SPLIT.ALL
-    default   默认值，可选，路径不存在时返回，默认为空字符串
+  行为: 路径不存在或中间节点不是 map 时返回默认值；命中末级键时序列化其值。
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串或默认值
+  入参: list [map, 点分路径, 默认值]；前两项必填，默认值可选。
+
+  边界: 只处理 Map 和点分路径；递归遍历由 base.map.dig.helper 完成。
+
+  返回值: toYamlPretty 格式化后的 YAML 字符串或默认值。
 
   示例:
     {{- $val := include "base.map.dig" (list .Values "image.repository") | fromYaml }}
@@ -44,16 +45,18 @@
 
 
 {{- /*
-  内部辅助模板：递归遍历 keys 列表逐层深入 Map 取值，由 base.map.dig 调用。
+  递归遍历 keys 列表逐层深入 Map 取值，由 base.map.dig 调用。
 
-  入参: list [map, keys(slice), default(string)]
-    map       当前层级的 Map 数据源
-    keys      待遍历的键名列表（每层取 mustFirst 作为当前键，mustRest 传入下一层递归）
-    default   路径不存在或中间节点非 map 时返回的默认值
+  行为: 每层取首个键继续递归；路径缺失或中间节点不是 map 时返回默认值。
 
-  返回值: 末级 key 命中时返回 toYamlPretty 格式化后的 YAML 字符串，否则返回 default
+  入参: list [当前 map, 剩余键列表, 默认值]；仅供 base.map.dig 递归传递。
 
-  注意: 仅供 base.map.dig 内部使用，禁止外部直接调用
+  边界: 仅供 base.map.dig 内部调用，不承担外部入参校验。
+
+  返回值: 末级 key 命中时返回 YAML 字符串，否则返回默认值。
+
+  示例:
+    {{- include "base.map.dig" (list .Values "image.repository") }}
 */ -}}
 {{- define "base.map.dig.helper" -}}
   {{- $m := index . 0 }}
@@ -84,15 +87,17 @@
 
 
 {{- /*
-  Map 值 Base64 编码：对 Map 中所有值进行 base64 编码后输出。
+  对 Map 中所有值进行 Base64 编码后输出。
 
-  入参: Map 数据源，空 Map 也合法
+  行为:
     - 所有值必须是标量类型（string/int/float64/bool）
     - nil 或非标量类型（map/slice）会报错
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串，键保持不变，值为带双引号的 base64 字符串
+  入参: map；值必须为 string、int、float64 或 bool。
 
-  用途: 用于 Secret 的 data 字段编码
+  边界: 只负责值编码，不负责 Secret 资源或 data 外层字段的渲染。
+
+  返回值: YAML 字符串，键保持不变，值为 Base64 字符串。
 
   示例:
     {{- $encoded := include "base.map.b64enc" .Values.data }}
@@ -120,15 +125,15 @@
 
 
 {{- /*
-  Map 值校验：对 Map 中每个值进行正则校验，不符合的值报错。
+  对 Map 中每个值进行正则校验。
 
-  入参: list [dict, regex(string)]
-    dict    Map 数据源，必填，空 Map 也合法
-    regex   正则表达式字符串，可选，用于校验每个值是否合法；空字符串则跳过校验
+  行为: 正则为空时跳过校验；其他情况逐项校验并保留原值。
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串，键和校验通过的值
+  入参: list [map, 正则]；正则可为空字符串。
 
-  用途: 用于 resources.requests 和 resources.limits 的值校验
+  边界: 只校验 Map 的直接值，不递归遍历嵌套集合。
+
+  返回值: YAML 字符串，包含原键和校验通过的值。
 
   示例:
     {{- $verified := include "base.map.verify" (list .Values.resources "^\\d+(m|Mi|Gi)?$") }}
@@ -161,19 +166,15 @@
 
 
 {{- /*
-  索引 Map 构建：从多个 Map 中提取指定字段的值作为新键，将整个 Map 作为值，构建索引 Map。
-  支持覆盖策略控制，用于处理重复键的冲突。
+  从多个 Map 中提取指定字段作为新键，构建索引 Map。
 
-  入参: list [key, overwrite(bool), map1, map2, ...]
-    key         用于提取新键的字段名，必填，string 类型；该字段的值必须为 string 类型
-    overwrite   是否启用覆盖模式，必填，bool 类型
-                  false: 左侧优先，重复键保留首次出现的 Map
-                  true:  右侧优先，重复键使用最后出现的 Map 覆盖
-    map1...     待处理的 Map 列表，至少 1 个；不包含指定 key 的元素会被跳过
+  行为: 指定覆盖模式时以最后一个同键 Map 为准；否则保留首次出现的 Map。
 
-  返回值: toYamlPretty 格式化后的索引 Map
-    - 键: 指定字段的值（string 类型）
-    - 值: 原始 Map 的完整内容
+  入参: list [索引字段名, 是否覆盖, map1, map2, ...]；至少包含一个待索引的 map。
+
+  边界: 仅构建索引；不修改输入 Map，也不处理缺少索引字段的元素。
+
+  返回值: YAML 格式的索引 Map；键为指定字段值，值为原始 Map。
 
   示例:
     {{- $indexed := include "base.map.merge" (list "name" true .Values.map1 .Values.map2) }}
@@ -223,13 +224,17 @@
 
 
 {{- /*
-  IP 列表校验：校验 Slice 中每个值是否为合法 IP 地址（IPv4/IPv6），去重后输出。
+  校验 Slice 中的 IP 地址并去重输出。
 
-  入参: Slice 数据源，必填
+  行为:
     - 元素类型必须为 string，非 string 元素会立即报错
     - 空 Slice 合法，输出空列表
 
-  返回值: toYamlPretty 格式化后的合法 IP 地址列表（已去重）
+  入参: string 组成的 slice。
+
+  边界: 委托 base.net 的 ip 模式校验；不支持域名或其他网络地址形式。
+
+  返回值: YAML 格式的合法 IP 地址列表（已去重）。
 
   示例:
     {{- $ips := include "base.slice.ips" .Values.ipList }}
@@ -253,13 +258,15 @@
 
 
 {{- /*
-  白名单过滤：从数据源列表中过滤出在允许范围内的值，不在范围内的值被丢弃，最后去重输出。
+  从数据源列表中过滤允许值并去重输出。
 
-  入参: list [value(slice), allowsList(slice)]
-    value       待过滤的数据源列表，必填，必须是 slice 类型
-    allowsList  允许值列表，必填，必须是 slice 类型；仅保留在此列表中出现的值
+  行为: 仅保留允许列表中出现的元素；不允许的元素直接丢弃。
 
-  返回值: toYamlPretty 格式化后的过滤结果列表（已去重）
+  入参: list [数据 slice, 允许值 slice]。
+
+  边界: 只过滤和去重，不转换元素类型或校验元素的业务语义。
+
+  返回值: YAML 格式的过滤结果列表（已去重）。
 
   示例:
     {{- $filtered := include "base.slice.allows" (list .Values.items (list "a" "b" "c")) }}
@@ -291,26 +298,18 @@
 
 
 {{- /*
-  混合类型数据清洗：递归归一化为标准列表，支持字符串拆分、整型转换、正则校验与自定义处理。
+  递归归一化混合类型数据为标准列表。
 
-  入参: list [s, r, c, define, sep, empty]
-    s       数据源，必填（位置 0），支持类型：
-              - string:    "a, b,c d"（按 r 拆分）
-              - slice:     [a, b, c] 或 [{k: v}, ...]（递归清洗）
-              - int/int64/float64: 标量或列表（直接追加）
-              - map:       {k: v}（直接追加）
-    r       拆分正则，可选（位置 1，string），默认 base.env.SPLIT.ALL
-              常用：","、"."、":"、"|"、"/"、"*"、"^"、"@"、"#"、"\s"
-    c       校验正则，可选（位置 2，string），元素未匹配则立即报错
-    define  自定义处理模板名，可选（位置 3，string），对每个元素单独调用
-    sep     输出分隔符，可选（位置 4，string），非空时按 join 输出字符串
-    empty   是否保留空字符串，可选（位置 5，bool），默认 false 时仅剔除空字符串
+  行为:
+    - 支持字符串拆分、嵌套 slice 递归、数值和 map 透传、正则校验及逐项自定义处理。
+    - 纯数字字符串自动转 int，最终去重；默认移除空字符串。
+    - 指定分隔符时输出 join 字符串，否则输出 YAML 列表。
 
-  返回值:
-    - 未指定 sep：toYamlPretty 格式化后的列表
-    - 指定 sep：join 拼接后的字符串
-    - 元素类型保留原始类型，纯数字字符串自动转 int
-    - 末尾自动 mustUniq 去重；empty=false 时仅去除空字符串，不影响 0/false
+  入参: list [数据, 拆分正则, 校验正则, 处理模板, 输出分隔符, 保留空字符串]；仅数据必填。
+
+  边界: 只负责集合清洗；自定义元素语义由调用方提供的命名模板定义。
+
+  返回值: YAML 列表或指定分隔符拼接的字符串。
 
   示例:
     字符串拆分：默认分隔符
@@ -451,16 +450,15 @@
 
 
 {{- /*
-  slice 强类型守卫：仅接受 slice 类型，序列化后强制将所有单引号替换为双引号。
+  验证并序列化 slice，统一替换单引号为双引号。
 
-  入参: slice 数据源，必填
-    - 元素可为任意可 YAML 序列化类型（string/int/float64/bool/map/slice）
-    - 非 slice 类型立即报错（fail-fast）
+  行为: 空 slice 合法；非 slice 类型立即中断渲染。
 
-  返回值: toYamlPretty 格式化的字符串，所有单引号已被替换为双引号
-    - 空 slice 同样合法，输出 "[]"
+  入参: slice。
 
-  用途: 适配部分 K8s/CRD 字段不接受单引号字符串的场景，强制统一为双引号。
+  边界: 仅处理序列化文本，不保证替换后的文本保留 YAML 字面量的全部语义。
+
+  返回值: 单引号替换为双引号后的 YAML 字符串。
 
   示例:
     {{- $quoted := include "base.slice.quote" (list "a" "b") }}

@@ -1,13 +1,26 @@
 {{- /*
   渲染 Kubernetes ObjectMeta 字段片段。
 
+  行为 (按 K8s API 规范字段顺序):
+    - annotations (object, 可选): 按资源身份选择 annotations、podAnnotations、jobAnnotations 或 pvcAnnotations，并校验值为 string 类型。
+    - generateName (string, 可选): 仅在 name 为空且 generateName 非空时委托 base.rfc 按 RFC1035 校验并渲染。
+    - labels (object, 可选): 委托 base.labels 渲染并固定输出，校验返回值为非空 YAML map 且值为 string 类型。
+    - name (string, 可选): generateName 未生效且资源不是嵌套模板时，按资源身份委托 base.name 渲染。
+    - namespace (string, 可选): 除嵌套模板、PersistentVolumeClaim 与集群级资源外，委托 base.namespace 渲染。
+
   边界:
     - 只输出 annotations、generateName、labels、name 和 namespace，不包含 metadata 外层键。
     - _pkind 优先于 _kind 决定资源身份，两个控制字段均只读且不进入输出。
     - 专用注解来源、名称模式和 namespace 排除范围由资源身份决定。
 
-  入参:
-    - . (map): 包含资源身份、ObjectMeta 字段和 base 能力所需上下文的字典
+  入参: 上下文 map，可包含以下字段:
+    - _pkind / _kind                  (string, 可选)             资源身份控制字段，_pkind 优先
+    - annotations                     (object, 可选)  通用资源注解，值必须为 string 类型
+    - podAnnotations                  (object, 可选)  PodTemplateSpec 专用注解，值必须为 string 类型
+    - jobAnnotations                  (object, 可选)  JobTemplateSpec 专用注解，值必须为 string 类型
+    - pvcAnnotations                  (object, 可选)  PersistentVolumeClaim 专用注解，值必须为 string 类型
+    - generateName / name / namespace (string, 可选)             标准 ObjectMeta 名称字段
+    - labels                          (object, 可选)  用户标签，由 base.labels 补齐最终必填输出
 
   返回值: 可嵌入 metadata 下的 ObjectMeta YAML 字段片段；非法入参中断渲染。
 
@@ -23,7 +36,7 @@
   {{- $_kind := include "base.get" (list . "_kind") }}
   {{- $effectiveKind := coalesce $_pkind $_kind }}
 
-  {{- /* annotations（map[string]string）: 按有效资源身份选择专用或通用注解来源。 */ -}}
+  {{- /* annotations（object）: 按有效资源身份选择专用或通用注解来源。 */ -}}
   {{- $annotationsPath := "annotations" }}
   {{- if eq $effectiveKind "PodTemplateSpec" }}
     {{- $annotationsPath = "podAnnotations" }}
@@ -65,7 +78,7 @@
     {{- include "base.field" (list "generateName" $generateName) }}
   {{- end }}
 
-  {{- /* labels（map[string]string）: 原样委托 base.labels 并验证其结构化返回值。 */ -}}
+  {{- /* labels（object）: 原样委托 base.labels 并验证其结构化返回值。 */ -}}
   {{- $_labelsRaw := required "[definitions.objectMeta] labels: base.labels returned empty output" (include "base.labels" .) }}
   {{- $_labelsParsed := fromYaml $_labelsRaw }}
   {{- if eq (include "base.isFromYamlError" $_labelsParsed) "true" }}

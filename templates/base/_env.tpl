@@ -1,3 +1,17 @@
+{{- /*
+  提供基础模板共用的常量集合。
+
+  行为: 输出空字符串、分隔符、类型、网络、RFC、Kubernetes 与应用相关的正则常量。
+
+  入参: 任意占位值；不读取其内容。
+
+  边界: 仅声明静态 YAML 常量；不读取上下文、不执行校验，也不负责具体业务规则。
+
+  返回值: 可由 fromYaml 解析的常量 Map。
+
+  示例:
+    {{- $const := include "base.env" "" | fromYaml }}
+*/ -}}
 {{- define "base.env" -}}
 EMPTY_STR: ""
 SPLIT:

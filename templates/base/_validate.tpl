@@ -1,23 +1,17 @@
 {{- /*
-  数值范围校验。接受 int / int64 / float64；接受长度为 1、2 或 3 的 slice。
+  校验数值是否满足下限或闭区间。
 
-  Behavior:
-    - 非 slice: 中止渲染
-    - 长度 1: 原样返回唯一元素
-    - 长度 2: 第一个元素 >= 第二个元素时返回
-    - 长度 3: 第一个元素在 [第二个, 第三个] 闭区间时返回
-    - 其他长度: 中止渲染
-    - 元素非数值类型: 中止渲染
+  行为:
+    - 单值时原样返回；双值时校验不小于下限；三值时校验位于闭区间。
+    - 仅接受 int、int64、float64 组成的 slice；非法输入立即中断渲染。
 
-  Parameter: 数值 slice
-    - [num]            单个数值, 原样返回
-    - [num, min]       num 必须 >= min
-    - [num, min, max]  num 必须位于 [min, max] 闭区间
+  入参: list [数值, 最小值, 最大值]；只传数值时不做范围校验，最大值可选。
 
-  Return: 数值; 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  边界: 只执行数值区间校验，不转换类型、不定义业务字段范围。
 
-  Example:
+  返回值: 校验通过的数值。
+
+  示例:
     {{- include "base.int.range" (list 5) }}         // 5
     {{- include "base.int.range" (list 5 3) }}       // 5
     {{- include "base.int.range" (list 5 3 10) }}    // 5
@@ -88,19 +82,17 @@
 
 
 {{- /*
-  端口号范围校验。校验 TCP/UDP 端口号是否在 1-65535 闭区间内。
+  校验 TCP 或 UDP 端口号是否位于 1–65535。
 
-  Behavior:
-    - 非数值类型 (bool / map / slice / nil 等): 中止渲染
-    - 非数字字符串: 中止渲染 (避免 Sprig int "abc" -> 0 静默转换)
-    - 数值超出 [1, 65535]: 中止渲染
-    - 数值位于 [1, 65535]: 以 int 返回
+  行为: 接受数值或纯数字字符串，转换为 int 后校验范围；非法输入立即中断渲染。
 
-  Parameter: int / int64 / float64, 或纯数字字符串
-  Return: int; 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  入参: int、int64、float64 或纯数字字符串。
 
-  Example:
+  边界: 只验证端口号数值，不区分协议、命名端口或端口冲突。
+
+  返回值: 校验通过的 int。
+
+  示例:
     {{- include "base.port" 8080 }}    // 8080
     {{- include "base.port" "8080" }} // 8080
     {{- include "base.port" 0 }}       // [base.port] port 0 not in [1, 65535] (kind: int)
@@ -134,22 +126,17 @@
 
 
 {{- /*
-  Unix 文件模式校验。校验八进制 0000-0777 (十进制 0-511) 文件模式并返回。
+  校验 Unix 文件模式是否位于八进制 0000–0777（十进制 0–511）。
 
-  Behavior:
-    - 非数值且非字符串: 中止渲染
-    - int / int64 / float64 位于 [0, 511]: 截断为 int (丢弃小数部分), 委托 base.int.range 校验
-    - 字符串匹配 SYS.FILE_MODE 正则 (e.g. "0755", "0", "511"): 原样返回
-    - 其他: 中止渲染
+  行为: 数值截断为 int 后委托 base.int.range 校验；字符串按 SYS.FILE_MODE 正则校验并原样返回。
 
-  Parameter: int / int64 / float64 (截断为 int), 或八进制/十进制字符串
-  Return: int (数值入参) 或 string (字符串入参); 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  入参: int、int64、float64，或八进制/十进制文件模式字符串。
 
-  Note:
-    数值入参的范围校验委托给 base.int.range, 因此越界错误消息前缀为 [base.int.range] 而非 [base.fileMode]。
+  边界: 只验证文件权限位，不处理 setuid、setgid、sticky bit 或文件系统语义。
 
-  Example:
+  返回值: 数值输入返回 int，字符串输入返回原字符串。
+
+  示例:
     {{- include "base.fileMode" 493 }}      // 493
     {{- include "base.fileMode" "0755" }}  // 0755
     {{- include "base.fileMode" 1.5 }}     // 1 (截断, 非 1.5)
@@ -181,32 +168,19 @@
 
 
 {{- /*
-  网络地址校验。校验 IPv4 地址、域名或 DNS 风格联合形式。
+  校验 IPv4 地址、域名或两者兼容的 DNS 地址。
 
-  Behavior:
-    - 入参非 slice: 中止渲染
-    - 长度不在 {1, 2}: 中止渲染
-    - value (index 0) 非字符串: 中止渲染
-    - mode (index 1) 存在且非字符串: 中止渲染
-    - mode 不在 {ip, domain, dns} (默认 "ip"): 中止渲染
-    - value 不匹配 mode 对应正则: 中止渲染
-    - value 匹配: 原样返回
+  行为:
+    - 默认使用 ip 模式；支持 ip（IPv4，可带 CIDR）、domain（仅域名）与 dns（IPv4 或域名）。
+    - 使用 base.env 的网络正则；类型、模式或格式非法时立即中断渲染。
 
-  Parameter: list [value, mode]
-    value   待校验网络地址, 必填, 必须为字符串
-    mode    校验模式, 可选, 存在时必须为字符串 (nil/空/0 默认 "ip"), 可选值:
-              "ip"      IPv4 地址, 可带 CIDR 后缀 (默认值, mode 缺失或为空时)
-              "dns"     IPv4 地址或域名
-              "domain"  仅域名
+  入参: list [地址, 模式]；模式可选，默认为 ip。
 
-  Return: 原 value; 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  边界: 不支持 IPv6、URL、端口或 DNS 解析。
 
-  Note:
-    正则来源 (NET.IP, NET.DOMAIN_NAME) 集中在 templates/base/_env.tpl 管理,
-    本模板仅按需引用, 不内联正则。
+  返回值: 校验通过的原字符串。
 
-  Example:
+  示例:
     {{- include "base.net" (list "192.168.1.1" "ip") }}     // 192.168.1.1
     {{- include "base.net" (list "10.0.0.0/24" "ip") }}     // 10.0.0.0/24
     {{- include "base.net" (list "example.com" "domain") }} // example.com
@@ -283,40 +257,19 @@
 
 
 {{- /*
-  路径校验与归一化。校验路径为绝对、相对或 URI 形式 (绝对路径可选尾部斜杠), 返回归一化结果。
+  校验并归一化绝对、相对或 URI 路径。
 
-  Behavior:
-    - 入参非 slice: 中止渲染
-    - 长度不在 {2, 3}: 中止渲染
-    - path (index 0) 非字符串: 中止渲染
-    - mode (index 1) 非字符串: 中止渲染
-    - hasSuffix (index 2) 存在且非 bool: 中止渲染
-    - mode 不在 {abs, rel, uri}: 中止渲染
-    - path 不满足 mode 约束: 中止渲染
-    - path 满足约束: 返回归一化结果
+  行为:
+    - 通过 trim 与 clean 去除首尾空白并解析 .、.. 段。
+    - abs 只接受绝对路径，rel 只接受相对路径，uri 可按需确保尾部斜杠。
 
-  Parameter: list [path, mode, hasSuffix]
-    path      文件系统路径, 必填, 必须为字符串
-    mode      校验模式, 必填, 必须为字符串, 可选值:
-                "abs"  路径必须为绝对路径 (e.g. "/var/log"), 返回归一化结果
-                "rel"  路径必须为相对路径 (e.g. "logs/app"), 返回归一化结果
-                "uri"  路径必须为绝对路径, hasSuffix 控制尾部斜杠
-    hasSuffix 尾部斜杠控制, 可选, 存在时必须为 bool (默认 false), 仅在 "uri" 模式生效:
-                true  归一化结果未以 "/" 结尾时追加 "/"
-                false 归一化结果原样返回
+  入参: list [路径, 模式, 保留尾部斜杠]；路径与模式必填，第三项仅用于 uri 模式。
 
-  归一化策略:
-    - trim 去除首尾空白
-    - clean 解析 "." 与 ".." 段 (顺带折叠尾部 "/")
+  边界: 只进行字符串路径处理，不验证实际文件系统、URI scheme 或访问权限。
 
-  Return: 归一化路径字符串; 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  返回值: 归一化后的路径字符串。
 
-  Note:
-    本模板不依赖 templates/base/_env.tpl 中的任何正则, 故省略 base.env 调用。
-    路径归一化采用 Sprig 内置 trim 与 clean, 避免一次模板调用与一次正则匹配的开销。
-
-  Example:
+  示例:
     {{- include "base.path" (list "/var/log" "abs") }}        // /var/log
     {{- include "base.path" (list "/foo/../bar" "abs") }}     // /bar
     {{- include "base.path" (list "logs/app" "rel") }}        // logs/app
@@ -409,29 +362,17 @@
 
 
 {{- /*
-  基于正则的字符串校验。校验值是否匹配正则, 返回 trim 后的值。
+  基于正则校验字符串，并返回 trim 后的值。
 
-  Behavior:
-    - 入参非 slice: 中止渲染
-    - 长度不等于 2: 中止渲染
-    - data (index 0) 非字符串: 中止渲染
-    - regex (index 1) 非字符串: 中止渲染
-    - regex 为空字符串: 中止渲染
-    - trim(data) 不匹配 regex: 中止渲染
-    - trim(data) 匹配: 返回 trim(data) (确保先 trim 后校验, 避免首尾空白导致意外不匹配)
+  行为: 先 trim，再使用调用方提供的非空正则匹配；任一校验失败立即中断渲染。
 
-  Parameter: list [data, regex]
-    data   待校验值, 必填, 必须为字符串
-    regex  正则表达式, 必填, 必须为非空字符串
+  入参: list [字符串, 正则]。
 
-  Return: trim(data); 入参非法时中止渲染
-  错误消息同时包含违规值及其类型, 便于排错。
+  边界: 不维护正则常量，也不解释正则对应的业务语义。
 
-  Note:
-    正则由调用方提供, 本模板不引用 templates/base/_env.tpl 中的任何正则, 故省略 base.env 调用。
-    必须先 trim 再校验: data 首尾空白不应影响匹配结果。
+  返回值: trim 后且校验通过的字符串。
 
-  Example:
+  示例:
     {{- include "base.string.verify" (list "abc123" "^[a-z]+\\d+$") }}  // abc123
     {{- include "base.string.verify" (list "  abc123  " "^[a-z]+\\d+$") }}  // abc123 (先 trim 再校验)
     {{- include "base.string.verify" (list "abc" "^[a-z]+\\d+$") }}     // [base.string.verify] parameter 0 (data): regex '^[a-z]+\d+$' does not match, got 'abc' (kind: string)

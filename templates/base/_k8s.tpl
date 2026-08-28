@@ -13,9 +13,9 @@
     - 未知 mode 立即失败。
     - 不符合规则时立即失败。
 
-  入参:
-    - context (map|string): 包含 fullname/name 的字典，或需要直接校验的字符串
-    - mode    (string, 可选): "name" | "rbac" | "apiservice"
+  入参: map 或 string；也可传 list [上下文, 模式]，模式为 name、rbac 或 apiservice。
+
+  边界: 仅生成和校验名称；不处理对象间的名称唯一性或引用关系。
 
   返回值: 校验通过的标准化名称字符串；非法入参中断渲染。
 
@@ -110,8 +110,9 @@
     - 必须符合 RFC1123 DNS Label 规范（最多 63 字符）。
     - 不符合规则或类型非法时立即失败。
 
-  入参:
-    - context (map|string): 包含 namespace 的字典，或需要直接使用的字符串
+  入参: 包含 namespace 的 map，或直接使用的 string。
+
+  边界: 仅标准化和校验 namespace；不验证命名空间是否实际存在。
 
   返回值: 校验通过的标准化 namespace 字符串；非法入参中断渲染。
 
@@ -161,9 +162,9 @@
     - 未知 mode 或非字符串入参立即失败。
     - 不符合规则时立即失败。
 
-  入参:
-    - value (string): 待校验字符串
-    - mode  (string, 可选): "1035" | "1123" | "rbac"，默认 "1035"
+  入参: string；也可传 list [值, 模式]，模式为 1035、1123 或 rbac。
+
+  边界: 只校验本模板支持的 RFC 模式，不规范化输入内容。
 
   返回值: 校验通过的字符串；非法入参中断渲染。
 
@@ -242,8 +243,9 @@
     - 将 "+" 替换为 "_"，截断至 63 字符，移除所有尾部连字符。
     - 若 .Chart 信息缺失，生成 "chart-" 前缀 + 8 位随机小写字母。
 
-  入参:
-    - . (context): Helm 模板上下文，需包含 .Chart.Name 和 .Chart.Version
+  入参: Helm 上下文；读取 .Chart.Name 与 .Chart.Version。
+
+  边界: 只生成标签使用的 chart 名称；Chart 元数据缺失时使用随机后备名称。
 
   返回值: 符合 RFC1035 的 chart 名称字符串（最多 63 字符）
 
@@ -269,8 +271,9 @@
     - app.kubernetes.io/managed-by: 优先使用 .Release.Service，缺失时用 "Helm" 兜底。
     - 所有值均加双引号，确保 fromYaml 解析为字符串类型。
 
-  入参:
-    - . (context): Helm 模板上下文，应包含 .Chart 和 .Release
+  入参: Helm 上下文；读取 .Chart 与 .Release。
+
+  边界: 只输出本模板定义的 Helm 标准标签，不合并用户自定义标签。
 
   返回值: YAML 格式的标签字符串，每行一个键值对
 
@@ -293,11 +296,9 @@
       3. 兜底: 若以上均不满足，强制输出 name 标签
     - 所有字典合并均使用 mustDeepCopy 隔离，严禁污染 .Values。
 
-  入参:
-    - context (map): 包含以下字段的字典:
-      - justNameLabel (bool, 可选): 仅输出 name 标签
-      - labels (map, 可选): 用户自定义标签
-      - helmLabels (bool, 可选): 追加 Helm 标准标签
+  入参: 包含 justNameLabel、labels、helmLabels 的 map 上下文。
+
+  边界: 只构建标签 Map；不渲染 metadata 外层字段，也不修改输入上下文。
 
   返回值: toYamlPretty 格式化后的标签 YAML 字符串
 
@@ -368,8 +369,9 @@
     - 使用正则校验是否符合 Kubernetes Quantity 规范（支持 SI 后缀和二进制后缀）。
     - 合法时返回原值，非法时立即失败。
 
-  入参:
-    - value (string|int|float64): 待校验的 Quantity 值
+  入参: string、int 或 float64 形式的 Quantity 值。
+
+  边界: 只按当前正则验证格式，不解释资源类型或数值是否适合具体字段。
 
   返回值: 校验通过的原始值（字符串或数字）；非法入参中断渲染。
 
@@ -401,8 +403,9 @@
       - 均不匹配：立即失败。
     - 其他类型：立即失败。
 
-  入参:
-    - value (int|int64|float64|string): 待校验的时间值
+  入参: int、int64、float64 或 string 时间值。
+
+  边界: 只处理秒数和 Go duration 字面量，不解析 RFC3339 时间戳。
 
   返回值: Go duration 格式的字符串（如 "5m0s"）或原始时间字符串；非法入参中断渲染。
 
@@ -440,8 +443,9 @@
     - 合法格式包括：`.`（根）、`f:fieldName`（字段）、`i:index`（索引）、`v:value`（值）、`k:key`（键）。
     - 合法时返回原值，非法时立即失败。
 
-  入参:
-    - value (string): 待校验的 FieldsV1 字符串
+  入参: string 形式的 FieldsV1 值。
+
+  边界: 只验证单个 FieldsV1 片段格式，不构建或合并字段所有权结构。
 
   返回值: 校验通过的原始字符串；非法入参中断渲染。
 
@@ -474,8 +478,9 @@
       - 不匹配：立即失败。
     - 其他类型：立即失败。
 
-  入参:
-    - value (int|int64|float64|string): 待校验的 RollingUpdate 值
+  入参: int、int64、float64 或 string 形式的 IntOrString 值。
+
+  边界: 只验证 IntOrString 形式，不校验 maxSurge、maxUnavailable 的联动约束。
 
   返回值: int 类型（数字输入）或字符串（纯数字字符串/百分比字符串）；非法入参中断渲染。
 

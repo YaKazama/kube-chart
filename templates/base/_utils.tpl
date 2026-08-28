@@ -1,22 +1,18 @@
 {{- /*
-  统一错误上报。接收位置参数 list 并通过 fail 中止渲染，输出包含模板名、失败值及其类型的标准化消息。
+  统一错误上报，通过 fail 中止渲染并输出标准化消息。
 
-  Behavior:
-    - 入参非 list: 立即中止渲染
-    - 元素 < 1: 中止渲染 (name 必填)
-    - 元素 0 (name): 必填，非空字符串
-    - 元素 1 (value): 可选，任意类型，默认空字符串
-    - 元素 2 (line): 可选非负 int，> 0 时附加 "line N" 后缀
-    - 类型校验使用 kindIs (布尔判断，性能优于 kindOf)
+  行为:
+    - 验证模板名与可选的失败值、行号；无效参数立即中止。
+    - 行号大于 0 时在消息中附加 line N 后缀。
 
-  Parameter: list [name, value, line]
-    name    模板名 (e.g. "base.ftoi"), 必填, 非空字符串
-    value   失败值, 可选, 任意类型; 默认空字符串
-    line    错误位置编号, 可选, 非负 int; > 0 时附加 "line N" 后缀
+  入参: list [模板名, 失败值, 行号]；模板名必填，后两项可选。
 
-  Return: 无; 通过 fail 中止渲染
+  边界:
+    - 仅负责构造并触发 fail，不返回可供调用方继续处理的值。
 
-  Example:
+  返回值: 无；通过 fail 中止渲染。
+
+  示例:
     {{- include "base.failed" (list "base.ftoi" .) }}
     {{- include "base.failed" (list "base.int" . 1) }}
 */ -}}

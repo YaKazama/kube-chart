@@ -1,8 +1,13 @@
 {{- /*
-  float64 转 int（截断小数部分）
+  将 float64 转为 int（截断小数部分）。
 
-  入参: 任意类型，期望为 float64
-  返回值: int 的十进制字符串表示；入参非 float64 时中断渲染并报错
+  行为: 仅接受 float64；其他类型立即中断渲染。
+
+  入参: float64 数值。
+
+  边界: 不执行字符串或其他数值类型的转换。
+
+  返回值: int 的十进制字符串表示。
 
   示例:
     {{- $n := include "base.ftoi" 3.7 }}   // $n = "3"
@@ -18,10 +23,15 @@
 
 
 {{- /*
-  bool 转 string
+  将 bool 转为字符串。
 
-  入参: 任意类型，期望为 bool
-  返回值: "true" 或 "false"；入参非 bool 时中断渲染并报错
+  行为: 仅接受 bool；其他类型立即中断渲染。
+
+  入参: bool 值。
+
+  边界: 不解析 "true"、"false" 等字符串字面量。
+
+  返回值: "true" 或 "false"。
 
   示例:
     {{- $s := include "base.btoa" true }}   // $s = "true"
@@ -37,13 +47,17 @@
 
 
 {{- /*
-  字符串渲染：空字符串或纯空白字符串输出带引号的空字符串 ""
+  渲染允许为空的字符串；空白值输出带引号的空字符串 ""。
 
-  入参: string，必填
-  返回值:
+  行为:
     - 空字符串 / 纯空白字符串 => ""
     - 非空字符串 => 经 base.string 处理后的原值
-  非 string 入参中断渲染并报错
+
+  入参: string 值。
+
+  边界: 仅接受 string；非 string 输入立即中断渲染。
+
+  返回值: 适于嵌入 YAML 的字符串。
 
   示例:
     {{- include "base.string.empty" "" }}       // ""
@@ -65,11 +79,15 @@
 
 
 {{- /*
-  判断字符串是否包含换行符
+  判断字符串是否包含换行符。
 
-  入参: string，必填
-  返回值: 包含换行符返回 "true"，否则返回 "false"
-  非 string 入参中断渲染并报错
+  行为: 仅接受 string；包含 \n 返回 "true"，否则返回 "false"。
+
+  入参: string 值。
+
+  边界: 不识别其他类型或其他空白字符。
+
+  返回值: 布尔字符串。
 
   示例:
     {{- include "base.isMultiLine" "a\nb" }}  // true
@@ -84,11 +102,15 @@
 
 
 {{- /*
-  保留原始字符串（避免 base.string 破坏多行内容）
+  保留原始字符串，避免 base.string 改写多行内容。
 
-  入参: string，必填
-  返回值: 原字符串；空字符串 / nil 返回 ""
-  非 string 入参中断渲染并报错
+  行为: 空字符串保留为空；非 string 输入立即中断渲染。
+
+  入参: string 值。
+
+  边界: 不执行 trim、零折叠或其他字符串规范化。
+
+  返回值: 原字符串。
 
   示例:
     {{- include "base.rawString" "hello" }}  // hello
@@ -103,10 +125,15 @@
 
 
 {{- /*
-  判断 fromYaml 返回的是否为错误 map
+  判断 fromYaml 返回值是否为错误 map。
 
-  入参: 任意类型
-  返回值: 是 map 且包含 "Error" 键返回 "true"，否则返回 "false"
+  行为: 仅当值为 map 且包含 "Error" 键时返回 "true"。
+
+  入参: 任意类型的 fromYaml 返回值。
+
+  边界: 只识别 Helm 的 fromYaml 错误形态，不解析错误内容。
+
+  返回值: 布尔字符串。
 
   示例:
     {{- include "base.isFromYamlError" (dict "Error" "bad yaml") }}  // true
@@ -118,10 +145,15 @@
 
 
 {{- /*
-  判断 fromYamlArray 返回的是否为错误 slice
+  判断 fromYamlArray 返回值是否为错误 slice。
 
-  入参: 任意类型
-  返回值: 是 slice、非空且首个元素（字符串）包含 "error" 返回 "true"，否则返回 "false"
+  行为: 仅当非空 slice 的首个元素包含 "error"（忽略大小写）时返回 "true"。
+
+  入参: 任意类型的 fromYamlArray 返回值。
+
+  边界: 只识别 Helm 的 fromYamlArray 错误形态，不解析错误内容。
+
+  返回值: 布尔字符串。
 
   示例:
     {{- include "base.isFromYamlArrayError" (list "error converting YAML to JSON") }}  // true

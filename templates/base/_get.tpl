@@ -1,17 +1,16 @@
 {{- /*
-  统一取值函数：从多层上下文安全取值，支持点分路径、类型转换、集合合并与必填校验。
+  从多层上下文按点分路径安全取值。
 
-  入参: list <上下文> <点分路径> [强制类型] [合并模式] [必填校验] [调试]
-    上下文     根上下文（通常为 `.`），必填
-    点分路径   支持多级嵌套（如 image.repository），必填
-    强制类型   int | int64 | float64 | atoi | toString | toStrings | toDecimal | quote | squote
-    合并模式   字典: left 左优(默认) | right 右优；列表: concat 拼接去重(默认) | replace 全量替换
-    必填校验   true 时取值为空立即报错，默认 false
-    调试       true 时输出调试日志，默认 false
+  行为:
+    - 按 上下文自身 > .Context > .Values > .Values.global 的优先级取值。
+    - 标量取首个非空值；Map 和 slice 按指定模式合并，并支持必填校验与类型转换。
+    - 调试模式输出取值过程。
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串，配合 fromYaml 使用
+  入参: list [上下文, 点分路径, 强制类型, 合并模式, 必填校验, 调试]；前两项必填，后四项可选。
 
-  取值优先级: 上下文自身 > .Context > .Values > .Values.global
+  边界: 只处理取值、合并与序列化；不定义字段默认值或业务校验规则。
+
+  返回值: 可由 fromYaml 解析的 YAML 字符串。
 
   示例:
     {{- $val := include "base.get" (list . "image.repository") | fromYaml }}
@@ -242,7 +241,7 @@
 
 
 {{- /*
-  高层取值函数：支持别名/多路径回溯，从多层上下文按路径优先级取值并按合并模式合并。
+  支持别名和多路径回溯的高层取值函数。
 
   行为:
     - 路径列表按优先级从高到低排列，依次尝试取值；首个非空命中即作为基础结果。
@@ -255,14 +254,13 @@
     - 路径中的空字符串自动跳过。
     - 底层调用 base.get，统一遵循其类型/合并/必填语义。
 
-  入参: list <上下文> <路径列表> [强制类型] [合并模式] [必填校验]
-    上下文       根上下文（通常为 `.`），必填
-    路径列表     list 类型，按优先级从高到低排列，元素必须为非空字符串，必填
-    强制类型     int | int64 | float64 | atoi | toString | toStrings | toDecimal | quote | squote，默认 ""
-    合并模式     left (默认) | right | replace
-    必填校验     true 时取值为空立即报错，默认 false
+  入参: list [上下文, 路径列表, 强制类型, 合并模式, 必填校验]；前两项必填，后三项可选。
 
-  返回值: toYamlPretty 格式化后的 YAML 字符串，配合 fromYaml 使用
+  边界:
+    - 路径取值与基础类型转换委托 base.get；只负责多路径回溯和 Map 合并。
+    - 标量和 slice 命中后不再回溯；只有 Map 可按合并模式继续处理。
+
+  返回值: 可由 fromYaml 解析的 YAML 字符串。
 
   示例:
     {{- $tag := include "base.getWithAlias" (list . (list "image.tagAlias" "image.tag")) | fromYaml }}
