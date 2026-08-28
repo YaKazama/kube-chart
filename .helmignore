@@ -35,3 +35,8 @@ index.yaml
 *.tgz
 
 examples/tpls-bak/
+openspec/
+docs/
+.gitattributes
+.gitignore
+AGENTS.md

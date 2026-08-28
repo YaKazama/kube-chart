@@ -19,37 +19,42 @@
 - 文件路径必须来自已读文档的明确链接、本文映射或已授权目录的文件清单。AI 会话命令名与文件名属于不同命名空间；不得通过增删或替换命令前后缀猜测文件名。缺少映射时，先查询真实文件列表，再读取已确认的路径。
 - 命令只读取完成当前职责所需的当前文件；事实一经用户输入、当前规格或适用规则确认即停止扩张上下文。正式代码只说明实现现状，不能反向生成需求。
 - 搜索只用于确认真实文件名或在已授权文件中定位标识符；不得借此通读调用方、相邻能力、其他 change 或归档内容。
-- 仅当缺少会改变契约的版本特定事实时读取精确的本地参考片段；仍不足时查询精确的官方资源。参考资料不得扩张需求。
+- 本地参考统一从 [`openspec/references/README.md`](openspec/references/README.md) 路由；版本特定事实必须先在其映射的本地镜像或快照中定位精确片段。本地内容足以确认事实时禁止发起 URL 请求，不得仅为刷新、复核或获取更完整上下文访问在线资源。
+- 仅当缺少会改变契约的版本特定事实，且本地参考缺失、不可读或精确片段仍不足时，才查询对应的精确官方资源；已由用户输入、当前规格、适用规则或本地参考确认的事实不得重复查询。参考资料不得扩张需求。
 
 ## 命令入口
 
+本项目采用精简 OPSX 动作模型，以 `draft.md` 和 `spec.md` 两个制品驱动实施。状态只表示最近完成的稳定动作；`/opsx-fix` 可以重复执行，契约确需同步时由用户决定是否执行 `/opsx-spec-rewrite`。
+
 ```text
-/sdd-draft
-  → /sdd-plan
-  → /sdd-apply（可重复执行）
-  → /sdd-verify（可独立、可重复执行）
-  → 人工 Review
-  → /sdd-merge
+/opsx-draft
+  → /opsx-spec
+  → /opsx-code
+  ↔ /opsx-fix
+      └─ 用户确认回写时 → /opsx-spec-rewrite
+  → /opsx-review
+
+/ck-deploy
 ```
 
 | 命令 | 唯一定义文件 | 唯一主要职责 |
 |---|---|---|
-| `/sdd-draft` | [`openspec/commands/draft.md`](openspec/commands/draft.md) | 新建或继续只表达意图的轻量 `draft.md`。 |
-| `/sdd-plan` | [`openspec/commands/plan.md`](openspec/commands/plan.md) | 从 draft 生成变更契约；无阻塞项时进入 `planned`。 |
-| `/sdd-apply` | [`openspec/commands/apply.md`](openspec/commands/apply.md) | 可重复按变更契约生成代码并输出变更摘要。 |
-| `/sdd-verify` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 独立执行真实验证、生成验证记录并更新验证状态。 |
-| `/sdd-revise` | [`openspec/commands/revise.md`](openspec/commands/revise.md) | 将未合并 change 退回 `draft` 并使验证证据失效。 |
-| `/sdd-merge` | [`openspec/commands/merge.md`](openspec/commands/merge.md) | 检查验证证据、合并规格、同步用户文档并归档。 |
+| `/opsx-draft` | [`openspec/commands/draft.md`](openspec/commands/draft.md) | 新建或继续只表达意图的轻量 `draft.md`。 |
+| `/opsx-spec` | [`openspec/commands/spec.md`](openspec/commands/spec.md) | 从 draft 生成带精确代码锚点的 `spec.md`。 |
+| `/opsx-code` | [`openspec/commands/code.md`](openspec/commands/code.md) | 按已锁定规格和锚点生成代码。 |
+| `/opsx-fix` | [`openspec/commands/fix.md`](openspec/commands/fix.md) | 在 `code` 状态下局部调整代码，并给出回写判定与建议。 |
+| `/opsx-spec-rewrite` | [`openspec/commands/spec-rewrite.md`](openspec/commands/spec-rewrite.md) | 按用户在当前命令中确认的内容回写规格。 |
+| `/opsx-review` | [`openspec/commands/review.md`](openspec/commands/review.md) | 轻量核对当前变更、总结并归档。 |
 | `/ck-deploy` | [`openspec/commands/ck-deploy.md`](openspec/commands/ck-deploy.md) | 对整个 Chart 执行发布检查。 |
 
-收到任一命令时，先读取精简状态机 [`openspec/workflow.md`](openspec/workflow.md)，再读取 [`openspec/commands/`](openspec/commands/) 中对应的命令文件，并在其上下文边界内完成职责。命令是 AI 会话触发命令，不是 shell 命令。
+收到任一命令时，先读取精简工作流 [`openspec/workflow.md`](openspec/workflow.md)，再读取上表映射的唯一命令文件，并在其上下文边界内完成职责。命令是 AI 会话触发命令，不是 shell 命令。
 
 ## 规则路由
 
-仅按当前阶段和修改范围读取：
+仅按当前动作和修改范围读取：
 
-- 用户入口保护、frontmatter 与变更记录：[`openspec/rules/change-documents.md`](openspec/rules/change-documents.md)
-- 规格语法、合并或整理：[`openspec/rules/specifications.md`](openspec/rules/specifications.md)
+- 用户入口保护、frontmatter、代码锚点与归档：[`openspec/rules/change-documents.md`](openspec/rules/change-documents.md)
+- 规格语法或受控回写：[`openspec/rules/specifications.md`](openspec/rules/specifications.md)
 - Helm 模板：[`openspec/rules/helm-templates.md`](openspec/rules/helm-templates.md)
 - 核心命名模板调用：[`openspec/rules/core-capabilities.md`](openspec/rules/core-capabilities.md)
 - values、Schema 或用户配置：[`openspec/rules/values-schema.md`](openspec/rules/values-schema.md)

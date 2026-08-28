@@ -1,1 +1,12 @@
 schema: spec-driven
+
+context: |
+  Kubernetes API >= v1.36.0；Helm >= 4.0.0，推荐 4.2.2。
+  本仓库是 Helm library Chart；需求来源、上下文边界和发布门禁以 AGENTS.md、openspec/workflow.md 与 openspec/rules/ 为准。
+
+rules:
+  draft:
+    - 只保存用户初始意图与 [AI 推断] 边界，不从代码反向扩张需求。
+  specs:
+    - 只记录技术目标、精确代码锚点、可观察行为、失败边界、非目标和 Scenario。
+    - 代码生成后只有用户在当前命令中确认的内容才能通过 /opsx-spec-rewrite 回写。

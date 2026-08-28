@@ -2,7 +2,7 @@
 
 ## 职责
 
-对整个 Chart 执行只读发布检查；不创建、修改、合并或归档 change。
+对整个 Chart 执行只读发布检查；不创建、修改、修复或归档 change。
 
 ```text
 /ck-deploy
@@ -10,18 +10,20 @@
 
 ## 上下文
 
-使用 `Chart.yaml`、当前规格、正式模板、values、Schema、用户文档、稳定样例、适用工程规则和仓库已有发布命令。只读取检查项或失败直接涉及的文件；活动 change 只检查状态和技术目标，不读取正文、其余 plan 或 records。
+使用 `Chart.yaml`、正式模板、values、Schema、用户文档、稳定样例、既有稳定能力规格、适用工程规则和仓库已有发布命令。只读取检查项或失败直接涉及的文件。
+
+可以列出活动 change 的实际文件，以确认是否存在 `status: spec | code` 的未 Review 实现；不读取活动 draft 正文、其他 change 规格正文或归档内容补充发布契约。
 
 ## 检查范围
 
 - Chart 类型及 Kubernetes、Helm 版本基线满足声明要求。
-- 所有发布相关变更均已完成契约、应用、真实项目命令验证、人工 Review 和归档。
-- 当前规格、实现、样例和用户可见行为一致。
-- 通用规则只位于 [`openspec/rules/`](../rules/)，能力专属行为只位于当前规格。
-- 使用仓库真实存在的项目命令确认核心样例可渲染，关键异常输入按规格失败。
+- 不存在影响本次发布但仍处于 `spec` 或 `code` 状态的活动 change；仅有 draft 的意图不视为正式代码变化。
+- 正式模板、values、Schema、稳定样例和用户文档一致。
+- 按 [`../rules/helm-templates.md`](../rules/helm-templates.md) 执行完整 Chart lint 和真实 Helm 渲染，不复用 `/opsx-code` 或 `/opsx-fix` 的当前文件隔离检查代替。
+- 使用仓库真实存在的项目命令确认核心样例可渲染，关键异常输入按适用规格失败。
 - 无敏感信息硬编码，安全默认值符合项目规则。
-- 发布涉及 values 时，[`values.yaml`](../../values.yaml)、Schema、[`docs/`](../../docs/) 和当前规格一致。
-- [`openspec/changes/`](../changes/) 中不存在影响本次发布但尚未归档的变更。
+- 发布涉及 values 时，`values.yaml`、Schema、`docs/` 和稳定样例一致。
+- `/opsx-review` 的轻量结论、会话摘要或历史记录未被用作发布验证替代品。
 
 ## 输出
 

@@ -96,5 +96,9 @@
 
 - Pod 安全相关模板默认启用 `runAsNonRoot: true` 和 `readOnlyRootFilesystem: true`，默认禁用 `privileged`、`hostNetwork` 等高危权限。
 - values、样例和文档不得硬编码密钥、令牌、证书或私钥。
-- 所有模板修改必须实际执行 `/opt/homebrew/bin/helm lint`，并用真实 Helm 命令验证最小有效输入、较完整有效输入和关键失败输入。Markdown checklist、静态推断或臆造的校验器不得作为通过证据。
-- 临时验证文件只能创建于 `/tmp/`，完成后必须清理。
+- `/opsx-code` 和 `/opsx-fix` 修改 Helm 模板后，只对当前已变更的精确代码锚点执行空白、冲突标记和文件末尾换行等静态检查；不得为轻量检查扫描或 lint 整个 Chart。
+- `/opsx-code` 和 `/opsx-fix` 必须在 `/tmp/` 最小 application Chart 中加载当前已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`。
+- 最小 Chart 验证必须覆盖最小有效输入、较完整有效输入和关键失败输入。使用同名最小 fixture 时，只能证明当前模板自身的调用和分支行为，不得表述为真实依赖集成通过。
+- `/ck-deploy` 必须对整个 Chart 实际执行 `/opt/homebrew/bin/helm lint .`，并用仓库真实存在的 Helm 命令验证完整 Chart 的核心样例和关键失败输入。
+- 轻量静态检查、隔离 Chart、Markdown checklist、静态推断或臆造的校验器不得替代 `/ck-deploy` 的发布检查。
+- 临时验证文件只能创建于 `/tmp/`；验证完成后直接保留，由用户统一清理。
