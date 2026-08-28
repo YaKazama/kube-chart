@@ -1,6 +1,6 @@
 ---
-status: merged
 change-id: apps-deployment
+updated_at: "2026-08-28T02:36:15Z"
 ---
 
 # Apps Deployment

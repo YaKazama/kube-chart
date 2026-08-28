@@ -26,11 +26,10 @@
   {{- if not (kindIs "map" $__metadataEnvelope) }}
     {{- fail "[apps.deployment] metadata: invalid YAML output from definitions.objectMeta" }}
   {{- end }}
-  {{- $__metadataParsed := get $__metadataEnvelope "value" -}}
-  {{- if not (kindIs "map" $__metadataParsed) }}
+  {{- $metadata := get $__metadataEnvelope "value" -}}
+  {{- if not (kindIs "map" $metadata) }}
     {{- fail "[apps.deployment] metadata: must be map type" }}
   {{- end }}
-  {{- $metadata := $__metadataParsed -}}
   {{- include "base.field" (list "metadata" $metadata "base.map") }}
 
   {{- /* spec（DeploymentSpec）：描述 Deployment 的期望行为。 */ -}}
@@ -45,10 +44,9 @@
   {{- if not (kindIs "map" $__specEnvelope) }}
     {{- fail "[apps.deployment] spec: invalid YAML output from apps.deploymentSpec" }}
   {{- end }}
-  {{- $__specParsed := get $__specEnvelope "value" -}}
-  {{- if not (kindIs "map" $__specParsed) }}
+  {{- $spec := get $__specEnvelope "value" -}}
+  {{- if not (kindIs "map" $spec) }}
     {{- fail "[apps.deployment] spec: must be map type" }}
   {{- end }}
-  {{- $spec := $__specParsed -}}
   {{- include "base.field" (list "spec" $spec "base.map") }}
 {{- end }}

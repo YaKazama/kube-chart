@@ -1,4 +1,7 @@
-> 需求修改入口：[draft.md](../draft.md)
+---
+status: reviewed
+updated_at: "2026-08-28T06:39:14Z"
+---
 
 # Apps Deployment 变更规格
 
