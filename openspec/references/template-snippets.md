@@ -59,14 +59,10 @@
 
 ## 必填 Map 委托
 
-必填 map 须依次检查空输出、Helm 4.2.2 的 `fromYaml` 错误 map 和实际类型，再以 `base.field` 嵌入父字段。
+必填且要求非空的 map 须在 `fromYaml` 后依次检查错误 map、实际类型和恢复后的空值，再以 `base.field` 嵌入父字段。Helm 4.2.2 会把空输出和 `null` 恢复为空 map，不得在解析前重复检查原始字符串。
 
 ```gotemplate
-{{- $_metadataRaw := include "definitions.objectMeta" . }}
-{{- if not $_metadataRaw }}
-  {{- fail "[apps.deployment] metadata: required field is missing or empty" }}
-{{- end }}
-{{- $metadata := $_metadataRaw | fromYaml }}
+{{- $metadata := include "definitions.objectMeta" . | fromYaml }}
 {{- if eq (include "base.isFromYamlError" $metadata) "true" }}
   {{- fail "[apps.deployment] metadata: invalid YAML output from definitions.objectMeta" }}
 {{- end }}
@@ -84,18 +80,15 @@
 `base.get` 返回 YAML 字符串。map/list 恢复后执行错误与类型检查。
 
 ```gotemplate
-{{- $_labelsRaw := include "base.get" (list . "labels" "" "right") }}
-{{- if $_labelsRaw }}
-  {{- $labels := $_labelsRaw | fromYaml }}
-  {{- if eq (include "base.isFromYamlError" $labels) "true" }}
-    {{- fail "[example.template] labels: must be map type" }}
-  {{- end }}
-  {{- if not (kindIs "map" $labels) }}
-    {{- fail "[example.template] labels: must be map type" }}
-  {{- end }}
-  {{- if $labels }}
-    {{- include "base.field" (list "labels" $labels "base.map") }}
-  {{- end }}
+{{- $labels := include "base.get" (list . "labels" "" "right") | fromYaml }}
+{{- if eq (include "base.isFromYamlError" $labels) "true" }}
+  {{- fail "[example.template] labels: must be map type" }}
+{{- end }}
+{{- if not (kindIs "map" $labels) }}
+  {{- fail "[example.template] labels: must be map type" }}
+{{- end }}
+{{- if $labels }}
+  {{- include "base.field" (list "labels" $labels "base.map") }}
 {{- end }}
 ```
 
@@ -114,9 +107,9 @@
 {{- if $_isMap }}
   {{- $value = $_parsed }}
 
-{{- else if and $_isErr (mustRegexMatch $pattern $_unquoted) }}
-  {{- $_first := mustRegexReplaceAll $pattern $_unquoted "${1}" | trim }}
-  {{- $_second := mustRegexReplaceAll $pattern $_unquoted "${2}" | trim }}
+{{- else if and $_isErr (mustRegexMatch $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted) }}
+  {{- $_first := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$1" | trim }}
+  {{- $_second := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$2" | trim }}
   {{- $value = dict "first" $_first "second" $_second }}
 
 {{- else }}
@@ -124,6 +117,6 @@
 {{- end }}
 ```
 
-`$pattern` 必须来自当前 Spec 列出的 `templates/base/_env.tpl` 常量键，不得在模板中重复定义；正则使用 `must*` 变体，捕获结果必须 `trim`。
+示例使用当前正式常量 `APPS.DEPLOYMENT.STRATEGY` 展示精确键读取；实际模板只能使用当前 design 锁定的键路径。常量归属、行为规格、设计边界、匹配捕获与验证统一遵循 [`Helm 模板工程规则`](../rules/helm-templates.md#正则契约)。
 
 不得省略 `fromYaml`/`fromYamlArray` 的错误与真实类型检查，也不得修改未经 `mustDeepCopy` 隔离的 `.Values` 或共享输入。
