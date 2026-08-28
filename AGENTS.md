@@ -34,6 +34,8 @@
       └─ 用户确认回写时 → /opsx-spec-rewrite
   → /opsx-review
 
+/docs-usage
+
 /ck-deploy
 ```
 
@@ -45,6 +47,7 @@
 | `/opsx-fix` | [`openspec/commands/fix.md`](openspec/commands/fix.md) | 在 `code` 状态下局部调整代码，并给出回写判定与建议。 |
 | `/opsx-spec-rewrite` | [`openspec/commands/spec-rewrite.md`](openspec/commands/spec-rewrite.md) | 按用户在当前命令中确认的内容回写规格。 |
 | `/opsx-review` | [`openspec/commands/review.md`](openspec/commands/review.md) | 轻量核对当前变更、总结并归档。 |
+| `/docs-usage` | [`openspec/commands/docs-usage.md`](openspec/commands/docs-usage.md) | 独立生成 `docs/` 最终用户文档并更新根 `README.md`。 |
 | `/ck-deploy` | [`openspec/commands/ck-deploy.md`](openspec/commands/ck-deploy.md) | 对整个 Chart 执行发布检查。 |
 
 收到任一命令时，先读取精简工作流 [`openspec/workflow.md`](openspec/workflow.md)，再读取上表映射的唯一命令文件，并在其上下文边界内完成职责。命令是 AI 会话触发命令，不是 shell 命令。

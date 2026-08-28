@@ -56,6 +56,8 @@ code  ──/opsx-spec-rewrite───────────────→ c
 code  ──/opsx-review 成功──→ reviewed + archive
 ```
 
+`/docs-usage` 是独立文档动作，不读取或改变活动 change 的状态，也不参与上述状态转换。
+
 活动目录中出现 `status: reviewed` 只表示 Review 已更新状态但归档移动被中断；重新执行 `/opsx-review` 时必须再次完成轻量核对后续作归档。
 
 ## 动作门禁
@@ -68,6 +70,7 @@ code  ──/opsx-review 成功──→ reviewed + archive
 - `/opsx-spec-rewrite` 只接受 `status: code`，且当前命令必须包含用户确认的精确回写内容。它只更新规格正文和 `updated_at`，保持 `status: code`；不得修改代码锚点、draft 或正式代码。
 - `/opsx-review` 只读取 `spec.md` 和代码锚点中当前已变更的文件。代码与规格不一致、存在未确认回写或轻量检查失败时保持 `code`；全部通过后写入 `reviewed` 并归档。
 - `/ck-deploy` 独立读取整个 Chart 所需的当前文件并执行真实发布检查，不依赖 Review 摘要替代实际命令。
+- `/docs-usage` 独立生成最终用户文档；存在 `status: spec` 或 `status: code` 的活动 change 时停止，避免将未 Review 的行为写入文档。
 
 如果用户拒绝 `/opsx-fix` 给出的必须回写建议，必须再次执行 `/opsx-fix` 把代码恢复为当前 spec 所定义的行为，之后才能 Review。
 
