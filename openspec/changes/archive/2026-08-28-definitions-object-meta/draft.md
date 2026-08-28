@@ -1,13 +1,12 @@
 ---
-status: draft
 change-id: definitions-object-meta
+updated_at: "2026-08-28T02:36:15Z"
 ---
 
 # definitions.objectMeta 命名模板
 
-> 用户唯一输入入口。
+> 用户初始意图入口。
 > 只需编辑下面的“目标、需求、约束、非目标、验收”。
-> 如果在会话中说明修改内容，AI 必须将确认后的修改写回本文件。
 
 ## 目标
 
