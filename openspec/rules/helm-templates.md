@@ -6,18 +6,29 @@
 
 - 尽早报错：必填缺失、类型非法或无法消解的冲突必须通过 `required` 或 `fail` 中断渲染。
 - 类型稳定：新 values 字段只定义一种公共类型；已有明确支持多类型的字段必须在上层归一化为 dict 后再委托。
-- 简洁高效：在不改变规格、类型、失败与隔离边界的前提下，优先使用 Helm/Sprig 内置函数和已有 base 能力直接表达逻辑，消除可合并的重复取值、分支、校验与临时状态；不得以额外 `include`、序列化/反序列化、深拷贝或重复遍历换取表面上的代码缩短，也不得为压缩行数牺牲可读性。
+- 简洁高效：在不改变规格、类型、失败与隔离边界的前提下，优先使用 Helm/Sprig 内置函数和已有 base 能力直接表达逻辑，消除可合并的重复取值、分支、校验与临时状态；不得以额外 `include`、序列化/反序列化、深拷贝或重复遍历换取表面上的代码缩短，也不得为压缩行数牺牲可读性；不得过度防御编程以及滥用 Helm/Sprig 内置函数。
 - 最小传参：单值传标量，同构集合传 list，多维状态传 dict；业务模板不得无意义透传 `.`，base 工具可按契约接收根上下文。
 - 状态隔离：修改或合并非当前模板所有的 dict、list 或上下文前使用 `mustDeepCopy`；只读透传不复制，调用链不得修改 `.Values` 或跨资源共享输入。当前契约明确允许注入、覆盖控制变量时，只能修改本模板拥有的上下文和契约允许的键；资源专用或父 Chart 构造的局部 map 可按契约原地写入，无需 `mustDeepCopy`。
-- 正则集中：正则统一定义于 [`templates/base/_env.tpl`](../../templates/base/_env.tpl)，使用全大写下划线嵌套键；简单正则可由父模板解析，复杂正则在对应子模板逐级解析。
+
+## 正则契约
+
+- 项目内固定用于校验、解析、筛选或拆分的正则统一定义于 [`templates/base/_env.tpl`](../../templates/base/_env.tpl) 的 `base.env` 返回 Map；业务模板不得内联、拼接或复制同一表达式。常量使用按领域、能力和语义分层的全大写下划线键，例如 `APPS.DEPLOYMENT.STRATEGY`。
+- spec 只记录用户可见的匹配范围、全量或子串语义、捕获结果的顺序与类型，以及不匹配时的失败或忽略边界；不得记录 `base.env` 键路径或源码转义等实现细节。
+- design 记录 `base.env` 的调用入参 `""`、精确常量键路径、source、operation 和调用层归属。运行时表达式以 `base.env` 输出经 `fromYaml` 恢复后实际传给正则函数的 string 为准，并与 `_env.tpl` 源码中的 YAML 双引号和反斜杠转义层明确区分。
+- `/opsx-spec` 必须从 `_env.tpl` 精确确认现状：既有键的运行时表达式与 spec 行为一致时 operation 为 `consume`，`_env.tpl` 是 read boundary；缺失且当前 change 明确负责新增时 operation 为 `add`，`_env.tpl` 是 write boundary，writable scope 只包含该键；现有表达式冲突且用户未授权改变共享行为时停止。
+- 模板使用 `include "base.env" "" | fromYaml` 恢复常量 Map，并直接读取当前 design 已锁定的目标键；`base.env` 负责集中常量的结构与类型有效性，业务模板不得重复添加空输出、YAML、Map 或常量键保护。模板不得从 `.Values`、调用上下文或动态字符串覆盖项目固定正则。
+- 需要匹配完整输入的表达式必须使用 `^` 和 `$` 明确锚定；只有规格明确要求查找子串时才允许非锚定表达式。捕获提取前必须先用 `mustRegexMatch` 确认匹配，再按用途选择 `mustRegexFind`、`mustRegexFindAll` 或 `mustRegexReplaceAll`；纯替换或拆分按规格使用 `mustRegexReplaceAll`、`mustRegexReplaceAllLiteral` 或 `mustRegexSplit`，并显式处理无匹配结果。禁止使用非 `must*` 变体吞掉无效表达式错误。
+- 捕获组从 `1` 开始引用；独立替换使用 `$n`，仅在需要与相邻文本消歧时使用 `${n}`。每次 `mustRegexReplaceAll` 提取后必须 `trim`。可选捕获组允许得到空 string，但其含义和下游处理必须由规格明确；不得用捕获失败后的空值伪装成合法默认值。
+- `base.get` 返回的 YAML string 参与多类型分支时，先完成 `fromYaml` 错误与真实类型检查；进入 string 分支后，使用 `SYS.YAML_QUOTED` 剥离 YAML 外层引号并 `trim`，再执行目标正则。map 与 string 的归一化必须互斥，其他类型或不匹配输入按规格立即失败或忽略，不得静默回退到另一类型。
+- 正则解析由拥有归一化边界的模板负责：父模板只解析自身声明的字符串简写并传递规范化结果，嵌套结构的表达式由拥有该结构的子模板继续解析；不得由父模板重复实现子模板内部语义。
+- design 的验证设计和 tasks 必须覆盖典型匹配、边界匹配、不匹配、可选捕获为空和非法输入类型；修改 `_env.tpl` 时验证必须加载其真实实现，不得用同名 fixture 替代被修改常量。
 
 ## 取值与渲染
 
 - 多层字段统一使用 `base.get`；别名字段使用 `base.getWithAlias`，别名优先。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
-- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → 必填空值检查 → `fromYaml`/`fromYamlArray` → 错误保护 → `kindIs` → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数，也不得用原始 YAML 字符串判断集合空值。
+- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → `fromYaml`/`fromYamlArray` → 错误保护 → `kindIs` → 按契约判断恢复后的集合空值 → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数。要求非空的集合不得在解析前重复检查原始空输出或 `null`；只有契约允许真实空集合、且 Helm 恢复行为会使非法原始值与空集合无法区分时，才检查原始字符串。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
-- 正则捕获使用 `mustRegexReplaceAll` 后必须 `trim`。
 - 优先使用适配版本中真实存在的 Helm/Sprig `must*` 变体；使用前必须确认。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
 
 ## 边界与 Helm 4.2.2
@@ -67,7 +78,7 @@
 
 ## 模板定义与排版
 
-- 新增或修改直接 `include` 时，被调用模板的 `define` 名称、传入上下文和最小返回边界必须由当前规格、变更规格与适用规则唯一确定；否则退回 `draft`。可以引用尚未实现的被调用模板，但不得在当前 change 中创建未经授权的实现或占位 `define`。
+- 新增或修改直接 `include` 时，被调用模板的 `define` 名称、传入上下文和最小返回边界必须由当前 spec、design 与适用规则唯一确定；否则不得生成执行契约。可以引用 design 标记为 unavailable 的被调用模板，但不得在当前 change 中创建未经授权的实现或占位 `define`。
 - 隔离验证调用方模板时，可以在 `/tmp/` 测试 Chart 中提供同名最小 fixture；结果不得作为真实依赖集成通过的证据。
 - 每个命名模板必须使用中文整体契约注释，且紧邻对应 `{{- define "x.y" -}}` 之前，不得写入 `define` 块内；契约内容与排版遵循 [`命名模板注释`](../references/template-snippets.md#命名模板注释) 示例。
 - 直接渲染 Kubernetes API 字段时，按 API 字段顺序实现当前层负责的字段并遵守官方类型；委托字段不得重复实现子模板内部结构。
@@ -95,7 +106,7 @@
 
 - Pod 安全相关模板默认启用 `runAsNonRoot: true` 和 `readOnlyRootFilesystem: true`，默认禁用 `privileged`、`hostNetwork` 等高危权限。
 - values、样例和文档不得硬编码密钥、令牌、证书或私钥。
-- `/opsx-code` 和 `/opsx-fix` 修改 Helm 模板后，只对当前已变更的精确代码锚点执行空白、冲突标记和文件末尾换行等静态检查；不得为轻量检查扫描或 lint 整个 Chart。
+- `/opsx-code` 和 `/opsx-fix` 修改 Helm 模板后，只对当前已变更的精确 write boundary 执行空白、冲突标记和文件末尾换行等静态检查；不得为轻量检查扫描或 lint 整个 Chart。
 - `/opsx-code` 和 `/opsx-fix` 必须在 `/tmp/` 最小 application Chart 中加载当前已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`。
 - 最小 Chart 验证必须覆盖最小有效输入、较完整有效输入和关键失败输入。使用同名最小 fixture 时，只能证明当前模板自身的调用和分支行为，不得表述为真实依赖集成通过。
 - `/ck-deploy` 必须对整个 Chart 实际执行 `/opt/homebrew/bin/helm lint .`，并用仓库真实存在的 Helm 命令验证完整 Chart 的核心样例和关键失败输入。

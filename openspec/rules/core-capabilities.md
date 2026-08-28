@@ -35,9 +35,8 @@
 
 ## YAML 解析保护
 
-- `fromYaml` 的结果必须先通过 `base.isFromYamlError` 排除错误 map，再验证 `kindIs "map"`。
-- `fromYamlArray` 的结果必须先通过 `base.isFromYamlArrayError` 排除异常结果，再验证 `kindIs "slice"`。
-- `base.isFromYamlError` 和 `base.isFromYamlArrayError` 返回字符串布尔值，条件判断必须显式比较 `"true"` 或 `"false"`。
+- 禁止使用二次验证：除非有极特殊的豁免场景并显式注释说明，否则禁止使用 base.isFromYamlError 和 base.isFromYamlArrayError 进行验证。必须直接替换为 Helm 原生的 mustFromYaml 或 mustFromYamlArray，由底层引擎在解析异常时自动中断并抛出错误。
+- 存量与特殊场景约束：在极少数获批的特殊场景或维护历史存量代码时，由于 `base.isFromYamlError` 和 `base.isFromYamlArrayError` 返回的是字符串布尔值，条件判断必须显式与 "true" 或 "false" 进行比较，严禁直接作为布尔变量用于 if 条件。
 - string、map、list 等多类型输入必须先排除解析错误，再按真实类型分支；禁止以 `fromYaml` 是否返回非空作为类型判断。
 
 ## Kubernetes 共用入口

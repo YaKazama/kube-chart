@@ -2,13 +2,13 @@
 
 ## 职责
 
-只新建或继续表达用户初始意图的 `draft.md`；不读取正式代码，不生成 spec 或其他制品。
+只新建或继续表达用户初始意图的 `draft.md`；不读取正式代码，不生成 spec、design、tasks 或其他制品。
 
 ```text
 /opsx-draft <change-id>
 ```
 
-新建时只校验 change-id 为 kebab-case 且确切目标路径不存在；继续时要求 `draft.md` 已存在且 `spec.md` 不存在。参数非法、目录结构异常或 spec 已存在时不写文件。
+新建时只校验 change-id 为 kebab-case 且确切目标路径不存在；继续时要求 `draft.md` 已存在且 spec、design 和 tasks 均不存在。参数非法、目录结构异常或任一执行制品已存在时不写文件。
 
 ## 上下文
 
@@ -21,5 +21,5 @@
 - 按变更文档规则创建或更新轻量 `draft.md`，frontmatter 只含 `change-id` 和 `updated_at`。
 - 只把当前命令中用户明确表达或确认的意图写回正文；AI 建议保留 `[AI 推断]`。
 - 只在正文实际变化时更新 `updated_at`；无变化时不改文件。
-- 不创建 `spec.md`、plan、records 或正式代码。
+- 不创建 `spec.md`、`design.md`、`tasks.md`、records 或正式代码。
 - 会话报告已写入意图、待确认推断和当前隐式 `draft` 状态。

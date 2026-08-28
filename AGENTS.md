@@ -5,7 +5,8 @@
 - Kubernetes API `>= v1.36.0`；Helm `>= 4.0.0`，推荐 `4.2.2`。
 - Chart：library Chart，[`Chart.yaml`](Chart.yaml) 必须声明 `kubeVersion: ">=1.36.0"`。
 - 仅使用 Helm 内置函数、Go Template、Sprig 与 Helm 特有函数；严禁臆造。
-- 角色：资深 DevOps、云原生架构师
+- 角色：Helm 高级开发工程师
+- 代码精练简洁、不包含重复代码或冗余逻辑、不过度防御编程。
 
 ## 工作原则
 
@@ -24,7 +25,7 @@
 
 ## 命令入口
 
-本项目采用精简 OPSX 动作模型，以 `draft.md` 和 `spec.md` 两个制品驱动实施。状态只表示最近完成的稳定动作；`/opsx-fix` 可以重复执行，契约确需同步时由用户决定是否执行 `/opsx-spec-rewrite`。
+本项目采用 OPSX 多制品动作模型：`draft.md` 表达意图，`spec.md` 锁定行为，`design.md` 锁定技术设计与代码边界，`tasks.md` 锁定实施和验证。状态只表示最近完成的稳定动作；`/opsx-fix` 可以重复执行，行为契约确需同步时由用户决定是否执行 `/opsx-spec-rewrite`。
 
 ```text
 /opsx-draft
@@ -42,22 +43,24 @@
 | 命令 | 唯一定义文件 | 唯一主要职责 |
 |---|---|---|
 | `/opsx-draft` | [`openspec/commands/draft.md`](openspec/commands/draft.md) | 新建或继续只表达意图的轻量 `draft.md`。 |
-| `/opsx-spec` | [`openspec/commands/spec.md`](openspec/commands/spec.md) | 从 draft 生成带精确代码锚点的 `spec.md`。 |
-| `/opsx-code` | [`openspec/commands/code.md`](openspec/commands/code.md) | 按已锁定规格和锚点生成代码。 |
+| `/opsx-spec` | [`openspec/commands/spec.md`](openspec/commands/spec.md) | 从 draft 一次性生成并闭包检查 spec、design 和 tasks。 |
+| `/opsx-code` | [`openspec/commands/code.md`](openspec/commands/code.md) | 按已锁定的 spec、design 和 tasks 生成代码。 |
 | `/opsx-fix` | [`openspec/commands/fix.md`](openspec/commands/fix.md) | 在 `code` 状态下局部调整代码，并给出回写判定与建议。 |
 | `/opsx-spec-rewrite` | [`openspec/commands/spec-rewrite.md`](openspec/commands/spec-rewrite.md) | 按用户在当前命令中确认的内容回写规格。 |
 | `/opsx-review` | [`openspec/commands/review.md`](openspec/commands/review.md) | 轻量核对当前变更、总结并归档。 |
 | `/docs-usage` | [`openspec/commands/docs-usage.md`](openspec/commands/docs-usage.md) | 独立生成 `docs/` 最终用户文档并更新根 `README.md`。 |
 | `/ck-deploy` | [`openspec/commands/ck-deploy.md`](openspec/commands/ck-deploy.md) | 对整个 Chart 执行发布检查。 |
 
-收到任一命令时，先读取精简工作流 [`openspec/workflow.md`](openspec/workflow.md)，再读取上表映射的唯一命令文件，并在其上下文边界内完成职责。命令是 AI 会话触发命令，不是 shell 命令。
+收到任一命令时，先读取工作流 [`openspec/workflow.md`](openspec/workflow.md)，再读取上表映射的唯一命令文件，并在其上下文边界内完成职责。命令是 AI 会话触发命令，不是 shell 命令。
 
 ## 规则路由
 
 仅按当前动作和修改范围读取：
 
-- 用户入口保护、frontmatter、代码锚点与归档：[`openspec/rules/change-documents.md`](openspec/rules/change-documents.md)
+- 用户入口保护、制品归属、frontmatter 与归档：[`openspec/rules/change-documents.md`](openspec/rules/change-documents.md)
 - 规格语法或受控回写：[`openspec/rules/specifications.md`](openspec/rules/specifications.md)
+- 技术设计、依赖契约与代码边界：[`openspec/rules/designs.md`](openspec/rules/designs.md)
+- 实施与验证任务：[`openspec/rules/tasks.md`](openspec/rules/tasks.md)
 - Helm 模板：[`openspec/rules/helm-templates.md`](openspec/rules/helm-templates.md)
 - 核心命名模板调用：[`openspec/rules/core-capabilities.md`](openspec/rules/core-capabilities.md)
 - values、Schema 或用户配置：[`openspec/rules/values-schema.md`](openspec/rules/values-schema.md)

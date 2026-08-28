@@ -10,7 +10,7 @@
 
 ## 前置条件
 
-- 不存在 `status: spec` 或 `status: code` 的活动 change；仅有 draft 的意图不阻塞本命令。
+- 不存在 `status: spec | code` 或部分执行制品的活动 change；仅有 draft 的意图不阻塞本命令。
 - 文档只覆盖已完成 `/opsx-review` 并已归档的稳定能力，以及不依赖活动 change 的既有正式实现。
 - 缺少支撑某项用户可见行为的已归档规格、正式代码或稳定样例时，停止该项文档生成并报告缺口；不得以推断补全。
 
@@ -18,7 +18,7 @@
 
 读取 `Chart.yaml`、正式模板、values、Schema、现有 `docs/`、工作区根目录 `README.md`、稳定样例、已归档且 `status: reviewed` 的规格，以及 [`../rules/documentation.md`](../rules/documentation.md) 和按文件类型适用的工程规则。只读取生成或校验文档直接需要的文件。
 
-可以列出活动 change 的实际文件，以确认是否存在 `status: spec | code` 的未 Review 实现；不读取活动 draft 正文、活动 spec 正文或其他无关归档内容。
+可以列出活动 change 的实际文件，以确认是否存在未 Review 或部分生成的执行制品；不读取活动 draft、spec、design、tasks 正文或其他无关归档内容。
 
 ## 输出
 

@@ -12,12 +12,12 @@
 
 使用 `Chart.yaml`、正式模板、values、Schema、用户文档、稳定样例、既有稳定能力规格、适用工程规则和仓库已有发布命令。只读取检查项或失败直接涉及的文件。
 
-可以列出活动 change 的实际文件，以确认是否存在 `status: spec | code` 的未 Review 实现；不读取活动 draft 正文、其他 change 规格正文或归档内容补充发布契约。
+可以列出活动 change 的实际文件，以确认是否存在 `status: spec | code` 或部分执行制品的未 Review 实现；不读取活动 change 正文、其他 change 执行制品或归档内容补充发布契约。
 
 ## 检查范围
 
 - Chart 类型及 Kubernetes、Helm 版本基线满足声明要求。
-- 不存在影响本次发布但仍处于 `spec` 或 `code` 状态的活动 change；仅有 draft 的意图不视为正式代码变化。
+- 不存在影响本次发布但仍处于 `spec`、`code` 或部分执行制品状态的活动 change；仅有 draft 的意图不视为正式代码变化。
 - 正式模板、values、Schema、稳定样例和用户文档一致。
 - 按 [`../rules/helm-templates.md`](../rules/helm-templates.md) 执行完整 Chart lint 和真实 Helm 渲染，不复用 `/opsx-code` 或 `/opsx-fix` 的当前文件隔离检查代替。
 - 使用仓库真实存在的项目命令确认核心样例可渲染，关键异常输入按适用规格失败。
