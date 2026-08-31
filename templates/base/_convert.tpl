@@ -160,9 +160,6 @@
     {{- include "base.isFromYamlArrayError" (list "a" "b") }}                        // false
 */ -}}
 {{- define "base.isFromYamlArrayError" -}}
-  {{- if kindIs "slice" . }}
-    {{- and (ne (len .) 0) (contains "error" (lower (toString (index . 0)))) }}
-  {{- else }}
-    {{- false }}
-  {{- end }}
+  {{- $_val := first . | default "" }}
+  {{- and (ne (len .) 0) (or (contains "error" $_val) (contains "Error" $_val)) }}
 {{- end }}
