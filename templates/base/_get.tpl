@@ -3,10 +3,15 @@
 
   行为:
     - 按 上下文自身 > .Context > .Values > .Values.global 的优先级取值。
-    - 标量取首个非空值；Map 和 slice 按指定模式合并，并支持必填校验与类型转换。
+    - 每个数据源内部，非空同级 <叶子>Alias 先于规范键生效，空别名回退规范键；别名不跨数据源。
+    - 标量取首个非空值；Map 和 slice 按合并模式跨数据源合并，并支持必填校验与类型转换。
     - 调试模式输出取值过程。
 
-  入参: list [上下文, 点分路径, 强制类型, 合并模式, 必填校验, 调试]；前两项必填，后四项可选。
+  合并模式:
+    - Map: "left"(默认) 保留高优先级值并由低优先级补缺；"right" 由低优先级覆盖高优先级。
+    - List: "concat"(默认) 按数据源顺序拼接并去重；"replace" 用后命中的非空 list 替换累计结果。
+
+  入参: list [上下文, 点分路径, 强制类型, 合并模式, 必填校验, 别名, 调试]；前两项必填，后五项可选。
 
   边界: 只处理取值、合并与序列化；不定义字段默认值或业务校验规则。
 
@@ -15,6 +20,7 @@
   示例:
     {{- $val := include "base.get" (list . "image.repository") | fromYaml }}
     {{- $repo := include "base.get" (list . "image.repository" "toString" "" true) | fromYaml }}
+    {{- $repo := include "base.get" (list . "image.repository" "toString" "" true false) | fromYaml }}
     {{- $labels := include "base.get" (list . "labels" "" "right") | fromYaml }}
 */ -}}
 {{- define "base.get" -}}
@@ -32,6 +38,7 @@
   {{- $type := "" }}
   {{- $mergeMode := "left" }}
   {{- $required := false }}
+  {{- $alias := true }}
   {{- $debug := false }}
 
   {{- if ge (len .) 3 }}
@@ -44,14 +51,25 @@
     {{- $required = index . 4 }}
   {{- end }}
   {{- if ge (len .) 6 }}
-    {{- $debug = index . 5 }}
+    {{- $alias = index . 5 }}
+  {{- end }}
+  {{- if ge (len .) 7 }}
+    {{- $debug = index . 6 }}
   {{- end }}
 
-  {{- /* Step 3: 点分路径拆解 */}}
+  {{- if not (kindIs "bool" $alias) }}
+    {{- fail (printf "[base.get] alias: expected bool type, got '%v' (kind: %s)" $alias (kindOf $alias)) }}
+  {{- end }}
+
+  {{- /* Step 3: 点分路径拆解，别名只作用于叶子同级键 */ -}}
   {{- $keys := splitList "." $keyPath }}
+  {{- $leaf := mustLast $keys }}
+  {{- $parentKeys := mustInitial $keys }}
+  {{- $aliasKey := printf "%sAlias" $leaf }}
+  {{- $aliasEnabled := and $alias (not (hasSuffix "Alias" $leaf)) }}
 
   {{- if $debug }}
-    {{- printf "DEBUG[base.get]: keyPath='%s', keys='%v', type='%s', mergeMode='%s', required='%v'\n" $keyPath $keys $type $mergeMode $required }}
+    {{- printf "DEBUG[base.get]: keyPath='%s', keys='%v', aliasKey='%s', aliasEnabled='%v', type='%s', mergeMode='%s', required='%v'\n" $keyPath $keys $aliasKey $aliasEnabled $type $mergeMode $required }}
   {{- end }}
 
   {{- /* Step 4: 初始化状态变量 */}}
@@ -82,14 +100,14 @@
       {{- continue }}
     {{- end }}
 
-    {{- /* 6.1 嵌套路径取值 */}}
-    {{- $val := . }}
+    {{- /* 6.1 定位叶子父级 Map */}}
+    {{- $parent := . }}
     {{- $isMissing := false }}
-    {{- range $k := $keys }}
+    {{- range $k := $parentKeys }}
       {{- if not $isMissing }}
-        {{- if kindIs "map" $val }}
-          {{- if hasKey $val $k }}
-            {{- $val = get $val $k }}
+        {{- if kindIs "map" $parent }}
+          {{- if hasKey $parent $k }}
+            {{- $parent = get $parent $k }}
           {{- else }}
             {{- $isMissing = true }}
           {{- end }}
@@ -99,13 +117,37 @@
       {{- end }}
     {{- end }}
 
-    {{- /* 6.2 跳过路径缺失 */}}
-    {{- if $isMissing }}
+    {{- /* 6.2 取同级有效值: 非空别名优先，否则规范键 */}}
+    {{- $canonicalVal := "" }}
+    {{- $aliasVal := "" }}
+    {{- $val := "" }}
+    {{- $found := false }}
+    {{- if and (not $isMissing) (kindIs "map" $parent) }}
+      {{- if and $aliasEnabled (hasKey $parent $aliasKey) }}
+        {{- $aliasVal = get $parent $aliasKey }}
+        {{- if kindIs "string" $aliasVal }}
+          {{- $found = ne $aliasVal "" }}
+        {{- else if or (kindIs "map" $aliasVal) (kindIs "slice" $aliasVal) }}
+          {{- $found = gt (len $aliasVal) 0 }}
+        {{- else if not (kindIs "invalid" $aliasVal) }}
+          {{- $found = true }}
+        {{- end }}
+        {{- if $found }}
+          {{- $val = $aliasVal }}
+        {{- end }}
+      {{- end }}
+      {{- if and (not $found) (hasKey $parent $leaf) }}
+        {{- $canonicalVal = get $parent $leaf }}
+        {{- $val = $canonicalVal }}
+        {{- $found = true }}
+      {{- end }}
+    {{- end }}
+    {{- if not $found }}
       {{- continue }}
     {{- end }}
 
     {{- if $debug }}
-      {{- printf "DEBUG[base.get]: source='%v', nested val='%v' (kind='%s')\n" . $val (kindOf $val) }}
+      {{- printf "DEBUG[base.get]: source='%v', alias='%v', canonical='%v', effective='%v' (kind='%s')\n" . $aliasVal $canonicalVal $val (kindOf $val) }}
     {{- end }}
 
     {{- /* 6.3 类型分类 */}}
@@ -330,8 +372,9 @@
       {{- continue }}
     {{- end }}
 
-    {{- /* 调用底层的 base.get, 关闭其自带的 required 校验, 由外层统一控制 */ -}}
-    {{- $raw := include "base.get" (list $root $path $type $mergeMode false) }}
+    {{- /* 调用底层的 base.get: 关闭 required 校验(由外层统一控制)与 *Alias 自动识别,
+       保持本模板显式路径的 path-first 语义 */ -}}
+    {{- $raw := include "base.get" (list $root $path $type $mergeMode false false false) }}
     {{- if ne $raw "" }}
       {{- $val := $raw | fromYaml }}
 
