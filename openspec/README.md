@@ -1,8 +1,8 @@
 # kube-chart OpenSpec
 
-这里保存活动变更、归档历史与工程规则。命令入口见 [`AGENTS.md`](../AGENTS.md)，共享状态与门禁见 [`workflow.md`](workflow.md)。
+这里保存活动变更、归档历史与工程规则。命令入口见 [`AGENTS.md`](../AGENTS.md)，文件即状态判据与共享闭包见 [`workflow.md`](workflow.md)。
 
-工作流采用 OPSX 多制品动作模型：`draft.md` 保存意图，`spec.md` 锁定行为，`design.md` 锁定技术设计与代码边界，`tasks.md` 锁定实施和验证；局部修正是否回写行为规格由用户显式决定，完整发布验证统一由 `/ck-deploy` 承担。
+工作流采用 OPSX 多制品动作模型：`draft.md` 保存意图与开放问题，`spec.md` 锁定行为，`design.md` 锁定技术设计与代码边界，`tasks.md` 记录实施和验证进度。动作可以按需重复执行，不使用刚性阶段或状态机；最小 Helm 渲染由 `/opsx:verify` 承担，完整发布检查由 `/opsx:ck:publish` 承担。
 
 用户入口、制品归属、frontmatter 和归档格式统一见 [`rules/change-documents.md`](rules/change-documents.md)，本文件只提供导航，不定义第二套规则。
 
@@ -14,9 +14,9 @@
 openspec/
   commands/                 每个命令的职责与读取范围
   rules/                    按修改类型拆分的工程规则
-  specs/                    既有稳定能力规格，不参与 change 状态机或自动同步
+  specs/                    既有稳定能力规格，不参与活动 change 的文件状态判断
   changes/                  活动变更与 archive/ 历史
   references/               必要时按需读取的官方资料入口
 ```
 
-归档目录中的旧 change 可以保留历史工作流产生的 `plan/` 或 `records/`，不得用其结构推断当前活动 change 的制品要求。
+归档目录中的旧 change 可以保留历史工作流产生的 frontmatter、`plan/` 或 `records/`，不得用其结构推断当前活动 change 的制品要求。

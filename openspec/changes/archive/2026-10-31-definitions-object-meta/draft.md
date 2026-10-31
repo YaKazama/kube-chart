@@ -1,6 +1,6 @@
 ---
 change-id: definitions-object-meta
-updated_at: "2026-08-28T02:36:15Z"
+updated_at: "2026-10-29T10:24:32Z"
 ---
 
 # definitions.objectMeta 命名模板
@@ -11,19 +11,22 @@ updated_at: "2026-08-28T02:36:15Z"
 ## 目标
 
 - 在 `templates/api-resources/Definitions/_ObjectMeta.tpl` 中提供命名模板 `definitions.objectMeta`。
+- 若命名模板已存在，允许修改。
 
 ## 需求
 
 - 包含字段 `annotations`、`generateName`、`labels`、`name`、`namespace`。
 - `_kind`、`_pkind` 作为上下文字段，用于标识资源身份、字段是否渲染的判断条件。
+- `_kind`、`_pkind` 允许为空；为空时不做特殊处理，按内置默认值渲染。
 
 ## 约束
 
-- `_kind` 优先级 `_pkind` > `_kind`。
+- `_pkind` 优先级高于 `_kind`。
 - `annotations` 可选。取值顺序：
   - `_kind=PodTemplateSpec` 时，从 `podAnnotations` 取值，不共享 `annotations`。
   - `_kind=JobTemplateSpec` 时，从 `jobAnnotations` 取值，不共享 `annotations`。
   - `_kind=PersistentVolumeClaim` 时，从 `pvcAnnotations` 取值，不共享 `annotations`。
+- 保持来源隔离，不做隐式继承或合并。需要共享注解时，在 values.yaml 中以目标字段显式提供（如 `podAnnotations`、`jobAnnotations`、`pvcAnnotations`）。
 - `generateName` 可选。仅当未指定 `name` 时才应用。正则校验采用 `base.rfc` 的 `1035` 规则。
   - 通常只以 `name` 显示传入空字符串时才会生效。
   - `generateName` 不调用 `base.name`；`definitions.objectMeta` 对 `base.name` 的直接调用仅用于 `name` 字段。

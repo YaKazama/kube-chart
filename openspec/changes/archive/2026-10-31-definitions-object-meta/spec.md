@@ -1,20 +1,9 @@
 ---
-status: reviewed
-updated_at: "2026-08-28T06:55:59Z"
+confirmed: true
+updated_at: "2026-10-29T16:14:56Z"
 ---
 
 # definitions.objectMeta 命名模板规格
-
-## 技术目标
-
-- capability：`definitions.objectMeta`
-- artifact-type：Helm 命名模板（Kubernetes 原生 API 共享结构）
-- target：`templates/api-resources/Definitions/_ObjectMeta.tpl` 中的 `definitions.objectMeta`
-- direct-dependencies：`base.get`、`base.field`、`base.map`、`base.isFromYamlError`、`base.rfc`、`base.labels`、`base.name`、`base.namespace`
-
-## 代码锚点
-
-- `templates/api-resources/Definitions/_ObjectMeta.tpl`
 
 ## Purpose
 
@@ -43,23 +32,38 @@ updated_at: "2026-08-28T06:55:59Z"
 - **WHEN** 模板完成有效上下文的渲染
 - **THEN** 输出 MUST NOT 包含 `_pkind` 或 `_kind` 字段，也 MUST NOT 包含本规格未列出的其他 `ObjectMeta` 字段
 
+#### Scenario: 身份为空时使用默认行为
+
+- **WHEN** `_pkind` 与 `_kind` 均缺失或为空
+- **THEN** 系统 MUST 按通用 `annotations` 来源、`base.name` 默认模式和 `base.namespace` 缺省契约渲染，且 MUST NOT 因身份为空而中断
+
+#### Scenario: 非法上下文类型
+
+- **WHEN** 传入的上下文不是 map
+- **THEN** 系统 MUST 中断渲染并报告 `definitions.objectMeta` 的上下文类型错误
+
 ### Requirement: annotations 来源隔离
 
-系统 MUST 将 `annotations` 作为可选的 `map[string]string` 字段。有效资源身份为 `PodTemplateSpec`、`JobTemplateSpec` 或 `PersistentVolumeClaim` 时，系统 MUST 分别只从 `podAnnotations`、`jobAnnotations` 或 `pvcAnnotations` 读取该字段；其他资源身份 MUST 从 `annotations` 读取。专用来源不得与通用 `annotations` 合并，也不得在专用来源缺失或为空时回退到通用 `annotations`。
+系统 MUST 将 `annotations` 作为可选的 `map[string]string` 字段。系统 MUST 按有效资源身份选择唯一来源键：`PodTemplateSpec` 使用 `podAnnotations`，`JobTemplateSpec` 使用 `jobAnnotations`，`PersistentVolumeClaim` 使用 `pvcAnnotations`，其余身份（包括身份为空）使用 `annotations`。来源键选定后，系统 MUST 仅按该键读取，不与其他注解键合并。
 
 #### Scenario: Pod 模板使用专用注解
 
 - **WHEN** 有效资源身份为 `PodTemplateSpec` 且 `podAnnotations` 为非空 map
-- **THEN** 系统 MUST 将 `podAnnotations` 渲染为 `annotations`，并忽略通用 `annotations`
+- **THEN** 系统 MUST 将 `podAnnotations` 渲染为 `annotations`
 
 #### Scenario: Job 模板使用专用注解
 
 - **WHEN** 有效资源身份为 `JobTemplateSpec` 且 `jobAnnotations` 为非空 map
-- **THEN** 系统 MUST 将 `jobAnnotations` 渲染为 `annotations`，并忽略通用 `annotations`
+- **THEN** 系统 MUST 将 `jobAnnotations` 渲染为 `annotations`
 
-#### Scenario: PVC 使用专用注解且不回退
+#### Scenario: PVC 使用专用注解
 
-- **WHEN** 有效资源身份为 `PersistentVolumeClaim`、`pvcAnnotations` 缺失或为空且通用 `annotations` 非空
+- **WHEN** 有效资源身份为 `PersistentVolumeClaim` 且 `pvcAnnotations` 为非空 map
+- **THEN** 系统 MUST 将 `pvcAnnotations` 渲染为 `annotations`
+
+#### Scenario: 专用来源缺失或为空
+
+- **WHEN** 有效资源身份为 `PodTemplateSpec`、`JobTemplateSpec` 或 `PersistentVolumeClaim`，且对应专用来源缺失或为空
 - **THEN** 系统 MUST NOT 渲染 `annotations`
 
 #### Scenario: 普通资源使用通用注解

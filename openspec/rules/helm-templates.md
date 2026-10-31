@@ -15,7 +15,7 @@
 - 项目内固定用于校验、解析、筛选或拆分的正则统一定义于 [`templates/base/_env.tpl`](../../templates/base/_env.tpl) 的 `base.env` 返回 Map；业务模板不得内联、拼接或复制同一表达式。常量使用按领域、能力和语义分层的全大写下划线键，例如 `APPS.DEPLOYMENT.STRATEGY`。
 - spec 只记录用户可见的匹配范围、全量或子串语义、捕获结果的顺序与类型，以及不匹配时的失败或忽略边界；不得记录 `base.env` 键路径或源码转义等实现细节。
 - design 记录 `base.env` 的调用入参 `""`、精确常量键路径、source、operation 和调用层归属。运行时表达式以 `base.env` 输出经 `fromYaml` 恢复后实际传给正则函数的 string 为准，并与 `_env.tpl` 源码中的 YAML 双引号和反斜杠转义层明确区分。
-- `/opsx-spec` 必须从 `_env.tpl` 精确确认现状：既有键的运行时表达式与 spec 行为一致时 operation 为 `consume`，`_env.tpl` 是 read boundary；缺失且当前 change 明确负责新增时 operation 为 `add`，`_env.tpl` 是 write boundary，writable scope 只包含该键；现有表达式冲突且用户未授权改变共享行为时停止。
+- `/opsx:spec` 必须从 `_env.tpl` 精确确认现状：既有键的运行时表达式与 spec 行为一致时 operation 为 `consume`，`_env.tpl` 是 read boundary；缺失且当前 change 明确负责新增时 operation 为 `add`，`_env.tpl` 是 write boundary，writable scope 只包含该键；现有表达式冲突且用户未授权改变共享行为时停止。
 - 模板使用 `include "base.env" "" | fromYaml` 恢复常量 Map，并直接读取当前 design 已锁定的目标键；`base.env` 负责集中常量的结构与类型有效性，业务模板不得重复添加空输出、YAML、Map 或常量键保护。模板不得从 `.Values`、调用上下文或动态字符串覆盖项目固定正则。
 - 需要匹配完整输入的表达式必须使用 `^` 和 `$` 明确锚定；只有规格明确要求查找子串时才允许非锚定表达式。捕获提取前必须先用 `mustRegexMatch` 确认匹配，再按用途选择 `mustRegexFind`、`mustRegexFindAll` 或 `mustRegexReplaceAll`；纯替换或拆分按规格使用 `mustRegexReplaceAll`、`mustRegexReplaceAllLiteral` 或 `mustRegexSplit`，并显式处理无匹配结果。禁止使用非 `must*` 变体吞掉无效表达式错误。
 - 捕获组从 `1` 开始引用；独立替换使用 `$n`，仅在需要与相邻文本消歧时使用 `${n}`。每次 `mustRegexReplaceAll` 提取后必须 `trim`。可选捕获组允许得到空 string，但其含义和下游处理必须由规格明确；不得用捕获失败后的空值伪装成合法默认值。
@@ -25,11 +25,11 @@
 
 ## 取值与渲染
 
-- 多层字段统一使用 `base.get`；别名字段使用 `base.getWithAlias`，别名优先。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
+- 多层字段统一使用 `base.get`；同名 `<叶子>Alias` 由 `base.get` 自动识别并在同一数据源内优先，无需额外映射。需要按调用方指定的多路径顺序回溯时使用 `base.getWithAlias`。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
-- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → `fromYaml`/`fromYamlArray` → 错误保护 → `kindIs` → 按契约判断恢复后的集合空值 → `base.field` + `base.map`/`base.slice`”处理；不得把结构子模板直接作为 `base.field` 第三个参数。要求非空的集合不得在解析前重复检查原始空输出或 `null`；只有契约允许真实空集合、且 Helm 恢复行为会使非法原始值与空集合无法区分时，才检查原始字符串。
+- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → `fromYaml`/`fromYamlArray` → 对应错误 helper → 按契约判断恢复后的集合是否生效 → `base.field` + `base.map`/`base.slice`”处理；单一目标类型由最终 `base.*` 渲染模板执行类型门禁，调用方不得重复同类 `kindIs`，只有多类型输入才在排除解析错误后使用 `kindIs` 选择归一化分支。不得把结构子模板直接作为 `base.field` 第三个参数。要求非空的集合不得在解析前重复检查原始空输出或 `null`；只有契约允许真实空集合、且 Helm 恢复行为会使非法原始值与空集合无法区分时，才检查原始字符串。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
-- 优先使用适配版本中真实存在的 Helm/Sprig `must*` 变体；使用前必须确认。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
+- 优先使用适配版本中真实存在的 Helm/Sprig `must*` 变体。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
 
 ## 边界与 Helm 4.2.2
 
@@ -38,7 +38,7 @@
 - 非法枚举值必须失败并给出合法范围。
 - 类型不匹配时只允许规格明确的安全转换；无法转换必须失败。
 - 字段冲突或互斥按当前规格的优先级处理；未定义优先级时必须失败。
-- 空值和零值是否输出由调用方字段生效条件决定，不得交给只接收 key/value 的通用渲染器猜测。结构与多类型输入的解析、错误拦截和真实类型检查遵循核心能力规则。
+- 空值和零值是否输出由调用方字段生效条件决定，不得交给只接收 key/value 的通用渲染器猜测。结构输入的解析错误、单一目标类型的最终门禁和多类型输入的分支选择遵循核心能力规则。
 
 ## 分层与依赖
 
@@ -90,14 +90,14 @@
 - 临时变量以 `$_` 或 `$__` 开头，例如 `$_raw`、`$__parsed`；适用于 `base.get` 或 `include` 的原始输出、YAML 解析与类型转换中间值、正则捕获、兼容性或错误探测、循环内暂存，以及合并前后的过渡值。
 - `$_<name>` 用于当前处理步骤的一次中间结果；同一语义需要第二级中间结果或嵌套作用域存在重名风险时使用 `$__<name>`。临时变量必须限制在最小可用作用域，完成校验或归一化后应赋给具有业务语义的 `$<name>`，不得跨无关功能块复用。
 - 不需要读取返回值的 `set`、`unset` 或纯校验调用使用 `$_` 接收；`$_` 仅表示显式丢弃返回值，不得随后读取。
-- 字段按 Kubernetes API 顺序完成“取值/调用 → 解析 → 错误与类型检查 → 归一化 → `base.field` 渲染”闭环后再处理下一字段；仅关联字段可集中处理。
+- 字段按 Kubernetes API 顺序完成“取值/调用 → 解析 → 错误保护或必要的类型分支 → 归一化 → `base.field` 渲染”闭环后再处理下一字段；仅关联字段可集中处理。
 - 库 Chart 命名模板首尾不得输出 `---`，不得通过 `range` 自行拼接多个独立资源。
 
 ## 资源与父 Chart 边界
 
 - Kubernetes 名称和标签使用 [`核心模板能力调用规则`](core-capabilities.md) 中的共用入口，不得在资源模板重复实现。
 - library Chart 负责单个资源渲染和嵌套资源上下文隔离；父 Chart 负责跨资源编排与 Helm Hooks。
-- 父 Chart 必须以可写 map 构造局部 `$ctx` 并将其作为顶层资源模板的上下文；顶层资源模板依赖该调用契约，不重复使用 `kindIs "map"` 等入口类型门禁。该约定不适用于 `include` 返回字符串的结构恢复，子模板输出仍须执行 YAML 错误保护和真实类型检查。
+- 父 Chart 必须以可写 map 构造局部 `$ctx` 并将其作为顶层资源模板的上下文；顶层资源模板依赖该调用契约，不重复使用 `kindIs "map"` 等入口类型门禁。该约定不适用于 `include` 返回字符串的结构恢复：子模板输出仍须执行 YAML 错误保护，单一目标类型由最终 `base.*` 渲染模板执行类型门禁，多类型输入由调用方使用 `kindIs` 选择分支。
 - `_kind` 是资源身份控制键，通常只由顶层资源模板或明确拥有当前资源的特定资源模板写入；不拥有当前资源的下游定义和子模板只读使用或继续传递，不得自行新增或覆盖。当前规格或变更规格明确要求设置 `_kind` 时，拥有当前资源的模板可以原地覆盖已有值并继续传递同一上下文；该契约写入不要求使用 `mustDeepCopy`。
 - 二级嵌套资源在子模板入口使用 `mustDeepCopy` 与 `mustMergeOverwrite` 构造隔离上下文。
 - 父 Chart 通过局部 `$ctx` 注入业务配置，不得直接修改全局上下文。
@@ -106,9 +106,9 @@
 
 - Pod 安全相关模板默认启用 `runAsNonRoot: true` 和 `readOnlyRootFilesystem: true`，默认禁用 `privileged`、`hostNetwork` 等高危权限。
 - values、样例和文档不得硬编码密钥、令牌、证书或私钥。
-- `/opsx-code` 和 `/opsx-fix` 修改 Helm 模板后，只对当前已变更的精确 write boundary 执行空白、冲突标记和文件末尾换行等静态检查；不得为轻量检查扫描或 lint 整个 Chart。
-- `/opsx-code` 和 `/opsx-fix` 必须在 `/tmp/` 最小 application Chart 中加载当前已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`。
+- `/opsx:code` 修改 Helm 模板后，只对当前已变更的精确 write boundary 执行空白、冲突标记、明显 Go Template 结构和文件末尾换行等静态检查；不得在代码动作中扫描、lint 或渲染整个 Chart。
+- `/opsx:verify` 必须在 `/tmp/` 最小 application Chart 中加载当前 change 已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`。
 - 最小 Chart 验证必须覆盖最小有效输入、较完整有效输入和关键失败输入。使用同名最小 fixture 时，只能证明当前模板自身的调用和分支行为，不得表述为真实依赖集成通过。
-- `/ck-deploy` 必须对整个 Chart 实际执行 `/opt/homebrew/bin/helm lint .`，并用仓库真实存在的 Helm 命令验证完整 Chart 的核心样例和关键失败输入。
-- 轻量静态检查、隔离 Chart、Markdown checklist、静态推断或臆造的校验器不得替代 `/ck-deploy` 的发布检查。
+- `/opsx:ck:publish` 必须对整个 Chart 实际执行 `/opt/homebrew/bin/helm lint .`，并用仓库真实存在的 Helm 命令验证完整 Chart 的核心样例和关键失败输入。
+- 轻量静态检查、隔离 Chart、Markdown checklist、静态推断或臆造的校验器不得替代 `/opsx:ck:publish` 的发布检查。
 - 临时验证文件只能创建于 `/tmp/`；验证完成后直接保留，由用户统一清理。

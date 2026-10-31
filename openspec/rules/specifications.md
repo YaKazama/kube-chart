@@ -3,19 +3,14 @@
 ## 规格权威
 
 - `openspec/changes/<change-id>/spec.md` 是当前 change 可观察行为的唯一权威；design、tasks 和正式代码不得新增、弱化或改写其行为。
-- `spec.md` 只能从当前 draft 的明确意图派生，或由用户通过 `/opsx-spec-rewrite` 在当前命令中确认后修改；需求来源保护统一遵循 [`change-documents.md`](change-documents.md)。
-- 当前代码不一致时修代码；用户明确改变行为契约时执行 `/opsx-spec-rewrite`。不得按现有代码静默反写规格。
-- `openspec/specs/` 中已有的稳定能力规格不参与 OPSX 状态机或自动同步；只有 `/opsx-spec` 为解析 draft 中明确指向的既有能力确有需要时，才读取精确目标规格。
-- `openspec/changes/archive/` 只保存历史，不参与当前契约判断。
+- `/opsx:spec` 只从当前 draft 的明确意图和适用工程规则生成或校对规格；`/opsx:sync` 只在用户确认预览差异后按代码、测试和既有文档事实同步规格。来源保护统一遵循 [`change-documents.md`](change-documents.md)。
+- 代码事实与当前规格不一致时，`/opsx:code` 必须报告影响；是实现偏差时修代码，是用户接受的行为变化时通过 `/opsx:sync` 受控同步，不得静默反写。
+- `openspec/specs/` 中已有的稳定能力规格不参与 change 状态判断或自动同步；只有当前动作解析明确涉及的既有能力时，才读取精确目标规格。
+- `openspec/changes/archive/` 保存历史，不参与活动执行契约判断；`/opsx:docs` 与 `/opsx:ck:publish` 可以按各自职责读取。
 
 ## spec.md 结构
 
 ```markdown
----
-status: spec
-updated_at: "<UTC RFC 3339 时间>"
----
-
 # <变更名称>规格
 
 ## Purpose
@@ -38,6 +33,7 @@ updated_at: "<UTC RFC 3339 时间>"
 - <不属于本 change 的行为>
 ```
 
+- 在上述正文前添加 [`change-documents.md`](change-documents.md) 唯一定义的 spec frontmatter。
 - 新行为放入 `## ADDED Requirements`。
 - 修改行为放入 `## MODIFIED Requirements`，包含完整的新 Requirement 和全部 Scenario。
 - 删除行为放入 `## REMOVED Requirements`，记录 `Reason` 和 `Migration`。
@@ -48,11 +44,10 @@ updated_at: "<UTC RFC 3339 时间>"
 - 规则对既定需求形成的可观察行为或失败边界必须写入 Requirement；通用实现约束继续由工程规则直接约束 design 和代码。
 - 没有可观察行为变化时使用 `## NO SPEC DELTA`，说明受影响能力和理由；不得同时包含 ADDED、MODIFIED、REMOVED 或 RENAMED。
 
-## 受控回写
+## 重复校对与同步
 
-- `/opsx-spec-rewrite` 只接受 `status: code`，只把当前命令中用户明确确认的内容写入现有 Requirement、Scenario、非目标或失败边界。
-- `/opsx-fix` 的上一轮摘要可以作为用户撰写确认内容的参考，但不能替代当前命令中的确认文本。
-- 回写不得修改 Purpose、capability、design、tasks、代码边界或扩大 change；发生上述变化时停止，并建议新建 change。
-- 回写后保持 `status: code`，更新 `updated_at`；不得修改 draft、design、tasks、正式代码或用户文档。
-- 回写内容与当前规格冲突、存在多个合法表达、不能从用户确认唯一确定，或会使 design/tasks 失效时停止，不自行选择。
-- `/opsx-review` 必须依据回写后的完整三制品契约重新核对当前已变更代码，不复用 fix 的判断。
+- `/opsx:spec` 发现现有 spec 时逐项比较 draft、现有 spec、design 和 tasks：保留仍有效内容，只更新、补全或删除有明确依据的部分，并输出实际差异和冲突。
+- `/opsx:spec` 不得从聊天历史、代码便利性或 AI 建议生成 Requirement；影响行为的开放问题未关闭时，不得把执行契约标记为已确认。
+- `/opsx:sync` 必须把代码事实与用户可见行为区分开。重构、内部类型、格式和等价实现通常只更新 design 或 tasks；输入、输出、默认值、失败边界、Scenario 或非目标变化才建议更新 spec。
+- `/opsx:sync` 不得把偶然实现、bug、临时兼容、测试 fixture、未使用分支或无法证明稳定性的代码写入规格。
+- 同步内容与 draft 或现有规格冲突、存在多个合法表达、不能从当前确认唯一确定，或无法与 design/tasks 闭包时停止冲突项，不自行选择。

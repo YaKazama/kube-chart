@@ -1,33 +1,32 @@
-# `/opsx-code`
+# `/opsx:code`
 
 ## 职责
 
-按已锁定的 `spec.md`、`design.md` 和 `tasks.md` 生成正式代码并完成任务；不修订用户意图、行为契约或技术设计，不生成其他 change 制品。
+按已确认的 `spec.md`、`design.md` 和 `tasks.md` 生成或局部修改正式代码，更新具有当前实现证据的实施 task，并报告本次修改对规格、设计和任务的影响。不执行 Helm 渲染或完整 Chart 检查。
 
 ```text
-/opsx-code <change-id>
+/opsx:code <change-id> [实现说明]
 ```
 
 ## 门禁
 
-- spec、design 或 tasks 任一文件不存在时中断并报告确切缺口：必须先成功执行 `/opsx-spec <change-id>`。
-- 只接受 `status: spec`；其他状态不修改文件。
-- Requirement、Scenario、设计决策、依赖契约、代码边界或 task 存在占位符、歧义、无效路径、未决项或相互冲突时停止。
-- design 中每个当前正式依赖必须具有唯一精确 source，tasks 中每个写入目标必须属于 `access: write` 的 writable scope。
-- 用户执行本命令即确认已 Review 并接受当前三制品执行契约。
+- spec、design 或 tasks 任一文件不存在时停止并报告确切缺口。
+- `spec.md` 必须为 `confirmed: true`，且当前 draft、spec、design 和 tasks 仍通过四向闭包。
+- Requirement、Scenario、设计决策、依赖契约、代码边界或 task 存在会影响当前修改的歧义、无效路径、未决项或冲突时，停止相关修改。
+- 所有影响验收、接口、行为和任务边界的决策必须已写入 draft、spec、design 或 tasks。聊天历史可以帮助理解和实施，不能替代制品；缺失时提示先执行 `/opsx:explore` 或 `/opsx:sync` 沉淀。
 
 ## 上下文
 
-读取当前 `spec.md`、`design.md`、`tasks.md`、design 代码边界列出的精确当前文件、[`../rules/change-documents.md`](../rules/change-documents.md) 以及按 write boundary 文件类型路由的工程规则。
+读取当前命令输入、与当前实现直接相关的聊天历史、当前 draft、spec、design、tasks、design 代码边界列出的精确文件、[`../rules/change-documents.md`](../rules/change-documents.md)，以及按 write boundary 文件类型路由的工程规则。
 
-命令定义、工作流和规则属于控制上下文，不受代码边界限制。不得读取 draft、历史聊天、旧摘要、旧工具输出、其他 change、归档、未列入代码边界的正式实现，或沿 read dependency 继续扩张调用链。
+只沿 design 明确列出的直接依赖读取必要实现，不以聊天历史或相邻代码扩张 capability、行为或 write boundary。
 
 ## 输出
 
-- 按 tasks 顺序实施；只修改 design 中 `access: write` 的文件和 writable scope，`access: read` 文件不得修改。
-- 每项任务实际完成并完成其局部检查后，才把对应 checkbox 从 `[ ]` 改为 `[x]`；不得改写 task 文本或顺序。
-- 当前未实现且不属于本 change 的依赖，只能按 design 已锁定的最小契约在 `/tmp/` 验证 Chart 中提供 fixture；不得在正式代码中创建占位实现，也不得表述为真实依赖集成通过。
-- 需要扩大 write boundary、修改 design、改变 spec 或新增 task 时停止并报告，不得用历史上下文或临时推断补齐。
-- 本动作不声明 Review 或发布验证通过，不创建验证记录。
-- 全部 task 完成、代码与三制品一致且适用轻量检查通过后，只把 `spec.md` frontmatter 更新为 `status: code` 和当前 `updated_at`；spec 与 design 正文、tasks 文本和代码边界保持不变。
-- 中途失败或存在未完成 task 时保持 `status: spec`，保留已真实完成的 checkbox，报告已修改文件、已完成任务、未完成内容和阻塞原因，允许用户再次执行本命令续作。
+- 按 tasks 的依赖顺序实施，只修改 design 中 `access: write` 的文件和 writable scope；`access: read` 文件不得修改。
+- 每个文件写入后确认目标存在、内容已生成，并对本次已变更精确文件执行冲突标记、文件末尾换行和明显语法结构检查。
+- 不在本动作执行 `helm template`、全 Chart lint 或发布检查；需要实际渲染的验证 task 保持未勾选，并提示 `/opsx:verify <change-id>`。
+- 实施 task 的代码结果和对应静态检查均完成后，才把 checkbox 从 `[ ]` 改为 `[x]`；不得改写 task 文本或顺序。
+- 需要扩大 write boundary、改变 spec/design 或新增 task 时停止越界部分，不用临时推断补齐。
+- 会话报告修改文件、已完成与未完成 task、明显静态检查结果，以及 `规格影响`、`设计影响`、`任务影响`。每项明确为“无”“已有制品已覆盖”或“需要先沉淀”。
+- 本动作不改变 `confirmed`，不声明 Helm 验证、归档核对或发布检查通过。

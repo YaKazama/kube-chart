@@ -47,25 +47,17 @@
   {{- else if eq $effectiveKind "PersistentVolumeClaim" }}
     {{- $annotationsPath = "pvcAnnotations" }}
   {{- end }}
-
-  {{- $_annotationsRaw := include "base.get" (list . $annotationsPath) }}
-  {{- if $_annotationsRaw }}
-    {{- $_annotationsParsed := fromYaml $_annotationsRaw }}
-    {{- if eq (include "base.isFromYamlError" $_annotationsParsed) "true" }}
-      {{- fail (printf "[definitions.objectMeta] %s: expected map[string]string, got invalid YAML" $annotationsPath) }}
+  {{- $annotations := include "base.get" (list . $annotationsPath) | fromYaml }}
+  {{- if eq (include "base.isFromYamlError" $annotations) "true" }}
+    {{- fail (printf "[definitions.objectMeta] %s: base.get returned invalid YAML" $annotationsPath) }}
+  {{- end }}
+  {{- range $key, $value := $annotations }}
+    {{- if not (kindIs "string" $value) }}
+      {{- fail (printf "[definitions.objectMeta] %s.%s: expected string type, got %s" $annotationsPath $key (kindOf $value)) }}
     {{- end }}
-    {{- if not (kindIs "map" $_annotationsParsed) }}
-      {{- fail (printf "[definitions.objectMeta] %s: expected map[string]string, got %s" $annotationsPath (kindOf $_annotationsParsed)) }}
-    {{- end }}
-    {{- range $key, $value := $_annotationsParsed }}
-      {{- if not (kindIs "string" $value) }}
-        {{- fail (printf "[definitions.objectMeta] %s.%s: expected string type, got %s" $annotationsPath $key (kindOf $value)) }}
-      {{- end }}
-    {{- end }}
-    {{- $annotations := $_annotationsParsed }}
-    {{- if $annotations }}
-      {{- include "base.field" (list "annotations" $annotations "base.map") }}
-    {{- end }}
+  {{- end }}
+  {{- if $annotations }}
+    {{- include "base.field" (list "annotations" $annotations "base.map") }}
   {{- end }}
 
   {{- $_nameRaw := include "base.get" (list . "name") }}
@@ -79,21 +71,18 @@
   {{- end }}
 
   {{- /* labels（object）: 原样委托 base.labels 并验证其结构化返回值。 */ -}}
-  {{- $_labelsRaw := required "[definitions.objectMeta] labels: base.labels returned empty output" (include "base.labels" .) }}
-  {{- $_labelsParsed := fromYaml $_labelsRaw }}
-  {{- if eq (include "base.isFromYamlError" $_labelsParsed) "true" }}
-    {{- fail "[definitions.objectMeta] labels: expected map[string]string, got invalid YAML" }}
+  {{- $labels := include "base.labels" . | fromYaml }}
+  {{- if eq (include "base.isFromYamlError" $labels) "true" }}
+    {{- fail "[definitions.objectMeta] labels: base.labels returned invalid YAML" }}
   {{- end }}
-  {{- if not (kindIs "map" $_labelsParsed) }}
-    {{- fail (printf "[definitions.objectMeta] labels: expected map[string]string, got %s" (kindOf $_labelsParsed)) }}
-  {{- end }}
-  {{- $labels := $_labelsParsed }}
   {{- range $key, $value := $labels }}
     {{- if not (kindIs "string" $value) }}
       {{- fail (printf "[definitions.objectMeta] labels.%s: expected string type, got %s" $key (kindOf $value)) }}
     {{- end }}
   {{- end }}
-  {{- include "base.field" (list "labels" $labels "base.map") }}
+  {{- if $labels }}
+    {{- include "base.field" (list "labels" $labels "base.map") }}
+  {{- end }}
 
   {{- /* name（string）: 按资源身份委托 base.name，嵌套模板或 generateName 生效时省略。 */ -}}
   {{- if and (not $useGenerateName) (not (has $effectiveKind (list "PodTemplateSpec" "JobTemplateSpec"))) }}

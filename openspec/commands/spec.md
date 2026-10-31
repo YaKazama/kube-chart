@@ -1,33 +1,42 @@
-# `/opsx-spec`
+# `/opsx:spec`
 
 ## 职责
 
-从完整、无阻塞的 `draft.md` 一次性生成当前 change 的 `spec.md`、`design.md` 和 `tasks.md`，完成行为、设计与任务闭包检查后锁定执行契约；不生成代码。
+根据当前文件创建、校对或更新 change 的 `spec.md`、`design.md` 和 `tasks.md`，并执行 draft ↔ spec ↔ design ↔ tasks 四向闭包检查；不生成代码，不依赖聊天历史。
 
 ```text
-/opsx-spec <change-id>
+/opsx:spec <change-id>
+/opsx:spec <change-id> --confirm
 ```
 
 ## 门禁
 
-- `draft.md` 不存在时中断并警告：必须先执行 `/opsx-draft <change-id>`。
-- spec、design 或 tasks 任一文件已存在时停止，不覆盖、刷新、补齐或从 draft 重新推理。
-- draft 中存在影响行为、验收、技术目标、依赖、代码边界或任务的未确认 `[AI 推断]`、歧义或缺失事实时停止。
-- 候选三制品未通过 [`../workflow.md`](../workflow.md) 的三类闭包时停止，不创建部分制品。
+- change 目录和 `draft.md` 必须存在；缺失时停止并报告执行 `/opsx:new <change-id>` 所需的确切缺口。
+- draft 中影响行为、验收、技术目标、依赖、代码边界或任务的未确认 `[AI 推断]` 或阻塞性开放问题，必须作为冲突报告，不得自行选择后写入执行制品。
+- 已有 spec、design 或 tasks 不是失败条件。任一文件存在时必须读取并逐项比较；缺失文件按已确认 draft 和既有制品闭包创建。
 
 ## 上下文
 
-读取当前 `draft.md`、[`../rules/change-documents.md`](../rules/change-documents.md)、[`../rules/specifications.md`](../rules/specifications.md)、[`../rules/designs.md`](../rules/designs.md) 和 [`../rules/tasks.md`](../rules/tasks.md)。
+本动作只使用文件上下文，不使用聊天历史。读取当前 `draft.md`、已有 `spec.md`、`design.md`、`tasks.md`、[`../rules/change-documents.md`](../rules/change-documents.md)、[`../rules/specifications.md`](../rules/specifications.md)、[`../rules/designs.md`](../rules/designs.md) 和 [`../rules/tasks.md`](../rules/tasks.md)。
 
-只按 draft 明确涉及的产物读取精确当前能力规格和适用工程规则；为确认真实文件路径、当前符号、技术目标或直接依赖，可以读取已授权目录的文件清单和精确目标代码。依赖解析只到当前能力的直接依赖为止，不递归读取依赖自身的调用链，不读取其他 change、归档或无关实现。
+只按 draft 和已有制品明确涉及的产物读取精确当前能力规格、适用工程规则、文件清单、目标代码和直接依赖。代码和参考资料只提供当前实现事实、版本事实和技术约束，不得反向生成 Requirement、默认值、失败边界或验收。
 
-正式代码和参考资料只提供当前实现事实、版本事实和设计约束，不得反向生成 Requirement、默认值、失败边界或验收。
+## 重复执行
+
+1. 建立 draft、spec、design 和 tasks 的现有映射。
+2. 对每个已有制品列出保留、更新、补全、删除候选和冲突；不得整文件盲目重写。
+3. 不存在的制品按当前闭包创建；存在的制品只修改具有明确来源的区段。
+4. 保留语义未变且仍有事实支撑的 task checkbox；task 文本变化或证据失效时取消对应勾选。
+5. 重新执行四向闭包检查，并把未闭包项精确映射回来源文件。
 
 ## 输出
 
-- 先在内存中生成三份候选制品并交叉检查；全部通过后在 change 根目录一次性创建 `spec.md`、`design.md` 和 `tasks.md`。
-- `spec.md` frontmatter 写入 `status: spec` 和当前 UTC RFC 3339 `updated_at`，正文只记录可观察行为、失败边界和非目标。
-- `design.md` 记录技术目标、设计决策、依赖契约、精确代码边界和验证设计，不复制 Requirement 正文。
-- `tasks.md` 记录映射到 design 的实施与验证 checkbox，不增加行为或设计选择。
-- 不修改 draft、正式代码、用户文档或既有稳定能力规格。
-- 会话报告行为契约、关键设计、read/write 代码边界、任务数量和三类闭包结论。
+- 创建或更新 `spec.md`、`design.md`、`tasks.md`；首次生成的 spec 使用 `confirmed: false`。
+- 任一执行制品正文或 task 文本发生变化时，把 `spec.md` 的 `confirmed` 重置为 `false` 并更新 `updated_at`；无变化时不改文件。
+- 无法唯一确定的冲突项保持原文或保持缺失，不用 AI 推断覆盖；已经安全写入的独立补全可以保留，但不得宣称整体闭包完成。
+- 会话输出文件级差异、冲突、缺失项、行为闭包、设计闭包、任务闭包和实现事实映射结论。
+- 只有三制品完整、无阻塞冲突且四向闭包成立时，才报告可供用户审阅并显式设置 `confirmed: true`。
+
+## 确认
+
+`--confirm` 只表示确认当前文件中的三制品组合，不允许携带新的行为或设计内容。命令必须重新读取所有允许的文件并完成差异与四向闭包检查；只要候选更新、冲突、缺失项或失效 checkbox 仍存在，就保持 `confirmed: false` 并报告。当前三制品无需修改且闭包成立时，只把 `confirmed` 改为 `true` 并更新 `updated_at`。

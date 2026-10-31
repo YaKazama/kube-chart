@@ -9,7 +9,7 @@
 
   边界:
     - 固定资源身份并将 _kind 原地设置为 Deployment；不输出 status、文档分隔符或其他资源。
-    - metadata 与 spec 的字段内容、必填约束和类型校验由下层模板收口。
+    - metadata 与 spec 的字段内容由下层模板收口；当前模板校验子模板输出的解析错误与必填非空，最终 map 类型由 base.map 校验。
 
   入参: 可写 map 上下文，包含 definitions.objectMeta 与 apps.deploymentSpec 所需字段。
 
@@ -28,38 +28,22 @@
   {{- nindent 0 "" -}}kind: "Deployment"
 
   {{- /* metadata（ObjectMeta）：承载标准 Kubernetes 对象元数据。 */ -}}
-  {{- $_metadataRaw := include "definitions.objectMeta" . -}}
-  {{- if not $_metadataRaw }}
-    {{- fail "[apps.deployment] metadata: required field is missing or empty" }}
+  {{- $metadata := include "definitions.objectMeta" . | fromYaml -}}
+  {{- if eq (include "base.isFromYamlError" $metadata) "true" }}
+    {{- fail "[apps.deployment] metadata: definitions.objectMeta returned invalid YAML" }}
   {{- end }}
-  {{- $__metadataEnvelope := printf "value:%s" ($_metadataRaw | nindent 2) | fromYaml -}}
-  {{- if eq (include "base.isFromYamlError" $__metadataEnvelope) "true" }}
-    {{- fail "[apps.deployment] metadata: invalid YAML output from definitions.objectMeta" }}
-  {{- end }}
-  {{- if not (kindIs "map" $__metadataEnvelope) }}
-    {{- fail "[apps.deployment] metadata: invalid YAML output from definitions.objectMeta" }}
-  {{- end }}
-  {{- $metadata := get $__metadataEnvelope "value" -}}
-  {{- if not (kindIs "map" $metadata) }}
-    {{- fail "[apps.deployment] metadata: must be map type" }}
+  {{- if empty $metadata }}
+    {{- fail "[apps.deployment] metadata: definitions.objectMeta returned empty output" }}
   {{- end }}
   {{- include "base.field" (list "metadata" $metadata "base.map") }}
 
   {{- /* spec（DeploymentSpec）：描述 Deployment 的期望行为。 */ -}}
-  {{- $_specRaw := include "apps.deploymentSpec" . -}}
-  {{- if not $_specRaw }}
-    {{- fail "[apps.deployment] spec: required field is missing or empty" }}
+  {{- $spec := include "apps.deploymentSpec" . | fromYaml -}}
+  {{- if eq (include "base.isFromYamlError" $spec) "true" }}
+    {{- fail "[apps.deployment] spec: apps.deploymentSpec returned invalid YAML" }}
   {{- end }}
-  {{- $__specEnvelope := printf "value:%s" ($_specRaw | nindent 2) | fromYaml -}}
-  {{- if eq (include "base.isFromYamlError" $__specEnvelope) "true" }}
-    {{- fail "[apps.deployment] spec: invalid YAML output from apps.deploymentSpec" }}
-  {{- end }}
-  {{- if not (kindIs "map" $__specEnvelope) }}
-    {{- fail "[apps.deployment] spec: invalid YAML output from apps.deploymentSpec" }}
-  {{- end }}
-  {{- $spec := get $__specEnvelope "value" -}}
-  {{- if not (kindIs "map" $spec) }}
-    {{- fail "[apps.deployment] spec: must be map type" }}
+  {{- if empty $spec }}
+    {{- fail "[apps.deployment] spec: apps.deploymentSpec returned empty output" }}
   {{- end }}
   {{- include "base.field" (list "spec" $spec "base.map") }}
 {{- end }}

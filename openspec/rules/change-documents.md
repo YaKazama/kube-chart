@@ -2,26 +2,16 @@
 
 ## 意图入口与所有权
 
-1. `draft.md` 是执行契约生成前的用户意图入口；用户只维护表达意图的正文，frontmatter 由 AI 维护。
-2. AI 可以生成草稿，但不得覆盖、弱化或静默改写用户已确认的意图。
-3. 用户明确写出或在当前命令中确认的内容优先于 AI 推断。
-4. AI 推断内容必须标记 `[AI 推断]`；这是 draft 中唯一的特殊标记，不得伪装成用户需求或明确约束。
-5. 未经用户确认，`[AI 推断]` 条目不得派生 MUST、SHALL、设计决策或 task。
-6. 本轮确认的意图变化直接写回 `draft.md`；内容未确认或存在歧义时只输出建议文本、原因和下一步。
-7. `/opsx-spec` 一次性创建 spec、design 和 tasks 后冻结 draft；后续代码、Review 或归档不得修改 draft。
-8. `spec.md` 是行为契约，`design.md` 是技术设计契约，`tasks.md` 是实施与验证契约；三者共同构成当前 change 的执行契约，任何单一制品不得替代其他职责。
+1. `draft.md` 是用户意图、已形成共识和开放问题的入口；用户维护正文，frontmatter 由 AI 维护。
+2. AI 可以生成或整理草稿，但不得覆盖、弱化或静默改写用户已确认的意图。
+3. 用户明确写出或通过 `/opsx:explore` 确认的内容优先于 AI 推断。
+4. AI 推断内容必须标记 `[AI 推断]`；不得伪装成用户需求、既定约束或已形成共识。
+5. 未经用户确认，`[AI 推断]` 不得派生 Requirement、设计决策或 task。
+6. 已形成的共识必须在同一动作写回 `draft.md` 或用户当前命令指定的 change 内笔记文件；未形成共识时必须记录为开放问题。
+7. `spec.md` 是行为契约，`design.md` 是技术设计契约，`tasks.md` 是实施与验证契约；三者共同构成当前 change 的执行契约。
+8. draft 在 change 活动期间可以继续澄清；draft 变化导致执行契约失去闭包时，必须重新执行 `/opsx:spec`，不得凭旧确认标记继续实施。
 
-用户确认 `[AI 推断]` 后，AI 在同一轮将其改为普通条目；用户否决时删除该条目，不在正文保留讨论历史。
-
-## OPSX 执行上下文隔离
-
-OPSX 动作只以当前命令输入、命令允许读取的当前工作区文件和当轮职责内的真实工具结果为业务依据。
-
-- 历史聊天、旧摘要和旧工具输出不能替代当前制品、当前命令中的用户确认或本轮重新读取的当前事实。
-- `/opsx-fix` 给出的回写建议只是待用户决定的会话输出，不会自动成为契约。
-- `/opsx-spec-rewrite` 的当前命令必须携带用户确认的精确回写内容；只有命令名、泛化确认或上一轮摘要引用时停止，不修改规格。
-- 读取代码得到的是实现事实或校验证据；不得据此补全 Requirement、默认值、失败边界或验收，只能形成满足既定行为的 design。
-- 必要事实缺失时明确报告，不自行补全后宣称完成。
+用户确认 `[AI 推断]` 后，AI 在同一动作将其改为普通条目；用户否决时删除该条目。需要保留讨论过程时写入用户指定的 change 内笔记文件，不在正式制品中混入会话流水。
 
 ## draft.md 格式
 
@@ -33,13 +23,9 @@ updated_at: "<UTC RFC 3339 时间>"
 
 # <变更名称>
 
-> 用户初始意图入口。
-> 只需编辑下面的“目标、需求、约束、非目标、验收”。
-
 ## 目标
 
 - <要解决的问题或预期结果>
-- 依赖 `<外部能力>`，不属于当前实现范围。
 
 ## 需求
 
@@ -48,7 +34,7 @@ updated_at: "<UTC RFC 3339 时间>"
 
 ## 约束
 
-<!-- 只填写用户明确指定的本次特殊限制；AI 建议必须保留 [AI 推断]。 -->
+<!-- 只填写用户明确指定的本次特殊限制。 -->
 
 ## 非目标
 
@@ -57,36 +43,48 @@ updated_at: "<UTC RFC 3339 时间>"
 ## 验收
 
 - <可观察且可判定的结果>
+
+## 开放问题
+
+- <尚未形成共识且会影响后续制品的事项>
 ```
 
-- frontmatter 只含 `change-id` 和 `updated_at`；不得写入 `status`。
+- 上述章节可以按实际意图增删或重排，但必须清楚区分已确认内容、`[AI 推断]` 和开放问题。
+- frontmatter 只含 `change-id` 和 `updated_at`；不得写入状态字段。
 - change-id 取自 `openspec/changes/<change-id>/` 目录名，两者必须完全一致。
-- `updated_at` 只在 draft 实际变化时更新。
+- `updated_at` 只在 draft 正文实际变化时更新。
 - 条目不强制编号；需要引用时使用章节名加条目原文。
-- “约束”可为空。项目基线、通用规则、代码事实或历史决定不得作为普通条目写入；AI 建议只能标记 `[AI 推断]`。
-- draft 保持轻量，不写方案比较、实现步骤、代码边界、验证记录或长篇背景。
+- 项目基线、通用规则、代码事实或历史决定不得伪装为用户意图写入；AI 建议只能标记 `[AI 推断]`。
+- draft 保持轻量，不写精确实现步骤、代码边界、任务进度或验证结论。
 
-## 执行制品归属
+## 执行制品归属与确认
 
-- `spec.md`、`design.md` 和 `tasks.md` 位于 change 根目录，只由 `/opsx-spec` 在同一次成功动作中首次创建。存在任一文件时不得覆盖、刷新、补齐或重新生成。
-- 三个候选制品必须在内存中通过工作流闭包检查后一次性写入；写入失败造成部分制品时保持无效状态，后续 OPSX 动作停止并报告实际文件，不自动修复。
-- `spec.md` frontmatter 只含 `status` 和 `updated_at`；状态取值和转换遵循 [`../workflow.md`](../workflow.md)。`design.md` 和 `tasks.md` 不使用 frontmatter。
-- `spec.md` 只拥有 Purpose、Requirement、Scenario、失败边界和非目标，语法遵循 [`specifications.md`](specifications.md)。
-- `design.md` 只拥有技术目标、设计决策、依赖契约、代码边界和验证设计，语法遵循 [`designs.md`](designs.md)。
-- `tasks.md` 只拥有实施和验证 checkbox，语法遵循 [`tasks.md`](tasks.md)。
-- `/opsx-code` 成功进入 `code` 前，spec 和 design 正文及 task 文本已锁定；code 只能更新 task checkbox。进入 `code` 后，design、tasks 和代码边界全部锁定。
+- `spec.md`、`design.md` 和 `tasks.md` 位于 change 根目录。`/opsx:spec` 负责创建、校对、更新和闭包；`/opsx:sync` 经确认后可以按代码与测试事实同步三者，但禁止修改 draft。
+- `/opsx:code` 只修改正式代码和已真实完成的实施 task checkbox；`/opsx:verify` 只修改已真实通过的验证 task checkbox；二者不得改写 task 文本。
+- `spec.md` frontmatter 只包含 `confirmed` 和 `updated_at`：
 
-## 局部修正与回写
+```yaml
+confirmed: true | false
+updated_at: "<UTC RFC 3339 时间>"
+```
 
-- `/opsx-fix` 只修改 design 中已锁定的 write boundary 和 writable scope，不修改四个 change 制品或用户文档。
-- 修正只涉及重构、类型稳定、语法、DRY 或恢复现有 spec/design 行为时，回写结论为 `无需回写`。
-- 修正改变输入、输出、默认值、失败边界、可观察行为或验收时，回写结论为 `必须回写`；会话同时给出可供用户确认的精确规格文本。
-- 必须回写的代码在 `/opsx-spec-rewrite` 完成前不得通过 `/opsx-review`；回写会使 design 或 tasks 失效时不得执行回写，必须新建 change 或恢复代码。
-- 用户拒绝回写时，必须通过新的 `/opsx-fix` 把代码恢复为当前 spec 所定义的行为；不得用 Review 摘要覆盖契约差异。
+- `confirmed: true` 确认同目录当前 spec、design 和 task 文本的组合，不是阶段状态。`design.md` 和 `tasks.md` 不使用 frontmatter。
+- `/opsx:spec` 创建、更新或补全任一执行制品正文时写入 `confirmed: false`；用户执行 `/opsx:spec <change-id> --confirm` 后，命令重新完成闭包且内容无待决差异时，才改为 `true`。
+- `/opsx:sync <change-id>` 当前命令中的“确认回写”区块表示用户确认本轮按当前文件重新计算出的精确同步项；只有确认覆盖全部实际差异且同步后四向闭包成立时才写入 `confirmed: true`，否则写入 `false`。
+- 仅勾选既有 checkbox 不改变 `confirmed`；checkbox 的证据失效时必须取消勾选。
+- v0.2.0 动作实际修改仍带旧 `status` frontmatter 的活动 spec 时，应把它迁移为上述 `confirmed` 结构；历史归档不批量改写。
+- `spec.md` 正文归属和语法遵循 [`specifications.md`](specifications.md)，`design.md` 遵循 [`designs.md`](designs.md)，`tasks.md` 遵循 [`tasks.md`](tasks.md)。
+
+## 同步保护
+
+- 代码和测试可以证明当前实现事实，不能独自证明用户原始意图。可观察行为变化必须在 `/opsx:sync` 预览中单独列为待确认项。
+- `/opsx:sync` 回写前必须先输出代码事实、现有制品差异、建议更新、疑似冲突、待确认项和不建议写入规格项；没有当前输入或代码库变更说明中的精确确认时不得写文件。
+- 同步只更新已确认差异直接涉及的 spec、design 和 tasks，不顺带整理无关内容，不修改 `draft.md`、正式代码或用户文档。
+- 无法从当前文件和同步说明唯一确定的行为、设计或任务保持不变，并作为疑似冲突或待确认项报告。
 
 ## 归档
 
-- `/opsx-review` 成功后，将 `spec.md` 状态更新为 `reviewed`，再把包含 draft、spec、design 和 tasks 的 change 目录移动到 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`。
+- `/opsx:archive` 轻量核对通过后，把完整 change 目录移动到 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`，不通过状态字段表示归档。
 - 归档目标已存在时停止，不覆盖既有归档。
-- Review 摘要只输出到会话，不创建 verification、sync 或其他记录文件。
-- 历史归档可以保留旧工作流结构，但不能作为当前意图、执行契约或验证结论的来源。
+- 归档摘要输出到会话；除非当前 change 的正式制品明确要求，否则不创建额外 verification、sync 或 summary 记录。
+- 历史归档可以保留旧工作流结构和 frontmatter，但不能替代当前活动 change 的意图或执行契约。

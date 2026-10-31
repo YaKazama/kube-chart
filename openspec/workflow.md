@@ -1,92 +1,82 @@
-# kube-chart OPSX 工作流
+# kube-chart OPSX v0.2.0 工作流
 
-本文件是制品、状态转换和共享门禁的唯一来源。命令职责与读取范围位于 [`commands/`](commands/)，变更文档规则位于 [`rules/change-documents.md`](rules/change-documents.md)。
+本文件是制品关系、文件即状态判据、共享闭包和命令上下文类别的唯一来源。命令职责与读取范围位于 [`commands/`](commands/)，变更文档规则位于 [`rules/change-documents.md`](rules/change-documents.md)。
 
-## 共享边界
+## 动作模型
 
-- 工作流使用 `draft.md`、`spec.md`、`design.md` 和 `tasks.md` 四个活动制品，不生成验证记录或同步记录。
-- `draft.md` 保存用户意图；`spec.md` 只锁定可观察行为；`design.md` 锁定技术目标、实现决策、依赖契约和代码边界；`tasks.md` 锁定实施顺序与验证场景。
-- `/opsx-spec` 在内存中生成 spec、design 和 tasks 候选，完成行为闭包、设计闭包和任务闭包检查后一次性创建三个制品；任一闭包失败时不得创建部分制品。
-- spec、design 和 tasks 共同构成当前 change 的执行契约。三者生成后冻结 draft；正式代码、规则和参考资料只能解析、约束或校验既定意图，不能反向增加需求。
+- OPSX 命令是可以按需执行和重复执行的动作，不存在刚性阶段、状态枚举或状态转换。
+- `draft.md` 保存意图、已确认共识和开放问题；`spec.md` 保存可观察行为；`design.md` 保存技术目标、设计决策、依赖契约和代码边界；`tasks.md` 保存实施和验证 checkbox。
+- spec、design 和 tasks 共同构成执行契约，三者必须保持 draft ↔ spec ↔ design ↔ tasks 闭包；任何单一制品不得替代其他职责。
 - `design.md` 的代码边界按精确文件记录 `read | write` 权限、operation 和 writable scope。`read` 只允许读取；`write` 同时允许读取，但只能修改声明的 writable scope。
-- 历史聊天、旧摘要和旧工具输出不能替代当前制品、当前命令中的用户确认或本轮允许读取的当前工作区事实。
-- 状态只表示最近完成的稳定动作。等待确认、执行中、失败、局部修正或待用户决定是否回写不增加新状态，失败不得推进状态。
-- 完整 Chart 验证只属于 `/ck-deploy`；`/opsx-review` 不能把文件级轻量检查表述为发布验证通过。
+- `/opsx:spec` 和 `/opsx:sync` 都可以重复执行。已有制品必须先对比再更新或补全，不得盲目重新生成。
+- `/opsx:code` 只负责生成或修改代码和明显静态错误检查；最小 Helm 渲染属于 `/opsx:verify`，完整 Chart 发布检查属于 `/opsx:ck:publish`。
+
+## 命令上下文类别
+
+当前命令定义、工作流和适用规则属于控制上下文。业务事实按下表取用：
+
+| 类别 | 命令 | 可用业务上下文 |
+|---|---|---|
+| 会话与文件 | `/opsx:new`、`/opsx:explore`、`/opsx:code` | 当前命令输入、相关聊天历史和完成职责所需的文件上下文。 |
+| 仅文件 | `/opsx:spec`、`/opsx:verify`、`/opsx:docs`、`/opsx:archive`、`/opsx:ck:publish` | 只使用完成职责所需的当前文件和本轮真实工具结果；聊天历史不作为业务依据。 |
+| 同步专用 | `/opsx:sync` | 不依赖聊天历史；允许使用当前命令输入中的简短同步说明，并以代码事实、测试事实和既有文档为准。 |
+
+仅文件动作即使在同一会话中执行，也必须重新从允许的当前文件建立事实。`/opsx:sync` 的回写确认必须出现在当前命令输入或代码库内可读取的变更说明中，不能仅引用上一轮会话结论。
 
 ## 目录与制品
 
 ```text
 openspec/changes/<change-id>/
-  draft.md                  用户初始意图
-  spec.md                   可观察行为与状态
+  draft.md                  用户意图、共识与开放问题
+  spec.md                   可观察行为与执行契约确认标记
   design.md                 技术设计、依赖契约与代码边界
-  tasks.md                  实施和验证任务
+  tasks.md                  实施和验证进度
+  notes/                    可选；/opsx:explore 指定的讨论笔记
 ```
 
-活动 change 根目录只保留上述制品。归档 change 可以保留创建时采用的历史结构，不参与当前状态判断。
+活动 change 至少包含 `draft.md`。`notes/` 只保存讨论记录，不能替代任何正式制品。归档位于 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`；旧归档可以保留创建时采用的历史结构。
 
-`draft.md` frontmatter 只包含：
+frontmatter、正文归属和确认标记统一遵循 [`rules/change-documents.md`](rules/change-documents.md)。
 
-```yaml
-change-id: <kebab-case>
-updated_at: "<UTC RFC 3339 时间>"
-```
+## 文件即状态
 
-`spec.md` frontmatter 只包含：
+| 事实 | 判断依据 |
+|---|---|
+| 是否已有草稿 | `openspec/changes/<change-id>/draft.md` 是否存在。 |
+| 是否已有变更目录 | `openspec/changes/<change-id>/` 是否存在。 |
+| 是否已有规格制品 | `spec.md`、`design.md`、`tasks.md` 各自是否存在；缺失文件是明确缺口，不映射为状态值。 |
+| 执行契约是否已确认 | `spec.md` frontmatter 的 `confirmed: true`；该标记确认同目录当前 spec、design 和 tasks 的组合。 |
+| 任务进度 | `tasks.md` 中对应 checkbox 是否勾选，并由代码或验证事实支撑。 |
+| 是否已实现 | 代码文件、测试结果、任务 checkbox 和版本控制变更共同证明，不由单个标记推断。 |
+| 是否已归档 | change 是否位于 `openspec/changes/archive/YYYY-MM-DD-<change-id>/`。 |
+| 文档是否完成 | `docs/` 和根 `README.md` 是否已按实际行为更新。 |
 
-```yaml
-status: spec | code | reviewed
-updated_at: "<UTC RFC 3339 时间>"
-```
+`confirmed: true` 不是阶段状态。`/opsx:spec` 修改 spec、design 或 task 文本后必须把它重置为 `false`，用户审阅当前三制品后再通过确认动作设置为 `true`。`/opsx:sync` 只有在当前命令精确确认全部实际差异且同步后闭包成立时才能写入 `true`，否则写入 `false`。仅勾选既有 task 不重置确认标记。
 
-`design.md` 和 `tasks.md` 不使用 frontmatter。概念状态 `draft` 由只有 `draft.md`、且 spec、design 和 tasks 均不存在唯一确定。三个执行制品缺少任一文件都属于无效的部分制品，不得推断状态或自动补齐。
+## 四向闭包
 
-## 状态与转换
+- draft ↔ spec：draft 中每项已确认意图都映射到 spec；spec 的每项 Requirement、Scenario、失败边界和非目标都有 draft 意图、当前同步说明或经确认的代码事实来源，不含实现步骤。未确认 `[AI 推断]` 和阻塞性开放问题不得变成行为契约。
+- spec ↔ design：spec 中每项行为都映射到 design 的技术目标、设计决策或依赖契约；design 不新增或弱化行为。每个依赖都有确定的 availability、入参、返回边界和来源路径，或明确标记为当前未实现且不在本 change 实现。
+- design ↔ tasks：design 中每项 write operation 和验证设计都映射到 tasks；tasks 不引入新的行为、设计选择或文件。
+- tasks ↔ 实现事实：已勾选任务具有当前代码或实际命令结果；未完成或证据失效的任务保持未勾选。
 
-| 状态 | 存储位置 | 含义 | 可执行动作 |
-|---|---|---|---|
-| `draft` | 文件存在性 | 只有 `draft.md`，意图仍在收集 | `/opsx-draft`、`/opsx-spec` |
-| `spec` | `spec.md` frontmatter | spec、design 和 tasks 已完成闭包检查并锁定 | `/opsx-code` |
-| `code` | `spec.md` frontmatter | tasks 已完成，代码可以局部调整、受控回写或 Review | `/opsx-fix`、`/opsx-spec-rewrite`、`/opsx-review` |
-| `reviewed` | 归档中的 `spec.md` frontmatter | 轻量核对已通过并完成归档 | 无 |
+移除聊天历史后，仅凭正式制品、其明确列出的当前文件、适用规则和对应工具事实仍不能唯一执行仅文件动作时，闭包检查失败并报告缺口。
 
-允许的转换：
+## 共享动作约束
 
-```text
-draft ──/opsx-spec──→ spec ──/opsx-code──→ code
-code  ──/opsx-fix────────────────────────→ code
-code  ──/opsx-spec-rewrite───────────────→ code
-code  ──/opsx-review 成功──→ reviewed + archive
-```
-
-`/docs-usage` 是独立文档动作，不读取或改变活动 change 的状态，也不参与上述状态转换。
-
-活动目录中出现 `status: reviewed` 只表示 Review 已更新状态但归档移动被中断；重新执行 `/opsx-review` 时必须再次完成本轮轻量核对后续作归档。
-
-## 三类闭包
-
-- 行为闭包：draft 中每项已确认意图都映射到 spec，spec 的每项 Requirement、Scenario、失败边界和非目标都有明确意图来源或适用工程规则，不含实现步骤。
-- 设计闭包：spec 中每项行为都映射到 design 的技术目标、设计决策或依赖契约；每个依赖都有确定的 availability、入参、返回边界和来源路径，或明确标记为当前未实现且不在本 change 实现。
-- 任务闭包：design 中每项 write operation 和验证设计都映射到 tasks；每个任务只引用 design 中的精确代码边界，不引入新的行为、设计选择或文件。
-
-移除 draft、历史聊天和旧工具输出后，仅凭 spec、design、tasks、三者明确列出的当前文件及适用规则仍不能唯一完成代码时，闭包检查失败。
-
-## 动作门禁
-
-- `/opsx-draft` 只在 spec、design 和 tasks 均不存在时创建或更新 draft；任一执行制品已存在时停止，避免双源分叉。
-- `/opsx-spec` 必须先有完整 draft。它只创建一次 spec、design 和 tasks；任一目标、行为、设计、依赖、代码边界、任务或验证不能唯一确定时不创建任何执行制品。
-- `/opsx-code` 只接受完整的 `status: spec` 三制品契约；按 tasks 实施，只修改 design 中 `access: write` 的 writable scope，并只把已实际完成的 task checkbox 从 `[ ]` 改为 `[x]`。
-- `/opsx-fix` 只接受 `status: code`，只在已锁定 write boundary 内局部调整代码，不修改四个变更制品。结束时必须输出修改摘要、`无需回写 | 必须回写` 的二值结论、精确回写建议和 Review 就绪结论。
-- `/opsx-spec-rewrite` 只接受 `status: code` 和当前命令中用户确认的精确行为变化；只更新 spec。若变化会使 design 或 tasks 失效则停止，不得重新推理或修补它们。
-- `/opsx-review` 读取 spec、design、tasks 和当前变更涉及的代码边界；代码、设计、任务或规格不一致，存在未完成 task、未确认回写或轻量检查失败时保持 `code`。
-- `/ck-deploy` 独立读取整个 Chart 所需的当前文件并执行真实发布检查，不依赖 Review 摘要替代实际命令。
-- `/docs-usage` 在存在 `status: spec | code` 或部分执行制品的活动 change 时停止，避免将未 Review 行为写入文档。
-
-如果用户拒绝 `/opsx-fix` 给出的必须回写建议，必须再次执行 `/opsx-fix` 把代码恢复为当前 spec 所定义的行为，之后才能 Review。
+- `/opsx:new` 只在确切 change 路径不存在时新建目录和 `draft.md`。
+- `/opsx:explore` 把已形成的共识写回 draft 或用户指定笔记；未形成共识时把开放问题明确写入文件。
+- `/opsx:spec` 要求 draft 存在。目标制品不存在时创建，存在时逐项对比、更新、补全并输出差异与冲突；不能闭包时保留可验证的既有内容并报告缺口，不宣称完成。
+- `/opsx:code` 要求三制品完整、闭包且已确认。所有影响验收、接口、行为和任务边界的决策必须已存在于 draft、spec、design 或 tasks；缺失时停止相关修改并建议 `/opsx:explore` 或 `/opsx:sync`。
+- `/opsx:verify` 只验证当前 change 已变更模板及必要依赖，不修改代码；实际通过后可以勾选精确对应的验证 task。
+- `/opsx:sync` 首轮只输出代码事实、制品差异、建议更新、疑似冲突、待确认项和不建议写入规格项。只有当前命令输入或可读取变更说明包含精确确认后才回写，且永不修改 draft。
+- `/opsx:docs` 只把正式实现支持的行为写入最终用户文档；带 change-id 时限定该 change，不带时处理全部归档内容。
+- `/opsx:archive` 在轻量核对通过后移动整个 change 目录；失败时只输出缺失项、风险项和建议动作。
+- `/opsx:ck:publish` 对整个 Chart 执行实际发布检查，不能复用局部验证或会话摘要替代真实命令。
 
 ## 参数与时间
 
-- change-id 是 `/opsx-*` 命令的必填参数，必须是 kebab-case，并精确对应 `openspec/changes/<change-id>/`。
-- 正常执行直接访问确切路径，不扫描、模糊匹配、自动纠错或根据唯一活动 change 推断参数。
-- 目标不存在或前置制品缺失时停止并报告确切缺口，不创建替代 change。
-- `updated_at` 使用 UTC RFC 3339 时间；命令只在实际修改对应制品时更新时间。
+- change-id 必须是 kebab-case，并精确对应 `openspec/changes/<change-id>/`；`/opsx:docs` 的 change-id 可选，`/opsx:ck:publish` 不接受 change-id。
+- 正常执行直接访问确切路径，不模糊匹配、自动纠错或根据唯一活动 change 推断参数。无 change-id 的 `/opsx:docs` 和全 Chart 发布检查按各自命令定义列出所需范围。
+- 目标不存在或必要制品缺失时报告确切缺口，不创建替代 change。
+- `updated_at` 使用 UTC RFC 3339 时间，只在对应制品实际变化时更新。
