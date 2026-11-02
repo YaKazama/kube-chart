@@ -194,7 +194,7 @@
   {{- if eq (include "base.isFromYamlError" $_selectorParsed) "true" }}
     {{- fail "[apps.deploymentSpec] selector: must be map type" }}
   {{- end }}
-  {{- $_selector := pick $_selectorParsed "matchExpressions" "matchLabels" }}
+  {{- $_selector := pick $_selectorParsed "matchExpressions" "matchLabels" "matchExpressionsAlias" "matchLabelsAlias" }}
   {{- $_baseLabels := include "base.labels" . | fromYaml }}
   {{- if eq (include "base.isFromYamlError" $_baseLabels) "true" }}
     {{- fail "[apps.deploymentSpec] selector: base.labels returned invalid YAML" }}
