@@ -44,6 +44,10 @@ K8S:
     SET_FOR_APPS: "^([A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?)(?:\\s+((?i)in|(?i)notin))(?:\\s+\\((.*?)\\))$"
     # 存在性选择器 (key / !key, 捕获 not 前缀和 key)
     EXISTS_FOR_APPS: "^(!)?([A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?)$"
+    # 标签键名称段 (1-63 字符, 首尾字母数字, 中间允许 -_.)
+    KEY_NAME_FOR_APPS: "^[A-Za-z0-9]([-A-Za-z0-9_.]{0,61}[A-Za-z0-9])?$"
+    # 标签键前缀段 (点分隔 DNS 标签序列, 每段 1-63 字符, 仅小写字母数字和 -)
+    KEY_PREFIX_FOR_APPS: "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
