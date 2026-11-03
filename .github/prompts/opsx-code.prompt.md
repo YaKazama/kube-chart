@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:code — 按已确认的三制品生成或局部修改代码"
+description: "[4/9] OPSX /opsx:code — 按已确认的三制品生成或局部修改代码"
 argument-hint: "<change-id> [实现说明]"
 agent: "agent"
 ---

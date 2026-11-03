@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:new — 新建 change 目录与轻量 draft.md"
+description: "[1/9] OPSX /opsx:new — 新建 change 目录与轻量 draft.md"
 argument-hint: "<change-id>（kebab-case）"
 agent: "agent"
 ---

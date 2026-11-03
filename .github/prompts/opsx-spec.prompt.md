@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:spec — 创建或校对 spec/design/tasks 并做四向闭包检查"
+description: "[3/9] OPSX /opsx:spec — 创建或校对 spec/design/tasks 并做四向闭包检查"
 argument-hint: "<change-id> [--confirm]"
 agent: "agent"
 ---

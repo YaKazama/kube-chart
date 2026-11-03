@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:ck:publish — 对整个 Chart 执行只读发布检查"
+description: "[9/9] OPSX /opsx:ck:publish — 对整个 Chart 执行只读发布检查"
 agent: "agent"
 ---
 

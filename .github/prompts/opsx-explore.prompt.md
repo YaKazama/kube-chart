@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:explore — 讨论并把共识或开放问题写入 draft"
+description: "[2/9] OPSX /opsx:explore — 讨论并把共识或开放问题写入 draft"
 argument-hint: "<change-id> [讨论主题或笔记路径]"
 agent: "agent"
 ---

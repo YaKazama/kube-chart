@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:docs — 从指定 change 或全部归档生成最终用户文档"
+description: "[7/9] OPSX /opsx:docs — 从指定 change 或全部归档生成最终用户文档"
 argument-hint: "[change-id]"
 agent: "agent"
 ---

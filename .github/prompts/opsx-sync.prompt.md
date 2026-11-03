@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:sync — 预览代码事实差异，经精确确认后反向同步三制品"
+description: "[6/9] OPSX /opsx:sync — 预览代码事实差异，经精确确认后反向同步三制品"
 argument-hint: "<change-id> [简短同步说明]"
 agent: "agent"
 ---

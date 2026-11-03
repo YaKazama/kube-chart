@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:archive — 轻量核对后归档整个 change 目录"
+description: "[8/9] OPSX /opsx:archive — 轻量核对后归档整个 change 目录"
 argument-hint: "<change-id>"
 agent: "agent"
 ---

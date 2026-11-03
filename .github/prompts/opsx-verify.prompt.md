@@ -1,5 +1,5 @@
 ---
-description: "OPSX /opsx:verify — 在 /tmp 最小 Chart 中实际执行 helm template"
+description: "[5/9] OPSX /opsx:verify — 在 /tmp 最小 Chart 中实际执行 helm template"
 argument-hint: "<change-id>"
 agent: "agent"
 ---
