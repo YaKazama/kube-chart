@@ -4,6 +4,12 @@
 **/.vscode
 **/.idea
 
+# ide / 仅放行 .github/prompts 下的 Copilot Prompt 文件，其余 .github 内容继续排除
+!**/.github/
+**/.github/*
+!**/.github/prompts/
+!**/.github/prompts/**
+
 # build
 **/build*
 **/output*
@@ -32,3 +38,4 @@
 TODO.md
 docs/examples/
 examples/tpls-bak/
+openspec/references/regex_example.tpl
