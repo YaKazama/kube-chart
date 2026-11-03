@@ -1,5 +1,4 @@
 ---
-confirmed: true
 updated_at: "2026-11-02T15:49:16Z"
 ---
 

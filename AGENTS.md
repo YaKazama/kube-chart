@@ -25,7 +25,7 @@
 
 ## 命令入口
 
-本项目采用 OPSX v0.2 多制品动作模型：`draft.md` 表达意图和开放问题，`spec.md` 锁定可观察行为，`design.md` 锁定技术设计与代码边界，`tasks.md` 记录实施和验证进度。命令是可以按需重复执行的动作，不构成刚性阶段或状态机；当前事实由文件位置、文件内容、确认标记和 checkbox 共同表达。
+本项目采用 OPSX v0.2 多制品动作模型：`draft.md` 表达意图和开放问题，`spec.md` 锁定可观察行为，`design.md` 锁定技术设计与代码边界，`tasks.md` 记录实施和验证进度。命令是可以按需重复执行的动作，不构成刚性阶段或状态机；当前事实由文件位置、文件内容和 checkbox 共同表达。
 
 | 命令 | 唯一定义文件 | 唯一主要职责 |
 |---|---|---|
@@ -34,7 +34,7 @@
 | `/opsx:spec <change-id>` | [`openspec/commands/spec.md`](openspec/commands/spec.md) | 创建、校对和闭包检查 spec、design、tasks。 |
 | `/opsx:code <change-id>` | [`openspec/commands/code.md`](openspec/commands/code.md) | 按已确认制品生成或局部修改代码。 |
 | `/opsx:verify <change-id>` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 在 `/tmp/` 最小 application Chart 中实际执行 `helm template`。 |
-| `/opsx:sync <change-id>` | [`openspec/commands/sync.md`](openspec/commands/sync.md) | 经用户确认后把代码与测试事实反向同步到执行制品。 |
+| `/opsx:sync <change-id>` | [`openspec/commands/sync.md`](openspec/commands/sync.md) | 把代码与测试事实反向同步到执行制品，并保持 draft 与 spec 对齐。 |
 | `/opsx:docs [change-id]` | [`openspec/commands/docs.md`](openspec/commands/docs.md) | 从指定 change 或全部归档内容生成最终用户文档。 |
 | `/opsx:archive <change-id>` | [`openspec/commands/archive.md`](openspec/commands/archive.md) | 轻量核对、总结并归档 change。 |
 | `/opsx:ck:publish` | [`openspec/commands/ck-publish.md`](openspec/commands/ck-publish.md) | 对整个 Chart 执行发布检查。 |

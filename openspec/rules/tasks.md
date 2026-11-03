@@ -3,7 +3,7 @@
 ## 任务权威
 
 - `tasks.md` 是当前 change 的实施顺序和验证工作的唯一来源，只把 design 转换为可执行步骤，不创建新的行为、设计选择、依赖或文件边界。
-- task 文本只由 `/opsx:spec` 创建或校对，或由 `/opsx:sync` 经确认后同步；`/opsx:code` 和 `/opsx:verify` 只能更新具有当前事实证据的 checkbox。
+- task 文本只由 `/opsx:spec` 创建或校对，或由 `/opsx:sync` 按当前事实同步；`/opsx:code` 和 `/opsx:verify` 只能更新具有当前事实证据的 checkbox。
 
 ## tasks.md 结构
 

@@ -1,5 +1,5 @@
 ---
-description: "[4/9] OPSX /opsx:code — 按已确认的三制品生成或局部修改代码"
+description: "[4/9] OPSX /opsx:code — 按闭包成立的三制品生成或局部修改代码"
 argument-hint: "<change-id> [实现说明]"
 agent: "agent"
 ---
@@ -23,5 +23,5 @@ agent: "agent"
 - 按第 2 项的命令上下文类别取用业务上下文；本动作属于「会话与文件」类，聊天历史只用于理解和实施，不能替代制品。
 - 路径只取自上述文档的明确链接或文件清单；不得由命令名猜测文件名，不得模糊匹配、自动纠错或按唯一活动 change 推断 change-id。
 - 只修改 `design.md` 中 `access: write` 的文件和 writable scope；`access: read` 文件不得修改，不得沿相邻代码扩张边界。
-- 三制品不完整、未确认或存在影响当前修改的歧义时按第 3 项门禁停止，并建议先执行 `/opsx:explore` 或 `/opsx:sync`。
+- 三制品不完整或存在影响当前修改的歧义时按第 3 项门禁停止，并建议先执行 `/opsx:explore` 或 `/opsx:sync`。
 - 职责、门禁、checkbox 规则与输出格式全部以第 3 项为准，不在本文件重复。

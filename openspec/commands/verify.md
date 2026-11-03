@@ -26,5 +26,5 @@
 - 最小 Chart 只装载当前已变更模板和渲染所需的直接依赖，覆盖最小有效输入、较完整有效输入和关键失败输入。
 - 对每个场景实际执行 `/opt/homebrew/bin/helm template`，记录命令、退出码、关键输出和预期是否满足。
 - 只有相关场景全部获得预期结果时，才勾选 tasks 中精确对应的验证 checkbox；失败、跳过或 fixture 边界不清时不勾选。
-- 不修改 draft、spec 正文、design、task 文本、正式代码或用户文档，不改变 `confirmed`。
+- 不修改 draft、spec 正文、design、task 文本、正式代码或用户文档。
 - 会话报告临时 Chart 路径、真实依赖与 fixture 边界、通过项、失败项、未覆盖项和验证结论；不声明完整发布检查通过。

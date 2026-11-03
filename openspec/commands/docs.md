@@ -31,7 +31,7 @@
 ## 门禁
 
 - 带 change-id 时，确切活动 change 必须存在；不得自动改为读取同名归档。
-- 带 change-id 时，spec、design 和 tasks 必须完整闭包，`spec.md` 必须为 `confirmed: true`，且相关行为已有正式实现证据。
+- 带 change-id 时，spec、design 和 tasks 必须完整闭包，且相关行为已有正式实现证据。
 - 某项行为缺少明确规格来源、正式实现或必要验证依据时，跳过该项并报告证据缺口，不以推断补全。
 - 未确认 `[AI 推断]`、开放问题、未实现规格或仅存在于 fixture 的能力不得写成已支持功能。
 

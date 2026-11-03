@@ -6,7 +6,6 @@
 
 ```text
 /opsx:spec <change-id>
-/opsx:spec <change-id> --confirm
 ```
 
 ## 门禁
@@ -31,12 +30,11 @@
 
 ## 输出
 
-- 创建或更新 `spec.md`、`design.md`、`tasks.md`；首次生成的 spec 使用 `confirmed: false`。
-- 任一执行制品正文或 task 文本发生变化时，把 `spec.md` 的 `confirmed` 重置为 `false` 并更新 `updated_at`；无变化时不改文件。
+- 创建或更新 `spec.md`、`design.md`、`tasks.md`；`spec.md` frontmatter 只维护 `updated_at`。
+- 任一执行制品正文或 task 文本发生变化时，同步更新 `spec.md` 的 `updated_at`；无变化时不改文件。
 - 无法唯一确定的冲突项保持原文或保持缺失，不用 AI 推断覆盖；已经安全写入的独立补全可以保留，但不得宣称整体闭包完成。
 - 会话输出文件级差异、冲突、缺失项、行为闭包、设计闭包、任务闭包和实现事实映射结论。
-- 只有三制品完整、无阻塞冲突且四向闭包成立时，才报告可供用户审阅并显式设置 `confirmed: true`。
 
-## 确认
+## 完成判据
 
-`--confirm` 只表示确认当前文件中的三制品组合，不允许携带新的行为或设计内容。命令必须重新读取所有允许的文件并完成差异与四向闭包检查；只要候选更新、冲突、缺失项或失效 checkbox 仍存在，就保持 `confirmed: false` 并报告。当前三制品无需修改且闭包成立时，只把 `confirmed` 改为 `true` 并更新 `updated_at`。
+三制品完整、无阻塞冲突且四向闭包成立时，报告本次可交付的三制品组合；任一条件不成立则报告精确缺口。

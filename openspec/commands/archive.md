@@ -17,7 +17,7 @@
 ## 轻量核对
 
 - `openspec/changes/<change-id>/` 是否存在，归档目标是否不存在。
-- spec、design、tasks 是否完整，frontmatter 是否有效，`confirmed` 是否为 `true`，四向闭包是否成立。
+- spec、design、tasks 是否完整，frontmatter 是否有效，四向闭包是否成立。
 - tasks 是否全部完成且 checkbox 具有当前文件事实支撑。
 - 当前代码、spec、design 和 tasks 是否同步，write boundary 是否存在越界修改。
 - `docs/` 与根 `README.md` 是否需要更新；需要时是否已完成或已明确记录为归档后的文档动作。
