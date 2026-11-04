@@ -50,8 +50,7 @@ K8S:
     KEY_PREFIX_FOR_APPS: "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
 APPS:
   DEPLOYMENT:
-    STRATEGY: "^(Recreate|RollingUpdate)(?:\\s+(.*))?$"
-    ROLLING_UPDATE: "^(\\d+\\%?)?(?:\\s+(\\d+\\%?))?$"
+    STRATEGY: "^(?:((?i:recreate|rollingupdate)|\"\"|''))?(?:\\s*[\\s:,/|*^@#]+\\s*|\\s*)(\"\"|''|\\d+%?)?(?:\\s*[\\s:,/|*^@#]+\\s*|\\s*)(\"\"|''|\\d+%?)?$"
 API_GROUP:
   GROUP_VERSION_DISCOVERY: "^(\\S+\\/\\S+) +([a-z0-9][a-z0-9.]*)$"
   SERVER_ADDRESS_BY_CLIENT_CIDR: "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/\\d{1,2})?)\\s+(\\S+)$"

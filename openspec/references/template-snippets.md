@@ -94,29 +94,38 @@
 
 ## 多类型字段规整
 
-字段允许 map 与字符串简写时，按“有效 map / 受正则约束的 string / 其他类型失败”分支。字符串先剥离 YAML 引号，再匹配并提取捕获组。
+字段允许 map 与字符串简写时，按“有效 map / 其余输入统一按 string 简写全量匹配 / 不匹配即失败”分支。字符串先剥离 YAML 引号，再用单条正则一次性捕获全部位置槽，每个捕获值分别剥离外层引号后使用。
 
 ```gotemplate
 {{- $_parsed := $_raw | fromYaml }}
 {{- $_isErr := eq (include "base.isFromYamlError" $_parsed) "true" }}
-{{- $_isMap := and (kindIs "map" $_parsed) (not $_isErr) }}
 {{- $_const := include "base.env" "" | fromYaml }}
-{{- $_unquoted := mustRegexReplaceAll $_const.SYS.YAML_QUOTED $_raw "$1" | trim }}
 {{- $value := dict }}
 
-{{- if $_isMap }}
+{{- if and (not $_isErr) (kindIs "map" $_parsed) }}
   {{- $value = $_parsed }}
 
-{{- else if and $_isErr (mustRegexMatch $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted) }}
-  {{- $_first := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$1" | trim }}
-  {{- $_second := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$2" | trim }}
-  {{- $value = dict "first" $_first "second" $_second }}
-
 {{- else }}
-  {{- fail "[example.template] value: must be map or supported string type" }}
+  {{- $_unquoted := mustRegexReplaceAll $_const.SYS.YAML_QUOTED ($_raw | trim) "$1" | trim }}
+  {{- if not (mustRegexMatch $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted) }}
+    {{- fail "[example.template] value: string does not match the supported format" }}
+  {{- end }}
+  {{- $_type := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$1") "$1" | trim }}
+  {{- $_maxSurge := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$2") "$1" | trim }}
+  {{- $_maxUnavailable := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_unquoted "$3") "$1" | trim }}
+
+  {{- if or $_type $_maxSurge $_maxUnavailable }}
+    {{- $_ := set $value "type" (ternary "Recreate" "RollingUpdate" (eq "recreate" (lower $_type))) }}
+    {{- if $_maxSurge }}
+      {{- $_ := set $value "maxSurge" $_maxSurge }}
+    {{- end }}
+    {{- if $_maxUnavailable }}
+      {{- $_ := set $value "maxUnavailable" $_maxUnavailable }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 ```
 
-示例使用当前正式常量 `APPS.DEPLOYMENT.STRATEGY` 展示精确键读取；实际模板只能使用当前 design 锁定的键路径。常量归属、行为规格、设计边界、匹配捕获与验证统一遵循 [`Helm 模板工程规则`](../rules/helm-templates.md#正则契约)。
+示例使用当前正式常量 `APPS.DEPLOYMENT.STRATEGY` 展示精确键读取：该常量为单次全量匹配，捕获组 1/2/3 依次对应 `type`、`maxSurge`、`maxUnavailable`。示例只表达槽位捕获与逐槽去引号的通用形态，具体字段生效条件、默认值与互斥关系由各自规格约束。实际模板只能使用当前 design 锁定的键路径；常量归属、行为规格、设计边界、匹配捕获与验证统一遵循 [`Helm 模板工程规则`](../rules/helm-templates.md#正则契约)。
 
 不得省略 `fromYaml`/`fromYamlArray` 的错误与真实类型检查，也不得修改未经 `mustDeepCopy` 隔离的 `.Values` 或共享输入。

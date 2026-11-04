@@ -8,7 +8,7 @@
     - replicas (integer, 可选): 缺失时使用 1，负数抑制输出，并限制在 int32 非负上限内。
     - revisionHistoryLimit (integer, 可选): 缺失时使用 10，负数抑制输出，并限制在 int32 非负上限内。
     - selector (LabelSelector, 必填): 合并基础标签后委托 definitions.labelSelector 渲染。
-    - strategy (DeploymentStrategy, 可选): 归一化 map 或字符串简写后委托 definitions.deploymentStrategy 渲染。
+    - strategy (DeploymentStrategy, 可选): 归一化 map 或字符串简写后委托 apps.deploymentStrategy 渲染。
     - template (PodTemplateSpec, 必填): 透传原始上下文并委托 core.podTemplateSpec 渲染。
 
   边界: 只输出 DeploymentSpec 当前层字段，不包含 spec 父键；不解析 LabelSelector、DeploymentStrategy 与 PodTemplateSpec 的内部结构。
@@ -210,50 +210,81 @@
   {{- end }}
   {{- include "base.field" (list "selector" $selectorOutput "base.map") }}
 
-  {{- /* strategy（DeploymentStrategy）: 可选，将 map 或字符串简写归一化后委托渲染。 */ -}}
+  {{- /* strategy（DeploymentStrategy）: 可选，将 map 或字符串简写归一化后委托 apps.deploymentStrategy 渲染。 */ -}}
   {{- $_strategyRaw := include "base.get" (list . "strategy") }}
   {{- if $_strategyRaw }}
-    {{- if eq ($_strategyRaw | trim) "null" }}
-      {{- fail "[apps.deploymentSpec] strategy: must be map or string type" }}
-    {{- end }}
     {{- $_strategyParsed := $_strategyRaw | fromYaml }}
     {{- $_strategyIsError := eq (include "base.isFromYamlError" $_strategyParsed) "true" }}
     {{- $strategy := dict }}
 
     {{- if and (not $_strategyIsError) (kindIs "map" $_strategyParsed) }}
-      {{- range $_key := list "type" "rollingUpdate" }}
-        {{- if hasKey $_strategyParsed $_key }}
-          {{- $_ := set $strategy $_key (mustDeepCopy (get $_strategyParsed $_key)) }}
+      {{- $_strategyTypeRaw := include "base.get" (list $_strategyParsed "type") | trim }}
+      {{- $strategyType := "RollingUpdate" }}
+      {{- if and $_strategyTypeRaw (ne $_strategyTypeRaw "null") }}
+        {{- $strategyType = mustRegexReplaceAll $_const.SYS.YAML_QUOTED $_strategyTypeRaw "$1" | trim }}
+        {{- if eq (lower $strategyType) "recreate" }}
+          {{- $strategyType = "Recreate" }}
+        {{- else if eq (lower $strategyType) "rollingupdate" }}
+          {{- $strategyType = "RollingUpdate" }}
+        {{- end }}
+      {{- end }}
+      {{- $_ := set $strategy "type" $strategyType }}
+
+      {{- if ne $strategyType "Recreate" }}
+        {{- $_strategyRollingUpdateRaw := include "base.get" (list $_strategyParsed "rollingUpdate") | trim }}
+        {{- if $_strategyRollingUpdateRaw }}
+          {{- $strategyRollingUpdate := $_strategyRollingUpdateRaw | fromYaml }}
+          {{- if or (eq (include "base.isFromYamlError" $strategyRollingUpdate) "true") (not (kindIs "map" $strategyRollingUpdate)) }}
+            {{- fail "[apps.deploymentSpec] strategy: rollingUpdate must be map type" }}
+          {{- end }}
+          {{- if $strategyRollingUpdate }}
+            {{- $_ := set $strategy "rollingUpdate" (mustDeepCopy $strategyRollingUpdate) }}
+          {{- end }}
         {{- end }}
       {{- end }}
 
-    {{- else if $_strategyIsError }}
-      {{- $_strategyString := mustRegexReplaceAll $_const.SYS.YAML_QUOTED ($_strategyRaw | trim) "$1" | trim }}
+    {{- else }}
+      {{- $_strategyScalar := fromYaml (printf "v: %s" ($_strategyRaw | trim)) }}
+      {{- if eq (include "base.isFromYamlError" $_strategyScalar) "true" }}
+        {{- fail "[apps.deploymentSpec] strategy: string does not match the supported strategy format" }}
+      {{- end }}
+      {{- $_strategyString := get $_strategyScalar "v" | toString | trim }}
       {{- if not (mustRegexMatch $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString) }}
         {{- fail "[apps.deploymentSpec] strategy: string does not match the supported strategy format" }}
       {{- end }}
-      {{- $_strategyType := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString "$1" | trim }}
-      {{- $_strategyRollingUpdate := mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString "$2" | trim }}
-      {{- $strategy = dict "type" $_strategyType "rollingUpdate" $_strategyRollingUpdate }}
+      {{- $_strategyType := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString "$1") "$1" | trim }}
+      {{- $_strategyMaxSurge := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString "$2") "$1" | trim }}
+      {{- $_strategyMaxUnavailable := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (mustRegexReplaceAll $_const.APPS.DEPLOYMENT.STRATEGY $_strategyString "$3") "$1" | trim }}
 
-    {{- else }}
-      {{- fail "[apps.deploymentSpec] strategy: must be map or string type" }}
+      {{- if or $_strategyType $_strategyMaxSurge $_strategyMaxUnavailable }}
+        {{- $_strategyTypeName := ternary "Recreate" "RollingUpdate" (eq "recreate" (lower $_strategyType)) }}
+        {{- $_ := set $strategy "type" $_strategyTypeName }}
+
+        {{- if eq $_strategyTypeName "RollingUpdate" }}
+          {{- $_strategyRollingUpdate := dict }}
+          {{- if $_strategyMaxSurge }}
+            {{- $_ := set $_strategyRollingUpdate "maxSurge" $_strategyMaxSurge }}
+          {{- end }}
+          {{- if $_strategyMaxUnavailable }}
+            {{- $_ := set $_strategyRollingUpdate "maxUnavailable" $_strategyMaxUnavailable }}
+          {{- end }}
+          {{- if $_strategyRollingUpdate }}
+            {{- $_ := set $strategy "rollingUpdate" $_strategyRollingUpdate }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
     {{- end }}
-    {{- $_strategyOutputRaw := include "definitions.deploymentStrategy" $strategy }}
-    {{- if not $_strategyOutputRaw }}
-      {{- fail "[apps.deploymentSpec] strategy: definitions.deploymentStrategy returned empty output" }}
+
+    {{- if $strategy }}
+      {{- $strategyOutput := include "apps.deploymentStrategy" $strategy | fromYaml }}
+      {{- if eq (include "base.isFromYamlError" $strategyOutput) "true" }}
+        {{- fail "[apps.deploymentSpec] strategy: apps.deploymentStrategy returned invalid YAML" }}
+      {{- end }}
+      {{- if not $strategyOutput }}
+        {{- fail "[apps.deploymentSpec] strategy: apps.deploymentStrategy returned empty output" }}
+      {{- end }}
+      {{- include "base.field" (list "strategy" $strategyOutput "base.map") }}
     {{- end }}
-    {{- if eq ($_strategyOutputRaw | trim) "null" }}
-      {{- fail "[apps.deploymentSpec] strategy: definitions.deploymentStrategy must return map type" }}
-    {{- end }}
-    {{- $strategyOutput := $_strategyOutputRaw | fromYaml }}
-    {{- if eq (include "base.isFromYamlError" $strategyOutput) "true" }}
-      {{- fail "[apps.deploymentSpec] strategy: definitions.deploymentStrategy returned invalid YAML" }}
-    {{- end }}
-    {{- if not (kindIs "map" $strategyOutput) }}
-      {{- fail "[apps.deploymentSpec] strategy: definitions.deploymentStrategy must return map type" }}
-    {{- end }}
-    {{- include "base.field" (list "strategy" $strategyOutput "base.map") }}
   {{- end }}
 
   {{- /* template（PodTemplateSpec）: 必填，透传原始上下文并委托渲染。 */ -}}
