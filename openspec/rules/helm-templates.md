@@ -27,7 +27,9 @@
 
 - 多层字段统一使用 `base.get`；同名 `<叶子>Alias` 由 `base.get` 自动识别并在同一数据源内优先，无需额外映射。需要按调用方指定的多路径顺序回溯时使用 `base.getWithAlias`。入参、优先级、合并和返回值解析必须遵守 [`核心模板能力调用规则`](core-capabilities.md)。
 - 字段统一使用 `base.field` 渲染；调用方必须选择真实存在且符合字段类型的渲染模板，不得臆造命名模板。
-- `include` 返回字符串。map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → `fromYaml`/`fromYamlArray` → 对应错误 helper → 按契约判断恢复后的集合是否生效 → `base.field` + `base.map`/`base.slice`”处理；单一目标类型由最终 `base.*` 渲染模板执行类型门禁，调用方不得重复同类 `kindIs`，只有多类型输入才在排除解析错误后使用 `kindIs` 选择归一化分支。不得把结构子模板直接作为 `base.field` 第三个参数。要求非空的集合不得在解析前重复检查原始空输出或 `null`；只有契约允许真实空集合、且 Helm 恢复行为会使非法原始值与空集合无法区分时，才检查原始字符串。
+- 父级通过 `include` 调用子模板获取数据时，得到的永远是 map 类型字符串，并可直接交给 `fromYaml` 使用。
+- map/list 子模板须遵循核心能力规则的解析保护和字段生效约束，按“`include` → `fromYaml`/`fromYamlArray` → 对应错误 helper → 按契约判断恢复后的集合是否生效 → `base.field` + `base.map`/`base.slice`”处理；单一目标类型由最终 `base.*` 渲染模板执行类型门禁，调用方不得重复同类 `kindIs`，只有多类型输入才在排除解析错误后使用 `kindIs` 选择归一化分支。不得把结构子模板直接作为 `base.field` 第三个参数。
+- 要求非空的集合不得在解析前重复检查原始空输出或 `null`；只有契约允许真实空集合、且 Helm 恢复行为会使非法原始值与空集合无法区分时，才检查原始字符串。
 - 必填字段不得使用默认值掩盖缺失。失败消息统一为 `[模板名] 字段路径: 错误原因`。
 - 优先使用适配版本中真实存在的 Helm/Sprig `must*` 变体。包括 mustToJson、mustToPrettyJson、mustToRawJson、mustToToml、mustRegexMatch、mustRegexFindAll、mustRegexFind、mustRegexReplaceAll、mustRegexReplaceAllLiteral、mustRegexSplit、mustDateModify、mustToDate、mustMerge、mustMergeOverwrite、mustDeepCopy、mustFirst、mustRest、mustLast、mustInitial、mustAppend、mustPrepend、mustReverse、mustUniq、mustWithout、mustHas、mustCompact、mustSlice。
 
