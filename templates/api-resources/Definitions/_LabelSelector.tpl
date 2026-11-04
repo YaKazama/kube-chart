@@ -6,15 +6,19 @@
     - matchLabels (object, 必填): 直接渲染 string 键值；缺失或非 map 中断。
 
   边界:
-    - 使用 base.get 读取字段，自动识别 matchExpressionsAlias、matchLabelsAlias；不识别 mExprs、mLabels。
-    - 归一化项委托占位模板 definitions.labelSelectorRequirement；本 change 不创建该模板、文件或 define。
-    - 只输出 matchExpressions、matchLabels，不输出 status。
+    - 使用 base.get 读取外层字段，自动识别 matchExpressionsAlias、matchLabelsAlias；不识别 mExprs、mLabels。
+    - matchExpressions 原生对象项使用 base.get 取 key、operator、values，由其内置别名识别完成非空别名优先、空别名回退规范键。
+    - 原生对象项只校验 key、operator 非空与 operator 枚举；key 的标签键语法由 definitions.labelSelectorRequirement 校验，失败消息使用其前缀。
+    - 原生对象项的 values 仅在 In、NotIn 时允许并必须非空；Exists、DoesNotExist 按 K8s 定义不接受 values，非空时中断。
+    - 归一化项委托 definitions.labelSelectorRequirement；只输出 matchExpressions、matchLabels，不输出 status。
 
   入参: 上下文 map，可包含以下字段:
     - matchExpressions      (LabelSelectorRequirement array, 可选)  字符串简写或原生 map
     - matchLabels           (object, 必填)  标签键值，值必须为 string
     - matchExpressionsAlias (LabelSelectorRequirement array, 可选)  内置别名
     - matchLabelsAlias      (object, 可选)  内置别名
+
+  原生对象项入参: 可包含 key、keyAlias、operator、operatorAlias、values、valuesAlias。
 
   返回值: 可嵌入 selector 下的 LabelSelector YAML 字段片段；非法入参中断渲染。
 
@@ -72,26 +76,16 @@
       {{- end }}
 
     {{- else if kindIs "map" $_expression }}
-      {{- if not (hasKey $_expression "key") }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: required field is missing" $index) }}
+      {{- $_keyRaw := include "base.get" (list $_expression "key") | trim }}
+      {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_keyRaw)).v) }}
+        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: must be string type, got '%s'" $index $_keyRaw) }}
       {{- end }}
-      {{- $key = get $_expression "key" }}
-      {{- if not (kindIs "string" $key) }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: must be string type" $index) }}
-      {{- end }}
-      {{- $key = trim $key }}
-      {{- if eq $key "" }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: must not be empty" $index) }}
+      {{- $key = mustRegexReplaceAll $const.SYS.YAML_QUOTED $_keyRaw "$1" | trim }}
+      {{- if empty $key }}
+        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: required field is missing or empty" $index) }}
       {{- end }}
 
-      {{- if not (hasKey $_expression "operator") }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].operator: required field is missing" $index) }}
-      {{- end }}
-      {{- $_operatorRaw := get $_expression "operator" }}
-      {{- if not (kindIs "string" $_operatorRaw) }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].operator: must be string type" $index) }}
-      {{- end }}
-      {{- $_operatorToken := lower (trim $_operatorRaw) }}
+      {{- $_operatorToken := lower (mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list $_expression "operator") | trim) "$1" | trim) }}
       {{- if eq $_operatorToken "in" }}
         {{- $operator = "In" }}
       {{- else if eq $_operatorToken "notin" }}
@@ -104,30 +98,18 @@
         {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].operator: must be one of In, NotIn, Exists, DoesNotExist" $index) }}
       {{- end }}
 
+      {{- $valuesRaw = mustWithout (include "base.get" (list $_expression "values") | fromYamlArray) nil }}
+
       {{- if or (eq $operator "In") (eq $operator "NotIn") }}
-        {{- if not (hasKey $_expression "values") }}
+        {{- if not $valuesRaw }}
           {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: required for %s" $index $operator) }}
         {{- end }}
-        {{- $valuesRaw = get $_expression "values" }}
-        {{- if not (kindIs "slice" $valuesRaw) }}
+        {{- if eq (include "base.isFromYamlArrayError" $valuesRaw) "true" }}
           {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: must be array type" $index) }}
         {{- end }}
-        {{- range $_value := $valuesRaw }}
-          {{- if not (kindIs "string" $_value) }}
-            {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: items must be string type" $index) }}
-          {{- end }}
-        {{- end }}
         {{- $hasValues = true }}
-
-      {{- else if hasKey $_expression "values" }}
-        {{- $_values := get $_expression "values" }}
-        {{- if kindIs "slice" $_values }}
-          {{- if gt (len $_values) 0 }}
-            {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: must be empty for %s" $index $operator) }}
-          {{- end }}
-        {{- else if not (kindIs "invalid" $_values) }}
-          {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: must be array type for %s" $index $operator) }}
-        {{- end }}
+      {{- else if $valuesRaw }}
+        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].values: must be empty for %s" $index $operator) }}
       {{- end }}
 
     {{- else }}
