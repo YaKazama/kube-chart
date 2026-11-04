@@ -147,19 +147,19 @@
 {{- /*
   判断 fromYamlArray 返回值是否为错误 slice。
 
-  行为: 仅当非空 slice 的首个元素包含 "error"（忽略大小写）时返回 "true"。
+  行为: 仅当首个元素转为 string 后包含 "error"（忽略大小写）时返回 "true"。
 
-  入参: 任意类型的 fromYamlArray 返回值。
+  入参: `fromYamlArray` 返回值（slice）。
 
-  边界: 只识别 Helm 的 fromYamlArray 错误形态，不解析错误内容。
+  边界: 只识别 Helm 的 fromYamlArray 错误形态，不解析错误内容；非 slice 输入由 `first` 直接中断渲染。
 
   返回值: 布尔字符串。
 
   示例:
     {{- include "base.isFromYamlArrayError" (list "error converting YAML to JSON") }}  // true
     {{- include "base.isFromYamlArrayError" (list "a" "b") }}                        // false
+    {{- include "base.isFromYamlArrayError" (list 3 "a") }}                           // false
 */ -}}
 {{- define "base.isFromYamlArrayError" -}}
-  {{- $_val := first . | default "" }}
-  {{- and (ne (len .) 0) (or (contains "error" $_val) (contains "Error" $_val)) }}
+  {{- contains "error" (first . | toString | lower) }}
 {{- end }}

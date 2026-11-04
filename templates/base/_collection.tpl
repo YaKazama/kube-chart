@@ -412,7 +412,7 @@
         {{- end }}
       {{- end }}
       {{- $clean = concat $clean $valTmp }}
-    {{- else if or (kindIs "float64" $v) (kindIs "int" $v) (kindIs "int64" $v) }}
+    {{- else if or (kindIs "float64" $v) (kindIs "int" $v) (kindIs "int64" $v) (kindIs "bool" $v) }}
       {{- $clean = mustAppend $clean $v }}
     {{- else }}
       {{- fail (printf "[base.slice.cleanup] element: unsupported type '%s'" (kindOf $v)) }}
