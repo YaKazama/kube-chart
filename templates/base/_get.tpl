@@ -4,7 +4,7 @@
   行为:
     - 按 上下文自身 > .Context > .Values > .Values.global 的优先级取值。
     - 每个数据源内部，非空同级 <叶子>Alias 先于规范键生效，空别名回退规范键；别名不跨数据源。
-    - 标量取首个非空值；Map 和 slice 按合并模式跨数据源合并，并支持必填校验与类型转换。
+    - 标量取首个非空值（显式 null 视为空）；Map 和 slice 按合并模式跨数据源合并，并支持必填校验与类型转换。
     - 调试模式输出取值过程。
 
   合并模式:
@@ -163,7 +163,8 @@
     {{- /* 6.4 处理第一个有效值 */}}
     {{- if not $firstType }}
       {{- if eq $currentType "basic" }}
-        {{- if and (kindIs "string" $val) (eq $val "") }}
+        {{- /* 标量空值（包括显式 YAML null）不命中，继续回溯低优先级数据源。 */ -}}
+        {{- if or (kindIs "invalid" $val) (and (kindIs "string" $val) (eq $val "")) }}
           {{- continue }}
         {{- end }}
         {{- $res = $val }}
