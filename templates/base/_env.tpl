@@ -51,6 +51,9 @@ K8S:
 APPS:
   DEPLOYMENT:
     STRATEGY: "^(?:((?i:recreate|rollingupdate)|\"\"|''))?(?:\\s*[\\s:,/|*^@#]+\\s*|\\s*)(\"\"|''|\\d+%?)?(?:\\s*[\\s:,/|*^@#]+\\s*|\\s*)(\"\"|''|\\d+%?)?$"
+  ROLLING_UPDATE:
+    MAX_SURGE: "^\\d+(?:%)?$"
+    MAX_UNAVAILABLE: "^(?:\\d+|0*(?:100|\\d{1,2})%)$"
 API_GROUP:
   GROUP_VERSION_DISCOVERY: "^(\\S+\\/\\S+) +([a-z0-9][a-z0-9.]*)$"
   SERVER_ADDRESS_BY_CLIENT_CIDR: "^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?:/\\d{1,2})?)\\s+(\\S+)$"
