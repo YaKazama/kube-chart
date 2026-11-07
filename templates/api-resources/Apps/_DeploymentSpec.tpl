@@ -217,7 +217,7 @@
     {{- $_strategyIsError := eq (include "base.isFromYamlError" $_strategyParsed) "true" }}
     {{- $strategy := dict }}
 
-    {{- if and (not $_strategyIsError) (kindIs "map" $_strategyParsed) }}
+    {{- if not $_strategyIsError }}
       {{- $_strategyTypeRaw := include "base.get" (list $_strategyParsed "type") | trim }}
       {{- $strategyType := "RollingUpdate" }}
       {{- if and $_strategyTypeRaw (ne $_strategyTypeRaw "null") }}

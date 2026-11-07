@@ -331,7 +331,7 @@
     {{- $_clRaw := include "base.get" (list . "labels") }}
     {{- if and $_clRaw (ne $_clRaw "null") (ne $_clRaw "{}") (ne $_clRaw "[]") }}
       {{- $_clParsed := $_clRaw | fromYaml }}
-      {{- if and $_clParsed (eq (include "base.isFromYamlError" $_clParsed) "false") (kindIs "map" $_clParsed) }}
+      {{- if and $_clParsed (eq (include "base.isFromYamlError" $_clParsed) "false") }}
         {{- $customLabels = $_clParsed }}
       {{- end }}
     {{- end }}
@@ -341,7 +341,7 @@
       {{- $_hlOutRaw := include "base.helmLabels" . }}
       {{- if and $_hlOutRaw (ne $_hlOutRaw "null") (ne $_hlOutRaw "{}") (ne $_hlOutRaw "[]") }}
         {{- $_hlOutParsed := $_hlOutRaw | fromYaml }}
-        {{- if and $_hlOutParsed (eq (include "base.isFromYamlError" $_hlOutParsed) "false") (kindIs "map" $_hlOutParsed) }}
+        {{- if and $_hlOutParsed (eq (include "base.isFromYamlError" $_hlOutParsed) "false") }}
           {{- $helmLabels = $_hlOutParsed }}
         {{- end }}
       {{- end }}
