@@ -73,7 +73,7 @@
     {{- end }}
   {{- end }}
 
-  {{- /* affinity（Affinity, 可选）: 只保留三个官方键，同级字段补缺且 affinity 内值优先。 */ -}}
+  {{- /* affinity（Affinity, 可选）: 内部逐键识别同级别名后归一化为规范键，同级字段补缺且 affinity 内值优先。 */ -}}
   {{- $affinity := dict }}
   {{- $_affinityRaw := include "base.get" (list . "affinity") | trim }}
   {{- if $_affinityRaw }}
@@ -81,7 +81,18 @@
     {{- if eq (include "base.isFromYamlError" $_affinityParsed) "true" }}
       {{- fail "[core.podSpec] affinity: must be map type" }}
     {{- end }}
-    {{- $affinity = mustDeepCopy (pick $_affinityParsed "nodeAffinity" "podAffinity" "podAntiAffinity") }}
+    {{- range $_key := list "nodeAffinity" "podAffinity" "podAntiAffinity" }}
+      {{- $_innerRaw := include "base.get" (list $_affinityParsed $_key) | trim }}
+      {{- if $_innerRaw }}
+        {{- $_innerParsed := $_innerRaw | fromYaml }}
+        {{- if eq (include "base.isFromYamlError" $_innerParsed) "true" }}
+          {{- fail (printf "[core.podSpec] affinity.%s: must be map type" $_key) }}
+        {{- end }}
+        {{- if $_innerParsed }}
+          {{- $_ := set $affinity $_key (mustDeepCopy $_innerParsed) }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
   {{- end }}
   {{- $affinitySiblings := dict }}
   {{- range $_key := list "nodeAffinity" "podAffinity" "podAntiAffinity" }}
