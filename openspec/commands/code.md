@@ -14,6 +14,8 @@
 - `spec.md`、`design.md` 和 `tasks.md` 必须完整且无阻塞冲突，当前 draft、spec、design 和 tasks 通过四向闭包。
 - Requirement、Scenario、设计决策、依赖契约、代码边界或 task 存在会影响当前修改的歧义、无效路径、未决项或冲突时，停止相关修改。
 - 所有影响验收、接口、行为和任务边界的决策必须已写入 draft、spec、design 或 tasks。聊天历史可以帮助理解和实施，不能替代制品；缺失时提示先执行 `/opsx:explore` 或 `/opsx:sync` 沉淀。
+- 依赖契约的 availability、operation 和代码边界由 `/opsx:spec` 基于公共模板现状闭合，本动作只消费该结论，不重新分析公共模板能力。
+- 实施中直接观察到 design 记录的依赖可用性、能力、入参/返回边界或 source 与当前事实不符时，停止相关修改并报告不符项，提示先执行 `/opsx:spec` 修正依赖契约与代码边界。
 
 ## 上下文
 
@@ -24,9 +26,10 @@
 ## 输出
 
 - 按 tasks 的依赖顺序实施，只修改 design 中 `access: write` 的文件和 writable scope；`access: read` 文件不得修改。
+- 已由公共模板提供的能力只能复用，不得在本次修改中内联或重复实现；未经 design 以 `add | update | remove | rename` 授权，不得新增、改写或占位公共模板（`base.*`、`definitions.*` 和同 API 组既有模板）。
 - 每个文件写入后确认目标存在、内容已生成，并对本次已变更精确文件执行冲突标记、文件末尾换行和明显语法结构检查。
 - 不在本动作执行 `helm template`、全 Chart lint 或发布检查；需要实际渲染的验证 task 保持未勾选，并提示 `/opsx:verify <change-id>`。
 - 实施 task 的代码结果和对应静态检查均完成后，才把 checkbox 从 `[ ]` 改为 `[x]`；不得改写 task 文本或顺序。
 - 需要扩大 write boundary、改变 spec/design 或新增 task 时停止越界部分，不用临时推断补齐。
-- 会话报告修改文件、已完成与未完成 task、明显静态检查结果，以及 `规格影响`、`设计影响`、`任务影响`。每项明确为“无”“已有制品已覆盖”或“需要先沉淀”。
+- 会话报告修改文件、已完成与未完成 task、明显静态检查结果，以及 `规格影响`、`设计影响`、`任务影响`。每项明确为“无”“已有制品已覆盖”或“需要先沉淀”；`设计影响` 为“需要先沉淀”时必须点名与当前事实不符的依赖契约项及实际缺口，由 `/opsx:spec` 重新复核公共模板后修正。
 - 本动作不改动 spec frontmatter，不声明 Helm 验证、归档核对或发布检查通过。

@@ -42,6 +42,7 @@
 - 单一 map/list 目标类型排除解析错误后，直接交给 `base.map`/`base.slice` 等最终渲染模板执行类型门禁，调用方不得重复同类 `kindIs`。
 - 无需 YAML 恢复的 string 通常直接交给选定的 `base.*` 渲染模板，不在调用方重复其类型校验。
 - string、map、list 等多类型输入必须先排除解析错误，再使用 `kindIs` 按真实类型选择归一化分支；禁止以 `fromYaml` 是否返回非空作为类型判断。
+- `fromYaml` 成功即保证结果是 map（`null`、`~`、`{}` 等标量或空输入解析为空 map），`fromYamlArray` 成功即保证结果是 list；对恢复结果再判断 `kindIs "map"` 或 `kindIs "slice"` 属于重复类型检查，不得写入。`kindIs` 只允许用于多类型输入的分支选择，或判断未经 YAML 恢复的原始元素（例如数组元素本身可能是 string 或 map）。
 
 ## Kubernetes 共用入口
 

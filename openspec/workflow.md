@@ -63,8 +63,8 @@ frontmatter 和正文归属统一遵循 [`rules/change-documents.md`](rules/chan
 
 - `/opsx:new` 只在确切 change 路径不存在时新建目录和 `draft.md`。
 - `/opsx:explore` 把已形成的共识写回 draft 或用户指定笔记；未形成共识时把开放问题明确写入文件。
-- `/opsx:spec` 要求 draft 存在。目标制品不存在时创建，存在时逐项对比、更新、补全并输出差异与冲突；不能闭包时保留可验证的既有内容并报告缺口，不宣称完成。
-- `/opsx:code` 要求三制品完整、闭包且无阻塞冲突。所有影响验收、接口、行为和任务边界的决策必须已存在于 draft、spec、design 或 tasks；缺失时停止相关修改并建议 `/opsx:explore` 或 `/opsx:sync`。
+- `/opsx:spec` 要求 draft 存在。目标制品不存在时创建，存在时逐项对比、更新、补全并输出差异与冲突；不能闭包时保留可验证的既有内容并报告缺口，不宣称完成。公共模板的存在性与能力复核、依赖契约的 `availability` 和 `operation` 判定属于本动作。
+- `/opsx:code` 要求三制品完整、闭包且无阻塞冲突。所有影响验收、接口、行为和任务边界的决策必须已存在于 draft、spec、design 或 tasks；缺失时停止相关修改并建议 `/opsx:explore` 或 `/opsx:sync`。本动作只消费 design 已闭合的依赖契约，不重新分析公共模板能力；实施中发现契约与事实不符时停止并建议 `/opsx:spec`。
 - `/opsx:verify` 只验证当前 change 已变更模板及必要依赖，不修改代码；实际通过后可以勾选精确对应的验证 task。
 - `/opsx:sync` 在同一个动作内输出代码事实、制品差异、回写结果、疑似冲突、未回写项和闭包结论；执行命令即已授权回写，但不得修改正式代码或用户文档。
 - `/opsx:docs` 只把正式实现支持的行为写入最终用户文档；带 change-id 时限定该 change，不带时处理全部归档内容。
