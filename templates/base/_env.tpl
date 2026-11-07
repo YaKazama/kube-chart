@@ -17,6 +17,7 @@ EMPTY_STR: ""
 SPLIT:
   ALL: "\\s*[\\s:,./|*^@#-]+\\s*"
   COMMA: "\\s*,\\s*"
+  SPACE_COMMA: "\\s*[,\\s]+\\s*"
 TYPES:
   INT: "^[+-]?\\d+$"
   POSITIVE_INT: "^\\d+$"
@@ -38,6 +39,8 @@ K8S:
   QUANTITY: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
+  VOLUME:
+    SHORT: "^((?i:cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi))(?:\\s+(.*?))(?:\\s+(.*?))?$"
   SELECTOR:
     EQUALITY_FOR_APPS: "^([A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?)(?:\\s+([=]{1,2}|!=))(?:\\s+([A-Za-z0-9._-]+))$"
     # 集合选择器 (In/NotIn, 操作符大小写不敏感, 捕获 key/op/values)
