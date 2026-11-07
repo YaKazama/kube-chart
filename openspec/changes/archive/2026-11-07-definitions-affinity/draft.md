@@ -1,6 +1,6 @@
 ---
 change-id: definitions-affinity
-updated_at: "2026-11-07T14:34:43Z"
+updated_at: "2026-11-07T15:44:47Z"
 ---
 
 # Definitions Affinity
@@ -40,7 +40,7 @@ nodeAffinity:
   required:
     - matchExpressions:
         - a = b
-    - matchFields:
+      matchFields:
         - key: fields
           operator: NotIn
           values:
