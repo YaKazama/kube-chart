@@ -61,10 +61,10 @@
     {{- fail "[definitions.podAffinityTerm] matchLabelKeys: must be array type" }}
   {{- end }}
   {{- $matchLabelKeys := list }}
-  {{- range $_item := $_matchLabelKeysRaw }}
+  {{- range $index, $_item := $_matchLabelKeysRaw }}
     {{- $_key := toString $_item | trim }}
     {{- if $_key }}
-      {{- $matchLabelKeys = mustAppend $matchLabelKeys (include "base.labelKey" $_key) }}
+      {{- $matchLabelKeys = mustAppend $matchLabelKeys (include "base.labelKey" (list $_key "definitions.podAffinityTerm" (printf "matchLabelKeys[%d]" $index))) }}
     {{- end }}
   {{- end }}
   {{- $matchLabelKeys = mustUniq $matchLabelKeys }}
@@ -78,10 +78,10 @@
     {{- fail "[definitions.podAffinityTerm] mismatchLabelKeys: must be array type" }}
   {{- end }}
   {{- $mismatchLabelKeys := list }}
-  {{- range $_item := $_mismatchLabelKeysRaw }}
+  {{- range $index, $_item := $_mismatchLabelKeysRaw }}
     {{- $_key := toString $_item | trim }}
     {{- if $_key }}
-      {{- $mismatchLabelKeys = mustAppend $mismatchLabelKeys (include "base.labelKey" $_key) }}
+      {{- $mismatchLabelKeys = mustAppend $mismatchLabelKeys (include "base.labelKey" (list $_key "definitions.podAffinityTerm" (printf "mismatchLabelKeys[%d]" $index))) }}
     {{- end }}
   {{- end }}
   {{- $mismatchLabelKeys = mustUniq $mismatchLabelKeys }}
@@ -131,6 +131,6 @@
   {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_topologyKeyRaw)).v) }}
     {{- fail (printf "[definitions.podAffinityTerm] topologyKey: must be string type, got '%s'" $_topologyKeyRaw) }}
   {{- end }}
-  {{- $topologyKey := include "base.labelKey" (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_topologyKeyRaw "$1") }}
+  {{- $topologyKey := include "base.labelKey" (list (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_topologyKeyRaw "$1") "definitions.podAffinityTerm" "topologyKey") }}
   {{- include "base.field" (list "topologyKey" $topologyKey "base.rawString") }}
 {{- end }}

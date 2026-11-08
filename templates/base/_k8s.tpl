@@ -238,45 +238,66 @@
 {{- /*
   校验 Kubernetes 标签键语法并返回原值。
 
-  行为: 先 trim，再按单个斜杠拆分为可选的 prefix 段与必填的 name 段；段数超过 2、name 段不满足 KEY_NAME_FOR_APPS、prefix 段不满足 KEY_PREFIX_FOR_APPS 或 prefix 段超过 253 字符时立即中断渲染。
+  行为: 入参为 list [标签键, 调用方模板名, 调用方字段路径]；先 trim，再按单个斜杠拆分为可选的 prefix 段与必填的 name 段；标签键不是 string、段数超过 2、name 段不满足 KEY_NAME_FOR_APPS、prefix 段不满足 KEY_PREFIX_FOR_APPS 或 prefix 段超过 253 字符时立即中断渲染。
 
-  入参: string 标签键，可带 `<prefix>/` 前缀，例如 `app.kubernetes.io/name`。
+  入参: list [标签键, 调用方模板名, 调用方字段路径]；标签键为 string，可带首尾空白与可选 `<prefix>/` 前缀；后两项为非空 string。
 
-  边界: 只校验语法，不判断标签键是否存在于对象，也不解析标签值。
+  边界: 只校验语法，不判断标签键是否存在于对象，也不解析标签值；失败消息统一使用调用方模板名与字段路径，不保留本模板或 base.string.verify 的消息前缀。
 
   返回值: trim 后且校验通过的标签键字符串。
 
   示例:
-    {{- include "base.labelKey" "app.kubernetes.io/name" }}  // app.kubernetes.io/name
-    {{- include "base.labelKey" "zone" }}                   // zone
-    {{- include "base.labelKey" "a/b/c" }}                  // [base.labelKey] value: 'a/b/c' allows at most one '/' separator
-    {{- include "base.labelKey" "-zone" }}                  // [base.string.verify] parameter 0 (data): regex ... does not match, got '-zone' (kind: string)
-    {{- include "base.labelKey" 42 }}                       // [base.labelKey] value: expected string type, got '42' (kind: int)
+    {{- include "base.labelKey" (list "app.kubernetes.io/name" "definitions.foo" "key") }}  // app.kubernetes.io/name
+    {{- include "base.labelKey" (list "zone" "definitions.foo" "key") }}                  // zone
+    {{- include "base.labelKey" (list "a/b/c" "definitions.foo" "key") }}                 // [definitions.foo] key: 'a/b/c' allows at most one '/' separator
+    {{- include "base.labelKey" (list "-zone" "definitions.foo" "key") }}                 // [definitions.foo] key: '-zone' does not match label key name syntax
+    {{- include "base.labelKey" (list 42 "definitions.foo" "key") }}                      // [base.labelKey] parameter 0 (key): expected string type, got '42' (kind: int)
 */ -}}
 {{- define "base.labelKey" -}}
-  {{- /* 快速失败: 仅接受字符串, 使用 kindOf 一次获取避免重复反射 */ -}}
-  {{- $type := kindOf . }}
-  {{- if ne $type "string" }}
-    {{- fail (printf "[base.labelKey] value: expected string type, got '%v' (kind: %s)" . $type) }}
+  {{- /* 快速失败: 入参必须为长度 3 的 slice，模板名与字段路径必须为非空 string */ -}}
+  {{- if not (and (kindIs "slice" .) (eq (len .) 3)) }}
+    {{- fail (printf "[base.labelKey] parameter: expected list with 3 elements (key, template, path), got '%v' (kind: %s)" . (kindOf .)) }}
   {{- end }}
 
-  {{- $const := include "base.env" "" | fromYaml }}
-  {{- $key := trim . }}
-
-  {{- /* 按单个斜杠拆分; 段数超限由本模板报错, 段内语法委托 base.string.verify */ -}}
-  {{- $segments := splitList "/" $key }}
-  {{- if gt (len $segments) 2 }}
-    {{- fail (printf "[base.labelKey] value: '%s' allows at most one '/' separator" $key) }}
-  {{- end }}
-  {{- $_ := include "base.string.verify" (list (mustLast $segments) $const.K8S.SELECTOR.KEY_NAME_FOR_APPS) }}
-  {{- if eq (len $segments) 2 }}
-    {{- $prefix := include "base.string.verify" (list (mustFirst $segments) $const.K8S.SELECTOR.KEY_PREFIX_FOR_APPS) }}
-    {{- if gt (len $prefix) 253 }}
-      {{- fail (printf "[base.labelKey] prefix: '%s' exceeds 253 characters" $prefix) }}
+  {{- $key := index . 0 }}
+  {{- $template := index . 1 }}
+  {{- $path := index . 2 }}
+  {{- range $_i, $_v := list $template $path }}
+    {{- if not (and (kindIs "string" $_v) $_v) }}
+      {{- fail (printf "[base.labelKey] parameter %d: expected non-empty string, got '%v' (kind: %s)" (add1 $_i) $_v (kindOf $_v)) }}
     {{- end }}
   {{- end }}
 
-  {{- $key }}
+  {{- if not (kindIs "string" $key) }}
+    {{- fail (printf "[base.labelKey] parameter 0 (key): expected string type, got '%v' (kind: %s)" $key (kindOf $key)) }}
+  {{- end }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- $value := trim $key }}
+
+  {{- /* 按单个斜杠拆分; 段数超过 2 立即中断 */ -}}
+  {{- $segments := splitList "/" $value }}
+  {{- if gt (len $segments) 2 }}
+    {{- fail (printf "[%s] %s: '%s' allows at most one '/' separator" $template $path $value) }}
+  {{- end }}
+
+  {{- /* name 段校验: 首尾字母或数字，中间允许 -、_、.，1-63 字符 */ -}}
+  {{- if not (mustRegexMatch $const.K8S.SELECTOR.KEY_NAME_FOR_APPS (mustLast $segments)) }}
+    {{- fail (printf "[%s] %s: '%s' does not match label key name syntax" $template $path $value) }}
+  {{- end }}
+
+  {{- /* prefix 段校验: 点分隔小写 DNS 标签，总长不超过 253 字符 */ -}}
+  {{- if eq (len $segments) 2 }}
+    {{- $prefix := mustFirst $segments }}
+    {{- if not (mustRegexMatch $const.K8S.SELECTOR.KEY_PREFIX_FOR_APPS $prefix) }}
+      {{- fail (printf "[%s] %s: '%s' does not match label key prefix syntax" $template $path $value) }}
+    {{- end }}
+    {{- if gt (len $prefix) 253 }}
+      {{- fail (printf "[%s] %s: prefix '%s' exceeds 253 characters" $template $path $prefix) }}
+    {{- end }}
+  {{- end }}
+
+  {{- $value }}
 {{- end }}
 
 

@@ -134,26 +134,11 @@
         {{- end }}
 
         {{- if not $skip }}
-          {{- /* key（string, 必填）: 至多一个 /，名称段与前缀段分别校验，前缀不超过 253 字符。 */ -}}
+          {{- /* key（string, 必填）: 空值先按必填缺失中断，其余语法交由 base.labelKey 校验，失败消息使用本模板名与条目字段路径。 */ -}}
           {{- if eq $key "" }}
             {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: required field is missing or empty" $_name $index) }}
           {{- end }}
-          {{- $_segments := splitList "/" $key }}
-          {{- if gt (len $_segments) 2 }}
-            {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: '%s' allows at most one '/' separator" $_name $index $key) }}
-          {{- end }}
-          {{- if not (mustRegexMatch $const.K8S.SELECTOR.KEY_NAME_FOR_APPS (mustLast $_segments)) }}
-            {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: '%s' does not match label key name syntax" $_name $index $key) }}
-          {{- end }}
-          {{- if eq (len $_segments) 2 }}
-            {{- $_prefix := mustFirst $_segments }}
-            {{- if not (mustRegexMatch $const.K8S.SELECTOR.KEY_PREFIX_FOR_APPS $_prefix) }}
-              {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: '%s' does not match label key prefix syntax" $_name $index $key) }}
-            {{- end }}
-            {{- if gt (len $_prefix) 253 }}
-              {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: prefix '%s' exceeds 253 characters" $_name $index $_prefix) }}
-            {{- end }}
-          {{- end }}
+          {{- $key = include "base.labelKey" (list $key "definitions.nodeSelectorTerm" (printf "%s[%d].key" $_name $index)) }}
 
           {{- /* values（string array, 视 operator 可选）: In、NotIn 必须非空；Exists、DoesNotExist 必须为空；Gt、Lt 必须恰好一个整数。 */ -}}
           {{- if or (eq $operator "In") (eq $operator "NotIn") }}
