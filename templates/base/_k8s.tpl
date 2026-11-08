@@ -236,6 +236,51 @@
 
 
 {{- /*
+  校验 Kubernetes 标签键语法并返回原值。
+
+  行为: 先 trim，再按单个斜杠拆分为可选的 prefix 段与必填的 name 段；段数超过 2、name 段不满足 KEY_NAME_FOR_APPS、prefix 段不满足 KEY_PREFIX_FOR_APPS 或 prefix 段超过 253 字符时立即中断渲染。
+
+  入参: string 标签键，可带 `<prefix>/` 前缀，例如 `app.kubernetes.io/name`。
+
+  边界: 只校验语法，不判断标签键是否存在于对象，也不解析标签值。
+
+  返回值: trim 后且校验通过的标签键字符串。
+
+  示例:
+    {{- include "base.labelKey" "app.kubernetes.io/name" }}  // app.kubernetes.io/name
+    {{- include "base.labelKey" "zone" }}                   // zone
+    {{- include "base.labelKey" "a/b/c" }}                  // [base.labelKey] value: 'a/b/c' allows at most one '/' separator
+    {{- include "base.labelKey" "-zone" }}                  // [base.string.verify] parameter 0 (data): regex ... does not match, got '-zone' (kind: string)
+    {{- include "base.labelKey" 42 }}                       // [base.labelKey] value: expected string type, got '42' (kind: int)
+*/ -}}
+{{- define "base.labelKey" -}}
+  {{- /* 快速失败: 仅接受字符串, 使用 kindOf 一次获取避免重复反射 */ -}}
+  {{- $type := kindOf . }}
+  {{- if ne $type "string" }}
+    {{- fail (printf "[base.labelKey] value: expected string type, got '%v' (kind: %s)" . $type) }}
+  {{- end }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- $key := trim . }}
+
+  {{- /* 按单个斜杠拆分; 段数超限由本模板报错, 段内语法委托 base.string.verify */ -}}
+  {{- $segments := splitList "/" $key }}
+  {{- if gt (len $segments) 2 }}
+    {{- fail (printf "[base.labelKey] value: '%s' allows at most one '/' separator" $key) }}
+  {{- end }}
+  {{- $_ := include "base.string.verify" (list (mustLast $segments) $const.K8S.SELECTOR.KEY_NAME_FOR_APPS) }}
+  {{- if eq (len $segments) 2 }}
+    {{- $prefix := include "base.string.verify" (list (mustFirst $segments) $const.K8S.SELECTOR.KEY_PREFIX_FOR_APPS) }}
+    {{- if gt (len $prefix) 253 }}
+      {{- fail (printf "[base.labelKey] prefix: '%s' exceeds 253 characters" $prefix) }}
+    {{- end }}
+  {{- end }}
+
+  {{- $key }}
+{{- end }}
+
+
+{{- /*
   生成符合 RFC1035 的 chart 名称。
 
   行为:
