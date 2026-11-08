@@ -23,87 +23,132 @@
     {{- include "definitions.nodeAffinity" (dict "requiredDuringSchedulingIgnoredDuringExecution" (list (dict "matchExpressions" (list (dict "key" "a" "operator" "In" "values" (list "b")))))) }}
 */ -}}
 {{- define "definitions.nodeAffinity" -}}
-  {{- $fields := list
-        (dict "kind" "preferredDuringSchedulingIgnoredDuringExecution" "template" "definitions.preferredSchedulingTerm" "mode" "term")
-        (dict "kind" "requiredDuringSchedulingIgnoredDuringExecution" "template" "definitions.nodeSelector" "mode" "nodeSelector") }}
 
-  {{- /* preferredDuringSchedulingIgnoredDuringExecution、requiredDuringSchedulingIgnoredDuringExecution（可选）: 按固定顺序取值、归一化 term 并委托，两种模式的 term 归一化同构仅委托形态不同。 */ -}}
-  {{- range $_field := $fields }}
-    {{- $kind := $_field.kind }}
-    {{- $_raw := include "base.get" (list $ $kind "" "" false false) | trim }}
-    {{- if $_raw }}
-      {{- $_terms := fromYamlArray $_raw }}
-      {{- if eq (include "base.isFromYamlArrayError" $_terms) "true" }}
-        {{- fail (printf "[definitions.nodeAffinity] %s: must be array type" $kind) }}
+  {{- /* preferredDuringSchedulingIgnoredDuringExecution（PreferredSchedulingTerm array, 可选）: 元素必须为 map，matchExpressions 与 matchFields 归一化后连同必填 weight 逐项委托 definitions.preferredSchedulingTerm。 */ -}}
+  {{- $_preferredRaw := include "base.get" (list $ "preferredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
+  {{- if $_preferredRaw }}
+    {{- $_preferred := fromYamlArray $_preferredRaw }}
+    {{- if eq (include "base.isFromYamlArrayError" $_preferred) "true" }}
+      {{- fail "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution: must be array type" }}
+    {{- end }}
+
+    {{- $terms := list }}
+    {{- range $index, $_term := $_preferred }}
+      {{- if not (kindIs "map" $_term) }}
+        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d]: must be map type, got '%s'" $index (kindOf $_term)) }}
       {{- end }}
 
-      {{- $terms := list }}
-      {{- range $index, $_term := $_terms }}
-        {{- if not (kindIs "map" $_term) }}
-          {{- fail (printf "[definitions.nodeAffinity] %s[%d]: must be map type, got '%s'" $kind $index (kindOf $_term)) }}
-        {{- end }}
-
-        {{- /* matchExpressions、matchFields（NodeSelectorRequirement array, 可选）: 识别同级 *Alias 后按规范键写入本项，为空时不写入。 */ -}}
-        {{- $cleaned := dict }}
-        {{- range $_name := list "matchExpressions" "matchFields" }}
-          {{- $_matchRaw := include "base.get" (list $_term $_name) | trim }}
-          {{- if $_matchRaw }}
-            {{- $_match := fromYamlArray $_matchRaw }}
-            {{- if eq (include "base.isFromYamlArrayError" $_match) "true" }}
-              {{- fail (printf "[definitions.nodeAffinity] %s[%d].%s: must be array type" $kind $index $_name) }}
-            {{- end }}
-            {{- if $_match }}
-              {{- $_ := set $cleaned $_name $_match }}
-            {{- end }}
-          {{- end }}
-        {{- end }}
-
-        {{- /* weight（integer, 必填）: 只校验存在性与标量形态，取值与范围由 definitions.preferredSchedulingTerm 校验。 */ -}}
-        {{- $entry := $cleaned }}
-        {{- if eq $_field.mode "term" }}
-          {{- $_weightRaw := include "base.get" (list $_term "weight") | trim }}
-          {{- if not $_weightRaw }}
-            {{- fail (printf "[definitions.nodeAffinity] %s[%d].weight: required field is missing or empty" $kind $index) }}
-          {{- end }}
-          {{- $_weightScalar := fromYaml (printf "v: %s" $_weightRaw) }}
-          {{- if eq (include "base.isFromYamlError" $_weightScalar) "true" }}
-            {{- fail (printf "[definitions.nodeAffinity] %s[%d].weight: must be scalar type" $kind $index) }}
-          {{- end }}
-          {{- $_weightValue := get $_weightScalar "v" }}
-          {{- if or (kindIs "map" $_weightValue) (kindIs "slice" $_weightValue) }}
-            {{- fail (printf "[definitions.nodeAffinity] %s[%d].weight: must be scalar type" $kind $index) }}
-          {{- end }}
-          {{- $entry = dict "weight" $_weightValue "preference" $cleaned }}
-        {{- end }}
-
-        {{- $terms = mustAppend $terms $entry }}
+      {{- /* matchExpressions、matchFields（NodeSelectorRequirement array, 可选）: 各自识别同级 *Alias，为空时省略对应键。 */ -}}
+      {{- $_matchExpressions := include "definitions.nodeAffinity.matchList" (list $_term "preferredDuringSchedulingIgnoredDuringExecution" "matchExpressions" $index) | fromYamlArray }}
+      {{- $_matchFields := include "definitions.nodeAffinity.matchList" (list $_term "preferredDuringSchedulingIgnoredDuringExecution" "matchFields" $index) | fromYamlArray }}
+      {{- $preference := dict }}
+      {{- if $_matchExpressions }}
+        {{- $_ := set $preference "matchExpressions" $_matchExpressions }}
+      {{- end }}
+      {{- if $_matchFields }}
+        {{- $_ := set $preference "matchFields" $_matchFields }}
       {{- end }}
 
-      {{- if $terms }}
-
-        {{- /* preferred 逐项委托，required 包裹为 nodeSelectorTerms 整体委托；两者均以 base.field 输出。 */ -}}
-        {{- if eq $_field.mode "term" }}
-          {{- $rendered := list }}
-          {{- range $index, $_term := $terms }}
-            {{- $_termRendered := include $_field.template $_term | fromYaml }}
-            {{- if eq (include "base.isFromYamlError" $_termRendered) "true" }}
-              {{- fail (printf "[definitions.nodeAffinity] %s[%d]: %s returned invalid YAML" $kind $index $_field.template) }}
-            {{- end }}
-            {{- $rendered = mustAppend $rendered $_termRendered }}
-          {{- end }}
-          {{- include "base.field" (list $kind $rendered "base.slice") }}
-
-        {{- else }}
-          {{- $_rendered := include $_field.template (dict "nodeSelectorTerms" $terms) | fromYaml }}
-          {{- if eq (include "base.isFromYamlError" $_rendered) "true" }}
-            {{- fail (printf "[definitions.nodeAffinity] %s: %s returned invalid YAML" $kind $_field.template) }}
-          {{- end }}
-          {{- if $_rendered }}
-            {{- include "base.field" (list $kind $_rendered "base.map") }}
-          {{- end }}
-        {{- end }}
-
+      {{- /* weight（integer, 必填）: 只校验存在性与标量形态，取值与范围由 definitions.preferredSchedulingTerm 校验。 */ -}}
+      {{- $_weightRaw := include "base.get" (list $_term "weight") | trim }}
+      {{- if not $_weightRaw }}
+        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: required field is missing or empty" $index) }}
       {{- end }}
+      {{- $_weightScalar := fromYaml (printf "v: %s" $_weightRaw) }}
+      {{- if eq (include "base.isFromYamlError" $_weightScalar) "true" }}
+        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: must be scalar type" $index) }}
+      {{- end }}
+      {{- $_weightValue := get $_weightScalar "v" }}
+      {{- if or (kindIs "map" $_weightValue) (kindIs "slice" $_weightValue) }}
+        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: must be scalar type" $index) }}
+      {{- end }}
+
+      {{- $terms = mustAppend $terms (dict "weight" $_weightValue "preference" $preference) }}
+    {{- end }}
+
+    {{- if $terms }}
+      {{- /* 逐项委托 definitions.preferredSchedulingTerm，返回值排除 YAML 解析错误后以 base.field 输出。 */ -}}
+      {{- $rendered := list }}
+      {{- range $index, $_term := $terms }}
+        {{- $_termRendered := include "definitions.preferredSchedulingTerm" $_term | fromYaml }}
+        {{- if eq (include "base.isFromYamlError" $_termRendered) "true" }}
+          {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d]: definitions.preferredSchedulingTerm returned invalid YAML" $index) }}
+        {{- end }}
+        {{- $rendered = mustAppend $rendered $_termRendered }}
+      {{- end }}
+      {{- include "base.field" (list "preferredDuringSchedulingIgnoredDuringExecution" $rendered "base.slice") }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* requiredDuringSchedulingIgnoredDuringExecution（NodeSelectorTerm array, 可选）: 元素必须为 map，matchExpressions 与 matchFields 归一化后包裹为 nodeSelectorTerms 整体委托 definitions.nodeSelector。 */ -}}
+  {{- $_requiredRaw := include "base.get" (list $ "requiredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
+  {{- if $_requiredRaw }}
+    {{- $_required := fromYamlArray $_requiredRaw }}
+    {{- if eq (include "base.isFromYamlArrayError" $_required) "true" }}
+      {{- fail "[definitions.nodeAffinity] requiredDuringSchedulingIgnoredDuringExecution: must be array type" }}
+    {{- end }}
+
+    {{- $terms := list }}
+    {{- range $index, $_term := $_required }}
+      {{- if not (kindIs "map" $_term) }}
+        {{- fail (printf "[definitions.nodeAffinity] requiredDuringSchedulingIgnoredDuringExecution[%d]: must be map type, got '%s'" $index (kindOf $_term)) }}
+      {{- end }}
+
+      {{- /* matchExpressions、matchFields（NodeSelectorRequirement array, 可选）: 各自识别同级 *Alias，为空时省略对应键。 */ -}}
+      {{- $_matchExpressions := include "definitions.nodeAffinity.matchList" (list $_term "requiredDuringSchedulingIgnoredDuringExecution" "matchExpressions" $index) | fromYamlArray }}
+      {{- $_matchFields := include "definitions.nodeAffinity.matchList" (list $_term "requiredDuringSchedulingIgnoredDuringExecution" "matchFields" $index) | fromYamlArray }}
+      {{- $term := dict }}
+      {{- if $_matchExpressions }}
+        {{- $_ := set $term "matchExpressions" $_matchExpressions }}
+      {{- end }}
+      {{- if $_matchFields }}
+        {{- $_ := set $term "matchFields" $_matchFields }}
+      {{- end }}
+
+      {{- $terms = mustAppend $terms $term }}
+    {{- end }}
+
+    {{- if $terms }}
+      {{- /* 包裹为 nodeSelectorTerms 整体委托 definitions.nodeSelector，返回值排除 YAML 解析错误后以 base.field 输出。 */ -}}
+      {{- $_rendered := include "definitions.nodeSelector" (dict "nodeSelectorTerms" $terms) | fromYaml }}
+      {{- if eq (include "base.isFromYamlError" $_rendered) "true" }}
+        {{- fail "[definitions.nodeAffinity] requiredDuringSchedulingIgnoredDuringExecution: definitions.nodeSelector returned invalid YAML" }}
+      {{- end }}
+      {{- if $_rendered }}
+        {{- include "base.field" (list "requiredDuringSchedulingIgnoredDuringExecution" $_rendered "base.map") }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- /*
+  归一化单个 NodeSelectorTerm 元素中的 matchExpressions 或 matchFields。
+
+  行为: 经 base.get 取值（保留默认别名识别），非空时解析为 array；取值不是 array 时中断，解析结果为空时输出空字符串。
+
+  入参: list [元素 map, 子结构名, 字段名, 元素下标]。
+
+  边界: 只做单个字段的取值、类型门禁与解析；不校验数组元素内部结构，也不判断元素本身是否为 map。
+
+  返回值: 可 fromYamlArray 解析的 YAML 列表文本；字段缺失、为空或解析为空时为空字符串。
+
+  示例:
+    {{- include "definitions.nodeAffinity.matchList" (list $term "nodeAffinity" "matchExpressions" 0) | fromYamlArray }}
+*/ -}}
+{{- define "definitions.nodeAffinity.matchList" -}}
+  {{- $term := index . 0 }}
+  {{- $kind := index . 1 }}
+  {{- $name := index . 2 }}
+  {{- $index := index . 3 }}
+
+  {{- $_raw := include "base.get" (list $term $name) | trim }}
+  {{- if $_raw }}
+    {{- $_match := fromYamlArray $_raw }}
+    {{- if eq (include "base.isFromYamlArrayError" $_match) "true" }}
+      {{- fail (printf "[definitions.nodeAffinity] %s[%d].%s: must be array type" $kind $index $name) }}
+    {{- end }}
+    {{- if $_match }}
+      {{- toYamlPretty $_match }}
     {{- end }}
   {{- end }}
 {{- end }}
