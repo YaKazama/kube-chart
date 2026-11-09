@@ -40,5 +40,5 @@ docs/
 .gitattributes
 .gitignore
 AGENTS.md
-**/.github
-**/.screenshots
+.github
+.screenshots
