@@ -12,7 +12,7 @@
     - required 元素只透传 map 本体；weight、topologyKey、labelSelector、namespaceSelector、matchLabelKeys、namespaces 等字段语义由子模板负责。
     - 字段取值不是 array 时中断；元素为 null 或空 map 时跳过；元素不是 map 时中断。
     - 子模板返回值不是合法 YAML 时中断；字段无有效元素时不输出该字段，两个字段均无有效内容时输出空字符串，不输出空 map。
-    - 本层失败消息统一使用 [definitions.podAntiAffinity] 前缀；委托子模板抛出的失败消息原样传播，不捕获、不改写。
+    - 本层及其私有辅助模板的失败消息使用各自模板名，委托子模板抛出的失败消息原样传播，不捕获、不改写。
 
   入参: 上下文 map，由 definitions.affinity 传入，可包含以下字段:
     - preferredDuringSchedulingIgnoredDuringExecution (WeightedPodAffinityTerm array, 可选) 软性 Pod 反亲和性
@@ -55,7 +55,7 @@
   {{- if $_raw }}
     {{- $_terms := fromYamlArray $_raw }}
     {{- if eq (include "base.isFromYamlArrayError" $_terms) "true" }}
-      {{- fail (printf "[definitions.podAntiAffinity] %s: must be array type" $kind) }}
+      {{- fail (printf "[definitions.podAntiAffinity.termList] %s: must be array type" $kind) }}
     {{- end }}
 
     {{- $rendered := list }}
@@ -65,13 +65,13 @@
           {{- /* 委托子模板: 直接使用列表的 map 元素本体，不包装、不拆分。 */ -}}
           {{- $_termRendered := include $termTemplate $_term | fromYaml }}
           {{- if eq (include "base.isFromYamlError" $_termRendered) "true" }}
-            {{- fail (printf "[definitions.podAntiAffinity] %s[%d]: %s returned invalid YAML" $kind $index $termTemplate) }}
+            {{- fail (printf "[definitions.podAntiAffinity.termList] %s[%d]: %s returned invalid YAML" $kind $index $termTemplate) }}
           {{- end }}
           {{- $rendered = mustAppend $rendered $_termRendered }}
         {{- end }}
 
       {{- else if not (kindIs "invalid" $_term) }}
-        {{- fail (printf "[definitions.podAntiAffinity] %s[%d]: must be map type, got '%s'" $kind $index (kindOf $_term)) }}
+        {{- fail (printf "[definitions.podAntiAffinity.termList] %s[%d]: must be map type, got '%s'" $kind $index (kindOf $_term)) }}
       {{- end }}
     {{- end }}
 
@@ -104,7 +104,7 @@
   {{- if $_raw }}
     {{- $_terms := fromYamlArray $_raw }}
     {{- if eq (include "base.isFromYamlArrayError" $_terms) "true" }}
-      {{- fail (printf "[definitions.podAntiAffinity] %s: must be array type" $kind) }}
+      {{- fail (printf "[definitions.podAntiAffinity.weightedTermList] %s: must be array type" $kind) }}
     {{- end }}
 
     {{- $rendered := list }}
@@ -115,13 +115,13 @@
           {{- $context := include "definitions.podAntiAffinity.weightedTerm" (list $_term $kind $index) | fromYaml }}
           {{- $_termRendered := include $termTemplate $context | fromYaml }}
           {{- if eq (include "base.isFromYamlError" $_termRendered) "true" }}
-            {{- fail (printf "[definitions.podAntiAffinity] %s[%d]: %s returned invalid YAML" $kind $index $termTemplate) }}
+            {{- fail (printf "[definitions.podAntiAffinity.weightedTermList] %s[%d]: %s returned invalid YAML" $kind $index $termTemplate) }}
           {{- end }}
           {{- $rendered = mustAppend $rendered $_termRendered }}
         {{- end }}
 
       {{- else if not (kindIs "invalid" $_term) }}
-        {{- fail (printf "[definitions.podAntiAffinity] %s[%d]: must be map type, got '%s'" $kind $index (kindOf $_term)) }}
+        {{- fail (printf "[definitions.podAntiAffinity.weightedTermList] %s[%d]: must be map type, got '%s'" $kind $index (kindOf $_term)) }}
       {{- end }}
     {{- end }}
 
@@ -154,10 +154,10 @@
   {{- /* weight（integer, 必填）: 默认别名识别支持 weightAlias；原始 YAML 文本直接匹配 TYPES.INT，带引号数字、浮点及其他类型一律中断，范围由子模板校验。 */ -}}
   {{- $_weightRaw := include "base.get" (list $term "weight") | trim }}
   {{- if not $_weightRaw }}
-    {{- fail (printf "[definitions.podAntiAffinity] %s[%d].weight: required field is missing or empty" $kind $index) }}
+    {{- fail (printf "[definitions.podAntiAffinity.weightedTerm] %s[%d].weight: required field is missing or empty" $kind $index) }}
   {{- end }}
   {{- if not (mustRegexMatch $const.TYPES.INT $_weightRaw) }}
-    {{- fail (printf "[definitions.podAntiAffinity] %s[%d].weight: must be integer type, got '%s'" $kind $index $_weightRaw) }}
+    {{- fail (printf "[definitions.podAntiAffinity.weightedTerm] %s[%d].weight: must be integer type, got '%s'" $kind $index $_weightRaw) }}
   {{- end }}
   {{- $weight := int64 $_weightRaw }}
 
@@ -167,10 +167,10 @@
   {{- if $_podTermRaw }}
     {{- $_parsed := fromYaml $_podTermRaw }}
     {{- if eq (include "base.isFromYamlError" $_parsed) "true" }}
-      {{- fail (printf "[definitions.podAntiAffinity] %s[%d].podAffinityTerm: must be map type" $kind $index) }}
+      {{- fail (printf "[definitions.podAntiAffinity.weightedTerm] %s[%d].podAffinityTerm: must be map type" $kind $index) }}
     {{- end }}
     {{- if not (kindIs "map" $_parsed) }}
-      {{- fail (printf "[definitions.podAntiAffinity] %s[%d].podAffinityTerm: must be map type, got '%s'" $kind $index (kindOf $_parsed)) }}
+      {{- fail (printf "[definitions.podAntiAffinity.weightedTerm] %s[%d].podAffinityTerm: must be map type, got '%s'" $kind $index (kindOf $_parsed)) }}
     {{- end }}
     {{- if $_parsed }}
       {{- $podTerm = $_parsed }}
@@ -184,7 +184,7 @@
   {{- $_ := unset $rest "podAffinityTerm" }}
   {{- $_ := mustMerge $podTerm $rest }}
   {{- if not $podTerm }}
-    {{- fail (printf "[definitions.podAntiAffinity] %s[%d].podAffinityTerm: required field is missing or empty" $kind $index) }}
+    {{- fail (printf "[definitions.podAntiAffinity.weightedTerm] %s[%d].podAffinityTerm: required field is missing or empty" $kind $index) }}
   {{- end }}
 
   {{- toYamlPretty (dict "weight" $weight "podAffinityTerm" $podTerm) }}
