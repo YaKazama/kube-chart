@@ -7,7 +7,7 @@
     - mismatchLabelKeys (string array, 可选): 同 matchLabelKeys。
     - namespaceSelector (LabelSelector, 可选): 同 labelSelector。
     - namespaces (string array, 可选): 经 base.get 取值，按逗号或空白拆分并剔除空项，逐项按 RFC1123 校验、去重后归一为 string 列表，再以 base.field 输出。
-    - topologyKey (string, 必填): 经 base.get 必填取值，还原 YAML 标量类型确认 string 后剥离引号并按标签键语法校验，最后以 base.field 输出。
+    - topologyKey (string, 必填): 经 base.get 必填取值并按 YAML 标量语义解码，再按标签键语法校验，最后以 base.field 输出。
 
   边界:
     - 只识别六个规范键；base.get 默认开启别名识别，因此 <键名>Alias 隐式生效，本模板不额外实现别名映射。
@@ -126,11 +126,7 @@
     {{- end }}
   {{- end }}
 
-  {{- /* topologyKey（string, 必填）: 必填取值后还原 YAML 标量类型确认 string，剥离引号后按标签键语法校验；缺失、非 string 或语法非法时中断。 */ -}}
-  {{- $_topologyKeyRaw := include "base.get" (list $ "topologyKey" "" "" true) | trim }}
-  {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_topologyKeyRaw)).v) }}
-    {{- fail (printf "[definitions.podAffinityTerm] topologyKey: must be string type, got '%s'" $_topologyKeyRaw) }}
-  {{- end }}
-  {{- $topologyKey := include "base.labelKey" (list (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_topologyKeyRaw "$1") "definitions.podAffinityTerm" "topologyKey") }}
+  {{- /* topologyKey（string, 必填）: 必填取值后按 YAML 标量语义解码，再按标签键语法校验；缺失、非 string 或语法非法时中断。 */ -}}
+  {{- $topologyKey := include "base.labelKey" (list (include "base.string.normalize" (include "base.get" (list $ "topologyKey" "" "" true)) | trim) "definitions.podAffinityTerm" "topologyKey") }}
   {{- include "base.field" (list "topologyKey" $topologyKey "base.rawString") }}
 {{- end }}

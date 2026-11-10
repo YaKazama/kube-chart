@@ -3,7 +3,7 @@
 
   行为 (按 K8s API 规范字段顺序):
     - hostnames (string array, 可选): 元素按空白或逗号拆分并逐项校验 DNS 域名格式、去重后输出，单标签纯数字与非字符串元素中断。
-    - ip (string, 可选): 按标准 IPv4 或 IPv6 校验后以带引号标量输出，避免父级 YAML 解析歧义。
+    - ip (string, 可选): 按 YAML 标量语义解码后按标准 IPv4 或 IPv6 校验，通过后以带引号标量输出，避免父级 YAML 解析歧义。
 
   边界:
     - 只输出 hostnames 与 ip，不包含父级键；hostAliases 数组的循环、条目级合并与去重由调用方负责。
@@ -22,8 +22,8 @@
 {{- define "definitions.hostAlias" -}}
   {{- $const := include "base.env" "" | fromYaml }}
 
-  {{- /* ip（string, 可选）: 剥离 YAML 标量引号并 trim；非字符串值无法匹配后续整体锚定表达式，由格式校验收口。 */ -}}
-  {{- $ip := mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list . "ip") | trim) "$1" | trim }}
+  {{- /* ip（string, 可选）: 按 YAML 标量语义解码并 trim；非字符串值由 base.string.normalize 中断，可匹配范围由后续整体锚定表达式收口。 */ -}}
+  {{- $ip := include "base.string.normalize" (include "base.get" (list . "ip")) | trim }}
 
   {{- /* hostnames（string array, 可选）: fromYamlArray 恢复后排除解析错误，再委托 base.slice.cleanup 拆分、校验与去重。 */ -}}
   {{- $_hostnamesRaw := include "base.get" (list . "hostnames") | fromYamlArray }}

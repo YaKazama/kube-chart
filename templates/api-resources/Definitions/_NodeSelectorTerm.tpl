@@ -122,16 +122,12 @@
           {{- $skip = false }}
         {{- end }}
 
-      {{- /* 原生 map 条目：base.get 取值与别名识别，operator 输入大小写不敏感地映射为六个规范枚举。 */ -}}
+      {{- /* 原生 map 条目：base.get 取值与别名识别，base.string.normalize 解码后把 operator 输入大小写不敏感地映射为六个规范枚举。 */ -}}
       {{- else if kindIs "map" $_item }}
         {{- if $_item }}
-          {{- $_keyText := include "base.get" (list $_item "key") | trim }}
-          {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_keyText)).v) }}
-            {{- fail (printf "[definitions.nodeSelectorTerm] %s[%d].key: must be string type, got '%s'" $name $index $_keyText) }}
-          {{- end }}
-          {{- $key = mustRegexReplaceAll $const.SYS.YAML_QUOTED $_keyText "$1" | trim }}
+          {{- $key = include "base.string.normalize" (include "base.get" (list $_item "key")) | trim }}
 
-          {{- $_operatorToken := lower (mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list $_item "operator") | trim) "$1" | trim) }}
+          {{- $_operatorToken := lower (include "base.string.normalize" (include "base.get" (list $_item "operator")) | trim) }}
           {{- if eq $_operatorToken "in" }}
             {{- $operator = "In" }}
           {{- else if eq $_operatorToken "notin" }}

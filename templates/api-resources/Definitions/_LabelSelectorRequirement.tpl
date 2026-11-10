@@ -2,8 +2,8 @@
   渲染 Kubernetes LabelSelectorRequirement 字段片段。
 
   行为 (按 K8s API 规范字段顺序):
-    - key (string, 必填): 经 base.get 取值（内含必填校验与别名识别），去除 YAML 标量引号后由 base.labelKey 校验标签键语法；缺失、为 null 或空字符串中断。
-    - operator (string, 必填): 经 base.get 取值（内含必填校验与别名识别），枚举通过 base.field 的允许值列表校验；缺失、为 null、空字符串或取值超出允许范围中断。
+    - key (string, 必填): 经 base.get 取值（内含必填校验与别名识别），按 YAML 标量语义解码后由 base.labelKey 校验标签键语法；缺失、为 null 或空字符串中断。
+    - operator (string, 必填): 经 base.get 取值（内含必填校验与别名识别），按 YAML 标量语义解码后由 base.field 的允许值列表校验枚举；缺失、为 null、空字符串或取值超出允许范围中断。
     - values (string array, 可选): 转换后为空时不输出该字段；非 array 中断，元素统一转为 string。
 
   边界:
@@ -27,18 +27,12 @@
     {{- include "definitions.labelSelectorRequirement" (dict "key" "app.kubernetes.io/name" "operator" "In" "values" (list "web" "api")) }}
 */ -}}
 {{- define "definitions.labelSelectorRequirement" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- /* key（string, 必填）: base.get 承担多层取值、别名识别与必填校验，还原 YAML 标量类型确认 string 并去引号，标签键语法交由 base.labelKey 校验。 */ -}}
-  {{- $_keyRaw := include "base.get" (list . "key" "" "" true) | trim }}
-  {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_keyRaw)).v) }}
-    {{- fail (printf "[definitions.labelSelectorRequirement] key: must be string type, got '%s'" $_keyRaw) }}
-  {{- end }}
-  {{- $key := include "base.labelKey" (list (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_keyRaw "$1") "definitions.labelSelectorRequirement" "key") }}
+  {{- /* key（string, 必填）: base.get 承担多层取值、别名识别与必填校验，base.string.normalize 按 YAML 标量语义解码，标签键语法交由 base.labelKey 校验。 */ -}}
+  {{- $key := include "base.labelKey" (list (include "base.string.normalize" (include "base.get" (list . "key" "" "" true)) | trim) "definitions.labelSelectorRequirement" "key") }}
   {{- include "base.field" (list "key" $key "base.rawString") }}
 
-  {{- /* operator（string, 必填）: base.get 承担取值与必填校验，剥离 YAML 标量引号后由 base.field 的允许值列表校验。 */ -}}
-  {{- $operator := mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list . "operator" "" "" true) | trim) "$1" | trim }}
+  {{- /* operator（string, 必填）: base.get 承担取值与必填校验，base.string.normalize 解码后由 base.field 的允许值列表校验。 */ -}}
+  {{- $operator := include "base.string.normalize" (include "base.get" (list . "operator" "" "" true)) | trim }}
   {{- include "base.field" (list "operator" $operator "" (list "In" "NotIn" "Exists" "DoesNotExist")) }}
 
   {{- /* values（string array, 可选）: 缺失、空 array 与 null 均不输出；非 array 中断，元素统一转为 string，转换后为空也按空处理。 */ -}}

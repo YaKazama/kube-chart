@@ -76,16 +76,12 @@
       {{- end }}
 
     {{- else if kindIs "map" $_expression }}
-      {{- $_keyRaw := include "base.get" (list $_expression "key") | trim }}
-      {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_keyRaw)).v) }}
-        {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: must be string type, got '%s'" $index $_keyRaw) }}
-      {{- end }}
-      {{- $key = mustRegexReplaceAll $const.SYS.YAML_QUOTED $_keyRaw "$1" | trim }}
+      {{- $key = include "base.string.normalize" (include "base.get" (list $_expression "key")) | trim }}
       {{- if empty $key }}
         {{- fail (printf "[definitions.labelSelector] matchExpressions[%d].key: required field is missing or empty" $index) }}
       {{- end }}
 
-      {{- $_operatorToken := lower (mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list $_expression "operator") | trim) "$1" | trim) }}
+      {{- $_operatorToken := lower (include "base.string.normalize" (include "base.get" (list $_expression "operator")) | trim) }}
       {{- if eq $_operatorToken "in" }}
         {{- $operator = "In" }}
       {{- else if eq $_operatorToken "notin" }}

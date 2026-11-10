@@ -8,6 +8,8 @@
   边界:
     - 入参是父级已清洗的策略 map，本模板不解析字符串简写，不为 *Alias 增加专有处理，不校验入参形态与 rollingUpdate 内部结构。
     - type 为空时仅按隐式默认值 RollingUpdate 决定 rollingUpdate 是否渲染，不输出任何替代取值。
+    - type 不是 string 时由 base.string.normalize 中断，失败消息使用其自身前缀。
+    - type 为字面字符串 null 时不再视为未设置，而按枚举校验中断。
     - type 为 Recreate 时不读取 rollingUpdate，入参内容与类型均不判定。
     - 子模板返回的无效 YAML 由本模板中断；非 map 由 base.map 中断。
     - 不输出 status 或其他字段。
@@ -22,13 +24,8 @@
     {{- include "apps.deploymentStrategy" (dict "type" "Recreate") }}
 */ -}}
 {{- define "apps.deploymentStrategy" -}}
-  {{- $const := include "base.env" "" | fromYaml }}
-
-  {{- /* type（string, 可选）: 剥离 YAML 标量引号后归并缺失、null 与空字符串，供字段生效条件与枚举校验使用。 */ -}}
-  {{- $type := mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list . "type") | trim) "$1" | trim }}
-  {{- if eq $type "null" }}
-    {{- $type = "" }}
-  {{- end }}
+  {{- /* type（string, 可选）: 按 YAML 标量语义解码后仅供字段生效条件与枚举校验使用；缺失、YAML null 与空字符串均归并为空，字面字符串 null 交由枚举校验拒绝。 */ -}}
+  {{- $type := include "base.string.normalize" (include "base.get" (list . "type")) | trim }}
 
   {{- /* rollingUpdate（RollingUpdateDeployment, 可选）: type 不为 Recreate 且入参非空时原样委托 apps.rollingUpdateDeployment，子模板返回空时不输出。 */ -}}
   {{- if ne $type "Recreate" }}

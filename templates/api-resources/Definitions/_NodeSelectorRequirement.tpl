@@ -2,8 +2,8 @@
   渲染 Kubernetes NodeSelectorRequirement 字段片段。
 
   行为 (按 K8s API 规范字段顺序):
-    - key (string, 必填): 经 base.get 必填模式取值（内含别名识别与必填校验），确认 string 类型后剥离 YAML 外层引号；类型不符或为空时中断。
-    - operator (string, 必填): 与 key 同链路取值与类型校验，六个枚举由 base.field 的允许值列表校验，大小写敏感。
+    - key (string, 必填): 经 base.get 必填模式取值（内含别名识别与必填校验），按 YAML 标量语义解码；类型不符或为空时中断。
+    - operator (string, 必填): 与 key 同链路取值与解码，六个枚举由 base.field 的允许值列表校验，大小写敏感。
     - values (string array, 可选): 经 base.get 取值、fromYamlArray 恢复与错误保护后统一转为 string；非 array 中断。In、NotIn、Gt、Lt 分支内校验并输出该字段，Exists、DoesNotExist 分支只校验其为空，不进入渲染路径。
 
   边界:
@@ -31,14 +31,10 @@
   {{- if . }}
     {{- $const := include "base.env" "" | fromYaml }}
 
-    {{- /* key、operator（string, 必填）: base.get 承担取值、别名识别与必填校验，剥离 YAML 外层引号并 trim 后暂存；类型不符或归一化后为空时中断。 */ -}}
+    {{- /* key、operator（string, 必填）: base.get 承担取值、别名识别与必填校验，base.string.normalize 按 YAML 标量语义解码并 trim 后暂存；类型不符或归一化后为空时中断。 */ -}}
     {{- $scalars := dict }}
     {{- range $_name := list "key" "operator" }}
-      {{- $_raw := include "base.get" (list $ $_name "" "" true) | trim }}
-      {{- if not (kindIs "string" (fromYaml (printf "v: %s" $_raw)).v) }}
-        {{- fail (printf "[definitions.nodeSelectorRequirement] %s: must be string type, got '%s'" $_name $_raw) }}
-      {{- end }}
-      {{- $_value := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_raw "$1" | trim }}
+      {{- $_value := include "base.string.normalize" (include "base.get" (list $ $_name "" "" true)) | trim }}
       {{- if eq $_value "" }}
         {{- fail (printf "[definitions.nodeSelectorRequirement] %s: required field is missing or empty" $_name) }}
       {{- end }}

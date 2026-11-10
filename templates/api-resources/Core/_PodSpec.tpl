@@ -19,11 +19,11 @@
 
   {{- /* os（PodOS, 可选）: 字符串补齐 name，原生对象原样复制，供 PodOS、容器和 PodSecurityContext 复用。 */ -}}
   {{- $os := dict }}
-  {{- $_osRaw := include "base.get" (list . "os") | trim }}
+  {{- $_osRaw := include "base.get" (list . "os") }}
   {{- if $_osRaw }}
     {{- $_osParsed := $_osRaw | fromYaml }}
     {{- if eq (include "base.isFromYamlError" $_osParsed) "true" }}
-      {{- $_osName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED $_osRaw "$1" | trim }}
+      {{- $_osName := include "base.string.normalize" $_osRaw | trim }}
       {{- if not $_osName }}
         {{- fail "[core.podSpec] os: must be string or map type" }}
       {{- end }}
@@ -49,7 +49,7 @@
   {{- end }}
 
   {{- /* hostnameOverride（string, 可选）: 先取值，供互斥约束和字段渲染共同使用。 */ -}}
-  {{- $hostnameOverride := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "hostnameOverride") | trim) "$1" | trim }}
+  {{- $hostnameOverride := include "base.string.normalize" (include "base.get" (list . "hostnameOverride")) | trim }}
 
   {{- /* 跨字段互斥约束在任何字段输出前完成。 */ -}}
   {{- if and (get $bools "hostPID") (get $bools "shareProcessNamespace") }}
@@ -62,14 +62,12 @@
     {{- fail "[core.podSpec] hostnameOverride: conflicting with setHostnameAsFQDN" }}
   {{- end }}
 
-  {{- /* activeDeadlineSeconds（integer, 可选）: 仅正整数生效，0 不输出。 */ -}}
-  {{- $activeDeadlineSeconds := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "activeDeadlineSeconds") | trim) "$1" | trim }}
-  {{- if $activeDeadlineSeconds }}
-    {{- if not (mustRegexMatch $_const.TYPES.POSITIVE_INT $activeDeadlineSeconds) }}
-      {{- fail (printf "[core.podSpec] activeDeadlineSeconds: must be a positive integer, got '%s'" $activeDeadlineSeconds) }}
-    {{- end }}
-    {{- if gt (atoi $activeDeadlineSeconds) 0 }}
-      {{- include "base.field" (list "activeDeadlineSeconds" (include "base.int.positive" $activeDeadlineSeconds) "base.int") }}
+  {{- /* activeDeadlineSeconds（integer, 可选）: 只接受原生整数，仅正整数生效，0 不输出。 */ -}}
+  {{- $_activeDeadlineSecondsRaw := include "base.get" (list . "activeDeadlineSeconds") }}
+  {{- if $_activeDeadlineSecondsRaw }}
+    {{- $_activeDeadlineSecondsValue := int (include "base.int.range" (list (int (include "base.int" $_activeDeadlineSecondsRaw)) 0)) }}
+    {{- if gt $_activeDeadlineSecondsValue 0 }}
+      {{- include "base.field" (list "activeDeadlineSeconds" $_activeDeadlineSecondsValue "base.int") }}
     {{- end }}
   {{- end }}
 
@@ -154,7 +152,7 @@
   {{- include "base.field" (list "containers" $containers "base.slice") }}
 
   {{- /* dnsPolicy（string, 可选）: 按 Kubernetes 枚举校验。 */ -}}
-  {{- $dnsPolicy := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "dnsPolicy") | trim) "$1" | trim }}
+  {{- $dnsPolicy := include "base.string.normalize" (include "base.get" (list . "dnsPolicy")) | trim }}
   {{- if $dnsPolicy }}
     {{- include "base.field" (list "dnsPolicy" $dnsPolicy "base.string" (list "ClusterFirstWithHostNet" "ClusterFirst" "Default" "None")) }}
   {{- end }}
@@ -216,7 +214,7 @@
   {{- end }}
 
   {{- /* hostname（string, 可选）: 按 RFC 1035 单段名称校验。 */ -}}
-  {{- $hostname := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "hostname") | trim) "$1" | trim }}
+  {{- $hostname := include "base.string.normalize" (include "base.get" (list . "hostname")) | trim }}
   {{- if $hostname }}
     {{- include "base.field" (list "hostname" (include "base.rfc" (list $hostname "1035")) "quote") }}
   {{- end }}
@@ -283,7 +281,7 @@
   {{- end }}
 
   {{- /* nodeName（string, 可选）: 非空时输出原字符串。 */ -}}
-  {{- $nodeName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "nodeName") | trim) "$1" | trim }}
+  {{- $nodeName := include "base.string.normalize" (include "base.get" (list . "nodeName")) | trim }}
   {{- if $nodeName }}
     {{- include "base.field" (list "nodeName" $nodeName "quote") }}
   {{- end }}
@@ -309,13 +307,13 @@
   {{- end }}
 
   {{- /* preemptionPolicy（string, 可选）: 按 Kubernetes 枚举校验。 */ -}}
-  {{- $preemptionPolicy := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "preemptionPolicy") | trim) "$1" | trim }}
+  {{- $preemptionPolicy := include "base.string.normalize" (include "base.get" (list . "preemptionPolicy")) | trim }}
   {{- if $preemptionPolicy }}
     {{- include "base.field" (list "preemptionPolicy" $preemptionPolicy "base.string" (list "Never" "PreemptLowerPriority")) }}
   {{- end }}
 
   {{- /* priorityClassName（string, 可选）: 非空时输出，不限制枚举。 */ -}}
-  {{- $priorityClassName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "priorityClassName") | trim) "$1" | trim }}
+  {{- $priorityClassName := include "base.string.normalize" (include "base.get" (list . "priorityClassName")) | trim }}
   {{- if $priorityClassName }}
     {{- include "base.field" (list "priorityClassName" $priorityClassName "quote") }}
   {{- end }}
@@ -403,19 +401,19 @@
   {{- end }}
 
   {{- /* restartPolicy（string, 可选）: 按 Kubernetes 枚举校验。 */ -}}
-  {{- $restartPolicy := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "restartPolicy") | trim) "$1" | trim }}
+  {{- $restartPolicy := include "base.string.normalize" (include "base.get" (list . "restartPolicy")) | trim }}
   {{- if $restartPolicy }}
     {{- include "base.field" (list "restartPolicy" $restartPolicy "base.string" (list "Always" "Never" "OnFailure")) }}
   {{- end }}
 
   {{- /* runtimeClassName（string, 可选）: 非空时输出原字符串。 */ -}}
-  {{- $runtimeClassName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "runtimeClassName") | trim) "$1" | trim }}
+  {{- $runtimeClassName := include "base.string.normalize" (include "base.get" (list . "runtimeClassName")) | trim }}
   {{- if $runtimeClassName }}
     {{- include "base.field" (list "runtimeClassName" $runtimeClassName "quote") }}
   {{- end }}
 
   {{- /* schedulerName（string, 可选）: 非空时输出原字符串。 */ -}}
-  {{- $schedulerName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "schedulerName") | trim) "$1" | trim }}
+  {{- $schedulerName := include "base.string.normalize" (include "base.get" (list . "schedulerName")) | trim }}
   {{- if $schedulerName }}
     {{- include "base.field" (list "schedulerName" $schedulerName "quote") }}
   {{- end }}
@@ -438,7 +436,7 @@
   {{- end }}
 
   {{- /* serviceAccountName（string, 可选）: 非空时输出原字符串。 */ -}}
-  {{- $serviceAccountName := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "serviceAccountName") | trim) "$1" | trim }}
+  {{- $serviceAccountName := include "base.string.normalize" (include "base.get" (list . "serviceAccountName")) | trim }}
   {{- if $serviceAccountName }}
     {{- include "base.field" (list "serviceAccountName" $serviceAccountName "quote") }}
   {{- end }}
@@ -454,18 +452,15 @@
   {{- end }}
 
   {{- /* subdomain（string, 可选）: 非空时输出原字符串并保持字符串类型。 */ -}}
-  {{- $subdomain := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "subdomain") | trim) "$1" | trim }}
+  {{- $subdomain := include "base.string.normalize" (include "base.get" (list . "subdomain")) | trim }}
   {{- if $subdomain }}
     {{- include "base.field" (list "subdomain" $subdomain "quote") }}
   {{- end }}
 
-  {{- /* terminationGracePeriodSeconds（integer, 可选）: 接受非负整数，显式 0 也输出。 */ -}}
-  {{- $terminationGracePeriodSeconds := mustRegexReplaceAll $_const.SYS.YAML_QUOTED (include "base.get" (list . "terminationGracePeriodSeconds") | trim) "$1" | trim }}
-  {{- if $terminationGracePeriodSeconds }}
-    {{- if not (mustRegexMatch $_const.TYPES.POSITIVE_INT $terminationGracePeriodSeconds) }}
-      {{- fail (printf "[core.podSpec] terminationGracePeriodSeconds: must be a non-negative integer, got '%s'" $terminationGracePeriodSeconds) }}
-    {{- end }}
-    {{- include "base.field" (list "terminationGracePeriodSeconds" (include "base.int.positive" $terminationGracePeriodSeconds) "base.int") }}
+  {{- /* terminationGracePeriodSeconds（integer, 可选）: 只接受原生整数，非负整数均输出，显式 0 也输出。 */ -}}
+  {{- $_terminationGracePeriodSecondsRaw := include "base.get" (list . "terminationGracePeriodSeconds") }}
+  {{- if $_terminationGracePeriodSecondsRaw }}
+    {{- include "base.field" (list "terminationGracePeriodSeconds" (int (include "base.int.range" (list (int (include "base.int" $_terminationGracePeriodSecondsRaw)) 0))) "base.int") }}
   {{- end }}
 
   {{- /* tolerations（Toleration array, 可选）: 逐项以自身为上下文委托。 */ -}}
