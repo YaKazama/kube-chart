@@ -10,7 +10,7 @@
     - 两个键的取值已由父级 definitions.affinity 归一化为 array；取值不是 array 时中断，元素不是 map 时中断。
     - 两个键均保持输入顺序，每项对应一项输出，不合并、不去重、不重排。
     - 每项只向下传递 matchExpressions 与 matchFields，两者各自识别同级 *Alias 并在为空时省略；preferred 项两者都为空时本层中断，required 项两者都为空时仍委托子模板。
-    - preferred 每项的 weight 必须存在且非空，缺失、null 或空字符串时中断；不是标量时中断；整数类型与 1 - 100 范围由 definitions.preferredSchedulingTerm 校验。
+    - preferred 每项的 weight 必须存在且非空，缺失、null 或空字符串时中断；标量形态与 1 - 100 范围由 definitions.preferredSchedulingTerm 校验，纯数字字符串被其拒绝。
     - 子模板返回值不是合法 YAML 时中断；字段无有效内容时不输出该字段，两个字段均无有效内容时输出空字符串，不输出空 map。
 
   入参: 上下文 map，由 definitions.affinity 传入，可包含以下字段:
@@ -49,18 +49,10 @@
         {{- $_ := set $preference "matchFields" $_matchFields }}
       {{- end }}
 
-      {{- /* weight（integer, 必填）: 只校验存在性与标量形态，取值与范围由 definitions.preferredSchedulingTerm 校验。 */ -}}
+      {{- /* weight（integer, 必填）: 只校验存在性，把 base.get 原始文本直接交给子模板；标量形态与 1 - 100 范围均由 definitions.preferredSchedulingTerm 的 base.int、base.int.range 收口。 */ -}}
       {{- $_weightRaw := include "base.get" (list $_term "weight") | trim }}
       {{- if not $_weightRaw }}
         {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: required field is missing or empty" $index) }}
-      {{- end }}
-      {{- $_weightScalar := fromYaml (printf "v: %s" $_weightRaw) }}
-      {{- if eq (include "base.isFromYamlError" $_weightScalar) "true" }}
-        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: must be scalar type" $index) }}
-      {{- end }}
-      {{- $_weightValue := get $_weightScalar "v" }}
-      {{- if or (kindIs "map" $_weightValue) (kindIs "slice" $_weightValue) }}
-        {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].weight: must be scalar type" $index) }}
       {{- end }}
 
       {{- /* preference（NodeSelectorTerm, 必填）: matchExpressions 与 matchFields 归一化后都为空时本层直接中断，不向子模板传递空 map。 */ -}}
@@ -68,7 +60,7 @@
         {{- fail (printf "[definitions.nodeAffinity] preferredDuringSchedulingIgnoredDuringExecution[%d].preference: required field is missing or empty" $index) }}
       {{- end }}
 
-      {{- $terms = mustAppend $terms (dict "weight" $_weightValue "preference" $preference) }}
+      {{- $terms = mustAppend $terms (dict "weight" $_weightRaw "preference" $preference) }}
     {{- end }}
 
     {{- if $terms }}
