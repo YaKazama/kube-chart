@@ -26,10 +26,10 @@
 {{- define "definitions.podAntiAffinity" -}}
 
   {{- /* preferredDuringSchedulingIgnoredDuringExecution（WeightedPodAffinityTerm array, 可选）: 元素先归一化为只含 weight 与 podAffinityTerm 的上下文，再逐项委托 definitions.weightedPodAffinityTerm。 */ -}}
-  {{- include "definitions.podAntiAffinity.weightedTermList" (list $ "preferredDuringSchedulingIgnoredDuringExecution" "definitions.weightedPodAffinityTerm") }}
+  {{- include "definitions.podAntiAffinity.weightedTermList" (list . "preferredDuringSchedulingIgnoredDuringExecution" "definitions.weightedPodAffinityTerm") }}
 
   {{- /* requiredDuringSchedulingIgnoredDuringExecution（PodAffinityTerm array, 可选）: 元素原样逐项委托 definitions.podAffinityTerm。 */ -}}
-  {{- include "definitions.podAntiAffinity.termList" (list $ "requiredDuringSchedulingIgnoredDuringExecution" "definitions.podAffinityTerm") }}
+  {{- include "definitions.podAntiAffinity.termList" (list . "requiredDuringSchedulingIgnoredDuringExecution" "definitions.podAffinityTerm") }}
 {{- end }}
 
 {{- /*

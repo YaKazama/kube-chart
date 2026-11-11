@@ -35,7 +35,7 @@
   {{- $const := include "base.env" "" | fromYaml }}
 
   {{- /* labelSelector（LabelSelector, 可选）: 解析后按 map 恢复，空 map 与子模板空内容均不输出；非 map 或子模板返回非法 YAML 时中断。 */ -}}
-  {{- $_labelSelectorRaw := include "base.get" (list $ "labelSelector") | trim }}
+  {{- $_labelSelectorRaw := include "base.get" (list . "labelSelector") | trim }}
   {{- if $_labelSelectorRaw }}
     {{- $_labelSelector := fromYaml $_labelSelectorRaw }}
     {{- if eq (include "base.isFromYamlError" $_labelSelector) "true" }}
@@ -56,7 +56,7 @@
   {{- end }}
 
   {{- /* matchLabelKeys（string array, 可选）: 逐项 trim 后跳过空项，按标签键语法校验并去重；非 array 时中断，去重后为空时不输出。 */ -}}
-  {{- $_matchLabelKeysRaw := include "base.get" (list $ "matchLabelKeys") | fromYamlArray }}
+  {{- $_matchLabelKeysRaw := include "base.get" (list . "matchLabelKeys") | fromYamlArray }}
   {{- if eq (include "base.isFromYamlArrayError" $_matchLabelKeysRaw) "true" }}
     {{- fail "[definitions.podAffinityTerm] matchLabelKeys: must be array type" }}
   {{- end }}
@@ -73,7 +73,7 @@
   {{- end }}
 
   {{- /* mismatchLabelKeys（string array, 可选）: 同 matchLabelKeys。 */ -}}
-  {{- $_mismatchLabelKeysRaw := include "base.get" (list $ "mismatchLabelKeys") | fromYamlArray }}
+  {{- $_mismatchLabelKeysRaw := include "base.get" (list . "mismatchLabelKeys") | fromYamlArray }}
   {{- if eq (include "base.isFromYamlArrayError" $_mismatchLabelKeysRaw) "true" }}
     {{- fail "[definitions.podAffinityTerm] mismatchLabelKeys: must be array type" }}
   {{- end }}
@@ -90,7 +90,7 @@
   {{- end }}
 
   {{- /* namespaceSelector（LabelSelector, 可选）: 同 labelSelector。 */ -}}
-  {{- $_namespaceSelectorRaw := include "base.get" (list $ "namespaceSelector") | trim }}
+  {{- $_namespaceSelectorRaw := include "base.get" (list . "namespaceSelector") | trim }}
   {{- if $_namespaceSelectorRaw }}
     {{- $_namespaceSelector := fromYaml $_namespaceSelectorRaw }}
     {{- if eq (include "base.isFromYamlError" $_namespaceSelector) "true" }}
@@ -111,7 +111,7 @@
   {{- end }}
 
   {{- /* namespaces（string array, 可选）: 按逗号或空白拆分并剔除空项，逐项按 RFC1123 校验、去重后归一为 string 列表；非 array 或命名空间名非法时中断。 */ -}}
-  {{- $_namespacesRaw := include "base.get" (list $ "namespaces") | fromYamlArray }}
+  {{- $_namespacesRaw := include "base.get" (list . "namespaces") | fromYamlArray }}
   {{- if eq (include "base.isFromYamlArrayError" $_namespacesRaw) "true" }}
     {{- fail "[definitions.podAffinityTerm] namespaces: must be array type" }}
   {{- end }}
@@ -127,6 +127,6 @@
   {{- end }}
 
   {{- /* topologyKey（string, 必填）: 必填取值后按 YAML 标量语义解码，再按标签键语法校验；缺失、非 string 或语法非法时中断。 */ -}}
-  {{- $topologyKey := include "base.labelKey" (list (include "base.string.normalize" (include "base.get" (list $ "topologyKey" "" "" true)) | trim) "definitions.podAffinityTerm" "topologyKey") }}
+  {{- $topologyKey := include "base.labelKey" (list (include "base.string.normalize" (include "base.get" (list . "topologyKey" "" "" true)) | trim) "definitions.podAffinityTerm" "topologyKey") }}
   {{- include "base.field" (list "topologyKey" $topologyKey "base.rawString") }}
 {{- end }}

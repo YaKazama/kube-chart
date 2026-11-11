@@ -23,9 +23,8 @@
     {{- include "definitions.affinity" (dict "podAffinity" (dict "required" (list (dict "topologyKey" "zone")))) }}
 */ -}}
 {{- define "definitions.affinity" -}}
-
   {{- /* nodeAffinity（NodeAffinity, 可选）: 解析为 map 后按短键优先归一化两个调度键，归一化结果非空时委托 definitions.nodeAffinity 并输出。 */ -}}
-  {{- $_nodeAffinityRaw := include "base.get" (list $ "nodeAffinity" "" "" false false) | trim }}
+  {{- $_nodeAffinityRaw := include "base.get" (list . "nodeAffinity" "" "" false false) | trim }}
   {{- if $_nodeAffinityRaw }}
     {{- $_nodeAffinity := fromYaml $_nodeAffinityRaw }}
     {{- if eq (include "base.isFromYamlError" $_nodeAffinity) "true" }}
@@ -54,7 +53,7 @@
   {{- end }}
 
   {{- /* podAffinity（PodAffinity, 可选）: 同 nodeAffinity，委托 definitions.podAffinity。 */ -}}
-  {{- $_podAffinityRaw := include "base.get" (list $ "podAffinity" "" "" false false) | trim }}
+  {{- $_podAffinityRaw := include "base.get" (list . "podAffinity" "" "" false false) | trim }}
   {{- if $_podAffinityRaw }}
     {{- $_podAffinity := fromYaml $_podAffinityRaw }}
     {{- if eq (include "base.isFromYamlError" $_podAffinity) "true" }}
@@ -83,7 +82,7 @@
   {{- end }}
 
   {{- /* podAntiAffinity（PodAntiAffinity, 可选）: 同 nodeAffinity，委托 definitions.podAntiAffinity。 */ -}}
-  {{- $_podAntiAffinityRaw := include "base.get" (list $ "podAntiAffinity" "" "" false false) | trim }}
+  {{- $_podAntiAffinityRaw := include "base.get" (list . "podAntiAffinity" "" "" false false) | trim }}
   {{- if $_podAntiAffinityRaw }}
     {{- $_podAntiAffinity := fromYaml $_podAntiAffinityRaw }}
     {{- if eq (include "base.isFromYamlError" $_podAntiAffinity) "true" }}

@@ -23,9 +23,8 @@
     {{- include "definitions.nodeAffinity" (dict "requiredDuringSchedulingIgnoredDuringExecution" (list (dict "matchExpressions" (list (dict "key" "a" "operator" "In" "values" (list "b")))))) }}
 */ -}}
 {{- define "definitions.nodeAffinity" -}}
-
   {{- /* preferredDuringSchedulingIgnoredDuringExecution（PreferredSchedulingTerm array, 可选）: 元素必须为 map，matchExpressions 与 matchFields 归一化后必须至少一项非空，连同必填 weight 逐项委托 definitions.preferredSchedulingTerm。 */ -}}
-  {{- $_preferredRaw := include "base.get" (list $ "preferredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
+  {{- $_preferredRaw := include "base.get" (list . "preferredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
   {{- if $_preferredRaw }}
     {{- $_preferred := fromYamlArray $_preferredRaw }}
     {{- if eq (include "base.isFromYamlArrayError" $_preferred) "true" }}
@@ -78,7 +77,7 @@
   {{- end }}
 
   {{- /* requiredDuringSchedulingIgnoredDuringExecution（NodeSelectorTerm array, 可选）: 元素必须为 map，matchExpressions 与 matchFields 归一化后包裹为 nodeSelectorTerms 整体委托 definitions.nodeSelector。 */ -}}
-  {{- $_requiredRaw := include "base.get" (list $ "requiredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
+  {{- $_requiredRaw := include "base.get" (list . "requiredDuringSchedulingIgnoredDuringExecution" "" "" false false) | trim }}
   {{- if $_requiredRaw }}
     {{- $_required := fromYamlArray $_requiredRaw }}
     {{- if eq (include "base.isFromYamlArrayError" $_required) "true" }}

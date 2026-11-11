@@ -26,15 +26,14 @@
     {{- include "definitions.nodeSelectorTerm" (dict "matchExpressions" (list "c != d") "matchFields" (list "aa in (xx1, xx2)")) }}
 */ -}}
 {{- define "definitions.nodeSelectorTerm" -}}
-
   {{- /* matchExpressions（NodeSelectorRequirement array, 可选）: string 简写与原生 map 条目归一化、校验、去重后委托 definitions.nodeSelectorRequirement，结果非空时按字段输出。 */ -}}
-  {{- $_matchExpressionsRaw := include "definitions.nodeSelectorTerm.requirementList" (list $ "matchExpressions") }}
+  {{- $_matchExpressionsRaw := include "definitions.nodeSelectorTerm.requirementList" (list . "matchExpressions") }}
   {{- if $_matchExpressionsRaw }}
     {{- include "base.field" (list "matchExpressions" (fromYamlArray $_matchExpressionsRaw) "base.slice") }}
   {{- end }}
 
   {{- /* matchFields（NodeSelectorRequirement array, 可选）: 同 matchExpressions。 */ -}}
-  {{- $_matchFieldsRaw := include "definitions.nodeSelectorTerm.requirementList" (list $ "matchFields") }}
+  {{- $_matchFieldsRaw := include "definitions.nodeSelectorTerm.requirementList" (list . "matchFields") }}
   {{- if $_matchFieldsRaw }}
     {{- include "base.field" (list "matchFields" (fromYamlArray $_matchFieldsRaw) "base.slice") }}
   {{- end }}

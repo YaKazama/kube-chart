@@ -20,9 +20,8 @@
     {{- include "definitions.nodeSelector" (dict "nodeSelectorTerms" (list (dict "matchExpressions" (list "a = b")))) }}
 */ -}}
 {{- define "definitions.nodeSelector" -}}
-
   {{- /* nodeSelectorTerms（NodeSelectorTerm array, 必填）: 取值与别名识别由 base.get 承担，空输出、非数组与空数组中断；逐项按 map 委托 definitions.nodeSelectorTerm，非空结果按输入顺序收集，收集为空时中断，再以 base.field 输出。 */ -}}
-  {{- $_nodeSelectorTermsRaw := include "base.get" (list $ "nodeSelectorTerms") | trim }}
+  {{- $_nodeSelectorTermsRaw := include "base.get" (list . "nodeSelectorTerms") | trim }}
   {{- if not $_nodeSelectorTermsRaw }}
     {{- fail "[definitions.nodeSelector] nodeSelectorTerms: required field is missing or empty" }}
   {{- end }}
