@@ -384,16 +384,15 @@
     {{- end }}
   {{- end }}
 
-  {{- /* resources（ResourceRequirements, 可选）: 仅传递 claims、limits、requests。 */ -}}
+  {{- /* resources（ResourceRequirements, 可选）: 完整透传上下文并标记 Pod 级，交由 definitions.resourceRequirements 渲染。 */ -}}
   {{- $_resourcesRaw := include "base.get" (list . "resources") | trim }}
   {{- if $_resourcesRaw }}
     {{- $_resourcesParsed := $_resourcesRaw | fromYaml }}
     {{- if eq (include "base.isFromYamlError" $_resourcesParsed) "true" }}
       {{- fail "[core.podSpec] resources: must be map type" }}
     {{- end }}
-    {{- $resources := pick (mustDeepCopy $_resourcesParsed) "claims" "limits" "requests" }}
-    {{- if $resources }}
-      {{- $_rendered := include "definitions.resourceRequirements" $resources | fromYaml }}
+    {{- if $_resourcesParsed }}
+      {{- $_rendered := include "definitions.resourceRequirements" (mustMerge (dict "_kind" "PodSpec") $_resourcesParsed) | fromYaml }}
       {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
         {{- include "base.field" (list "resources" $_rendered "base.map") }}
       {{- end }}
