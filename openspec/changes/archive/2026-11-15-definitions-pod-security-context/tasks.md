@@ -1,0 +1,19 @@
+# PodSecurityContext 共享结构任务
+
+## 实施
+
+- [x] T1 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：新建文件并在 `writable-scopes` 内 `add` 紧邻 `define` 之前的中文整体契约注释与 `define "definitions.podSecurityContext"` 骨架，注释覆盖入参为含 `os` 的原生 map、输出仅为 `PodSecurityContext` 字段片段且不含 `os`、字段顺序、可选渲染、空内容返回与 `os` 适用性失败边界；对应 `Decision: 目标文件与命名模板归属`、`Decision: 返回值形态`。
+- [x] T2 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：在 `writable-scopes` 内实现 `os` 归一化与适用性前置校验：`base.get` 取 `os.name`、`base.env` 的 `SYS.YAML_QUOTED` 去引号并 `trim`、`lower` 转小写、非 `windows` 一律按 `linux`；按 `os` 选出禁止字段列表并以 `hasKey` 检查规范键与 `<字段>Alias`，非 `null` 命中时 `fail`，补齐该步骤的中文注释；对应 `Decision: os 取值与容错归一`、`Decision: 适用性前置校验与存在性判定`。
+- [x] T3 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：在 `writable-scopes` 内实现标量字段闭环：`fsGroup`、`runAsGroup`、`runAsUser` 经 `base.int` 与 `base.field` + `base.int` 渲染且显式 `0` 输出；`runAsNonRoot` 去引号后经 `base.field` + `base.bool` 渲染且显式 `false` 输出；`fsGroupChangePolicy`、`seLinuxChangePolicy`、`supplementalGroupsPolicy` 经 `base.string.normalize` 与 `base.field` 允许值列表校验渲染；各字段按 API 顺序排列并补齐中文注释；对应 `Decision: 标量字段的取值与渲染`。
+- [x] T4 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：在 `writable-scopes` 内 `add` `define "definitions.podSecurityContext.struct"` 及其紧邻的契约注释，实现 `raw` 判空、`fromYaml`、`base.isFromYamlError` 中断、非 map 中断、空 map 跳过、`include` 指定子模板、结果恢复与中断、非空时 `base.field` + `base.map` 输出；并在 `definitions.podSecurityContext` 中按 API 顺序以单行调用覆盖 `appArmorProfile`、`seLinuxOptions`、`seccompProfile`、`windowsOptions`；对应 `Decision: 委托结构字段的辅助模板`。
+- [x] T5 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：在 `writable-scopes` 内实现 `sysctls` 闭环：`fromYamlArray` 与 `base.isFromYamlArrayError` 中断、条目非 map 中断、`name` 与 `value` 的 `invalid` 归零、map 与 slice 中断、`toString` 归一与 `trim`、投影为只含 `name` 与 `value` 的 map、`mustUniq` 去重、逐条委托 `definitions.sysctl` 并回收非空结果、`base.field` + `base.slice` 输出，补齐中文注释；对应 `Decision: sysctls 清洗链`。
+- [x] T6 `templates/api-resources/Definitions/_PodSecurityContext.tpl`：在 `writable-scopes` 内实现 `supplementalGroups` 闭环：`fromYamlArray` 与解析错误中断、跳过 `invalid` 与空字符串、`base.int` 归一化后 `atoi` 转整数、`mustUniq` 去重、非空时 `base.field` + `base.slice` 输出，补齐中文注释；对应 `Decision: supplementalGroups 清洗链`。
+
+## 验证
+
+- [x] V1 `/tmp/` 最小 application Chart（真实 `base` 依赖，5 个子模板使用同名最小 fixture）：输入 `os.name: linux` 与 `fsGroup: 1000`，验证输出只含 `fsGroup: 1000`、不含 `os`，且可被 `fromYaml` 回收为 map；另验证只含 `os.name: linux` 时输出为空内容且渲染成功。
+- [x] V2 `/tmp/` 最小 application Chart（真实 `base` 依赖与同名 fixture）：linux 全字段有效值，验证输出字段集合与顺序为 `appArmorProfile`、`fsGroup`、`fsGroupChangePolicy`、`runAsGroup`、`runAsNonRoot`、`runAsUser`、`seLinuxChangePolicy`、`seLinuxOptions`、`seccompProfile`、`supplementalGroups`、`supplementalGroupsPolicy`、`sysctls`，且不含 `windowsOptions` 与 `os`；另验证 `os.name: windows` 时只输出 `runAsNonRoot` 与 `windowsOptions`。
+- [x] V3 `/tmp/` 最小 application Chart（真实 `base` 依赖与同名 fixture）：验证 `os.name: Windows` 与 `os.name: WINDOWS` 归一为 `windows`、`os.name: darwin` 与 `os` 缺省按 `linux` 处理、`fsGroup: 0` 与 `runAsUser: 0` 输出 `0`、`runAsNonRoot: false` 输出 `false`、范围外键被忽略。
+- [x] V4 `/tmp/` 最小 application Chart（真实 `base` 依赖与同名 fixture）：验证 `sysctls` 完整条目重复与空值移除、同名不同值两条保留且顺序不变、`value: "0"` 保留、清洗后为空不输出；验证 `supplementalGroups` 为 `[1000, 0, 1000, "", null, 1001]` 时输出 `[1000, 0, 1001]`、清洗后为空不输出。
+- [x] V5 `/tmp/` 最小 application Chart（真实 `base` 依赖与同名 fixture）：验证关键失败均中断渲染且失败信息符合各自边界：`os.name: windows` 下 `sysctls`、`seLinuxOptions: {}`、`runAsUser: 0`、`fsGroupChangePolicy: ""` 与按 `linux` 处理时的 `windowsOptions`，断言失败信息包含字段名与当前 `os` 且以 `[definitions.podSecurityContext]` 为前缀；`seccompProfile: RuntimeDefault` 与 `sysctls: [a]` 断言失败信息包含字段名；非法枚举 `supplementalGroupsPolicy: MergeAll` 断言失败信息包含字段名与允许值 `Merge`、`Strict`；非整数 `fsGroup: abc`、非布尔 `runAsNonRoot: 1` 与 `supplementalGroups: [1000, abc]` 断言渲染中断。
+- [x] V6 静态检查：`templates/api-resources/Definitions/_PodSecurityContext.tpl` 无冲突标记、无行尾空白、`define` 与 `end` 配平、契约注释位于各 `define` 之前、字段注释紧邻对应处理闭环、文件末尾单换行。
