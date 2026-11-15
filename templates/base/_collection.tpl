@@ -1,11 +1,11 @@
 {{- /*
   使用点分路径（a.b.c）从嵌套 Map 中提取值。
 
-  行为: 路径不存在或中间节点不是 map 时返回默认值；命中末级键时序列化其值。
+  行为: 路径以 `.` 分隔；路径不存在或中间节点不是 map 时返回默认值；命中末级键时序列化其值。
 
   入参: list [map, 点分路径, 默认值]；前两项必填，默认值可选。
 
-  边界: 只处理 Map 和点分路径；递归遍历由 base.map.dig.helper 完成。
+  边界: 只处理 Map 和点分路径，分隔符固定为 `.`，不做其他字符拆分；递归遍历由 base.map.dig.helper 完成。
 
   返回值: toYamlPretty 格式化后的 YAML 字符串或默认值。
 
@@ -37,7 +37,8 @@
     {{- $default = index . 2 }}
   {{- end }}
 
-  {{- $keys := mustRegexSplit $const.SPLIT.ALL $keyPath -1 }}
+  {{- /* 分隔符固定为 `.`，保留键名中的 `-`、`/` 等字符 */ -}}
+  {{- $keys := splitList "." $keyPath }}
 
   {{- /* 将拆分后的 keys 列表传递给 helper 模板进行递归 */ -}}
   {{- include "base.map.dig.helper" (list $m $keys $default) }}

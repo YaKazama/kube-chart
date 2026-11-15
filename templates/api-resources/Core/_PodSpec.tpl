@@ -384,18 +384,31 @@
     {{- end }}
   {{- end }}
 
-  {{- /* resources（ResourceRequirements, 可选）: 完整透传上下文并标记 Pod 级，交由 definitions.resourceRequirements 渲染。 */ -}}
-  {{- $_resourcesRaw := include "base.get" (list . "resources") | trim }}
-  {{- if $_resourcesRaw }}
-    {{- $_resourcesParsed := $_resourcesRaw | fromYaml }}
-    {{- if eq (include "base.isFromYamlError" $_resourcesParsed) "true" }}
-      {{- fail "[core.podSpec] resources: must be map type" }}
-    {{- end }}
-    {{- if $_resourcesParsed }}
-      {{- $_rendered := include "definitions.resourceRequirements" (mustMerge (dict "_kind" "PodSpec") $_resourcesParsed) | fromYaml }}
-      {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
-        {{- include "base.field" (list "resources" $_rendered "base.map") }}
+  {{- /* resources（ResourceRequirements, 可选）: resourcesFileRefs 优先从文件读取并合并；未设置或解析后无有效项时回退到内联 resources。 */ -}}
+  {{- $_resourcesParsed := dict }}
+  {{- $_fileRefsRaw := include "base.get" (list . "resourcesFileRefs") | trim }}
+  {{- if $_fileRefsRaw }}
+    {{- $_fileRefsMerged := include "base.fileRefs" (list . $_fileRefsRaw) }}
+    {{- if $_fileRefsMerged }}
+      {{- $_resourcesParsed = $_fileRefsMerged | fromYaml }}
+      {{- if eq (include "base.isFromYamlError" $_resourcesParsed) "true" }}
+        {{- fail "[core.podSpec] resourcesFileRefs: invalid YAML output from base.fileRefs" }}
       {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if not $_resourcesParsed }}
+    {{- $_resourcesRaw := include "base.get" (list . "resources") | trim }}
+    {{- if $_resourcesRaw }}
+      {{- $_resourcesParsed = $_resourcesRaw | fromYaml }}
+      {{- if eq (include "base.isFromYamlError" $_resourcesParsed) "true" }}
+        {{- fail "[core.podSpec] resources: must be map type" }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if $_resourcesParsed }}
+    {{- $_rendered := include "definitions.resourceRequirements" (mustMerge (dict "_kind" "PodSpec") $_resourcesParsed) | fromYaml }}
+    {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
+      {{- include "base.field" (list "resources" $_rendered "base.map") }}
     {{- end }}
   {{- end }}
 
