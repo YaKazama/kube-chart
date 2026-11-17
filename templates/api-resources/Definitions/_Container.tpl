@@ -4,7 +4,7 @@
   行为 (按 K8s API 规范字段顺序):
     - args                 (string array, 可选): 非空数组时按数组输出。
     - command              (string array, 可选): 同 args。
-    - env                  (EnvVar array, 可选): envFileRefs 有有效结果时优先，逐项委托 definitions.enVar。
+    - env                  (EnvVar array, 可选): envFileRefs 有有效结果时优先，逐项委托 definitions.envVar。
     - envFrom              (EnvFromSource array, 可选): envFromFileRefs 有有效结果时优先，逐项委托 definitions.envFromSource。
     - image                (string, 必填): 按 imageFileRefs > imageRefs > image 三级解析，最终为空时中断。
     - imagePullPolicy      (string, 可选): 按 Always、Never、IfNotPresent 枚举校验后以带引号标量输出。
@@ -80,7 +80,7 @@
     {{- end }}
   {{- end }}
 
-  {{- /* env（EnvVar array, 可选）: envFileRefs 有有效结果时优先，逐项委托 definitions.enVar。 */ -}}
+  {{- /* env（EnvVar array, 可选）: envFileRefs 有有效结果时优先，逐项委托 definitions.envVar。 */ -}}
   {{- $_envSource := "" }}
   {{- $_envFileRefsRaw := include "base.get" (list . "envFileRefs") | trim }}
   {{- if $_envFileRefsRaw }}
@@ -89,7 +89,7 @@
   {{- if not $_envSource }}
     {{- $_envSource = include "base.get" (list . "env") | trim }}
   {{- end }}
-  {{- include "definitions.container.array" (dict "key" "env" "define" "definitions.enVar" "raw" $_envSource) }}
+  {{- include "definitions.container.array" (dict "key" "env" "define" "definitions.envVar" "raw" $_envSource) }}
 
   {{- /* envFrom（EnvFromSource array, 可选）: envFromFileRefs 有有效结果时优先，逐项委托 definitions.envFromSource。 */ -}}
   {{- $_envFromSource := "" }}
