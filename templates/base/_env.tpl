@@ -42,6 +42,8 @@ RFC:
   APISERVICE: "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
 K8S:
   QUANTITY: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
+  # ObjectFieldSelector.fieldPath 在 EnvVarSource 与 DownwardAPIVolumeFile 中的官方支持路径并集
+  FIELD_REF: "^(metadata\\.(name|namespace|uid)|metadata\\.(labels|annotations)\\['[^']+'\\]|spec\\.(nodeName|serviceAccountName)|status\\.(hostIP|podIP|podIPs))$"
   RESOURCE:
     # 资源简写中的括注，只匹配一对不含嵌套括号的分组
     HUGE_PAGES_PAIR: "\\([^()]*\\)"
