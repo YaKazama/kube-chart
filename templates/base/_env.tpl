@@ -50,6 +50,8 @@ K8S:
   DIVISOR_CPU: "^(?:(\\d+)m|(\\d+)(?:\\.(\\d{1,3}))?)$"
   # ResourceFieldSelector.divisor 在 memory 与 ephemeral-storage 类资源下的允许形态：数值必须带字节单位
   DIVISOR_SIZE: "^\\d+(\\.\\d{1,3})?(?:Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)$"
+  # Secret.data 与 ConfigMap.data 的键字符集，不限首尾字符与长度
+  DATA_KEY: "^[-._a-zA-Z0-9]+$"
   RESOURCE:
     # 资源简写中的括注，只匹配一对不含嵌套括号的分组
     HUGE_PAGES_PAIR: "\\([^()]*\\)"

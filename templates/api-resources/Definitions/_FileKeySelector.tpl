@@ -3,7 +3,7 @@
 
   行为 (按 K8s API 规范字段顺序):
     - key (string, 必填): 按 YAML 标量语义解码后以带引号标量输出，缺失或为空白时中断。
-    - optional (boolean, 可选): 只接受原生布尔值，显式 false 也输出。
+    - optional (boolean, 可选): 接受原生布尔值与字符串 true/false，显式 false 也输出。
     - path (string, 必填): 解码后判空，按相对路径归一化并拒绝 .、.. 与 ../ 前缀，以带引号标量输出。
     - volumeName (string, 必填): 解码后判空，以带引号标量输出。
 
@@ -11,7 +11,7 @@
     - 只输出 key、optional、path 与 volumeName，不包含 fileKeyRef 父键。
     - 除上述四个字段以外的入参字段静默忽略。
     - path 的归一化委托 base.path 的 rel 模式；绝对路径由该能力中断并保留其消息前缀，.、.. 与 ../ 前缀由本模板拒绝。
-    - optional 的字符串形态（含 "true"）视为类型错误，本模板不做隐式转换。
+    - optional 的字符串形态（含 "true"）同样被接受；数字、map、list 与其他字符串视为类型错误。
     - 不校验 path 指向的卷内文件是否存在，不校验 key 的字符集与长度，不处理 EnvFiles 特性门禁。
 
   入参: 上下文 map，可包含以下字段:
@@ -36,13 +36,10 @@
   {{- end }}
   {{- include "base.field" (list "key" $key "quote") }}
 
-  {{- /* optional（boolean, 可选）: 排除引号包裹的字符串后按布尔输出，显式 false 也输出。 */ -}}
-  {{- $_optionalRaw := include "base.get" (list . "optional") | trim }}
-  {{- if $_optionalRaw }}
-    {{- if or (mustRegexMatch $const.SYS.YAML_QUOTED $_optionalRaw) (not (has $_optionalRaw (list "true" "false"))) }}
-      {{- fail (printf "[definitions.fileKeySelector] optional: must be boolean, got '%s'" $_optionalRaw) }}
-    {{- end }}
-    {{- include "base.field" (list "optional" $_optionalRaw "base.bool") }}
+  {{- /* optional（boolean, 可选）: 剥离 YAML 引号后交给 base.bool 做布尔类型门禁，显式 false 也输出。 */ -}}
+  {{- $optional := mustRegexReplaceAll $const.SYS.YAML_QUOTED (include "base.get" (list . "optional") | trim) "$1" | trim }}
+  {{- if $optional }}
+    {{- include "base.field" (list "optional" $optional "base.bool") }}
   {{- end }}
 
   {{- /* path（string, 必填）: 解码后判空，再按相对路径归一化；结果为 .、.. 或以 ../ 开头时拒绝。 */ -}}
