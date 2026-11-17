@@ -44,6 +44,12 @@ K8S:
   QUANTITY: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
   # ObjectFieldSelector.fieldPath 在 EnvVarSource 与 DownwardAPIVolumeFile 中的官方支持路径并集
   FIELD_REF: "^(metadata\\.(name|namespace|uid)|metadata\\.(labels|annotations)\\['[^']+'\\]|spec\\.(nodeName|serviceAccountName)|status\\.(hostIP|podIP|podIPs))$"
+  # ResourceFieldSelector.resource 在 EnvVarSource 中的官方支持资源名
+  RESOURCE_FIELD: "^(limits|requests)\\.(cpu|memory|ephemeral-storage)$"
+  # ResourceFieldSelector.divisor 在 cpu 类资源下的允许形态：依次捕获整数毫核、整数核值与可选小数部分
+  DIVISOR_CPU: "^(?:(\\d+)m|(\\d+)(?:\\.(\\d{1,3}))?)$"
+  # ResourceFieldSelector.divisor 在 memory 与 ephemeral-storage 类资源下的允许形态：数值必须带字节单位
+  DIVISOR_SIZE: "^\\d+(\\.\\d{1,3})?(?:Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)$"
   RESOURCE:
     # 资源简写中的括注，只匹配一对不含嵌套括号的分组
     HUGE_PAGES_PAIR: "\\([^()]*\\)"
