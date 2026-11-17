@@ -31,7 +31,7 @@
 {{- define "definitions.envVarSource" -}}
   {{- /* 五个互斥字段的配置表：字段名、选择器子模板、字符串位次字段、必需段数。 */ -}}
   {{- $sources := list
-    (dict "key" "configMapKeyRef" "define" "definitions.configMapKeySelector" "slots" (list "name" "key" "optional") "required" 1)
+    (dict "key" "configMapKeyRef" "define" "definitions.configMapKeySelector" "slots" (list "name" "key" "optional") "required" 2)
     (dict "key" "fieldRef" "define" "definitions.objectFieldSelector" "slots" (list "fieldPath" "apiVersion") "required" 1)
     (dict "key" "fileKeyRef" "define" "definitions.fileKeySelector" "slots" (list "volumeName" "path" "key" "optional") "required" 2)
     (dict "key" "resourceFieldRef" "define" "definitions.resourceFieldSelector" "slots" (list "resource" "containerName" "divisor") "required" 1)

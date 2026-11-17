@@ -156,23 +156,25 @@
     - 接受字符串或 list [value, mode]。
     - 字符串时使用默认 mode = "1035" (RFC1035 Label)。
     - list 时按 mode 选择校验规则:
-        "1035"  RFC1035 Label，最多 63 字符
-        "1123"  RFC1123 Label (DNS Label)，最多 63 字符
-        "rbac"  RBAC Subject 风格 (RFC1035_RBAC)，最多 253 字符
+        "1035"    RFC1035 Label，最多 63 字符
+        "1123"    RFC1123 Label (DNS Label)，最多 63 字符
+        "1123sub" RFC1123 Subdomain (DNS Subdomain)，最多 253 字符，允许点分段
+        "rbac"    RBAC Subject 风格 (RFC1035_RBAC)，最多 253 字符
     - 未知 mode 或非字符串入参立即失败。
     - 不符合规则时立即失败。
 
-  入参: string；也可传 list [值, 模式]，模式为 1035、1123 或 rbac。
+  入参: string；也可传 list [值, 模式]，模式为 1035、1123、1123sub 或 rbac。
 
   边界: 只校验本模板支持的 RFC 模式，不规范化输入内容。
 
   返回值: 校验通过的字符串；非法入参中断渲染。
 
   示例:
-    {{- include "base.rfc" "my-app" }}                                  // my-app
-    {{- include "base.rfc" (list "v1beta1.metrics.k8s.io" "1123") }}    // v1beta1.metrics.k8s.io
-    {{- include "base.rfc" (list "role:admin" "rbac") }}                // role:admin
-    {{- include "base.rfc" "bad_name" }}                                // [base.rfc] value: 'bad_name' does not match RFC1035 (...)
+    {{- include "base.rfc" "my-app" }}                                       // my-app
+    {{- include "base.rfc" (list "v1beta1.metrics.k8s.io" "1123") }}         // v1beta1.metrics.k8s.io
+    {{- include "base.rfc" (list "app.config" "1123sub") }}                  // app.config
+    {{- include "base.rfc" (list "role:admin" "rbac") }}                     // role:admin
+    {{- include "base.rfc" "bad_name" }}                                     // [base.rfc] value: 'bad_name' does not match RFC1035 (...)
 */ -}}
 {{- define "base.rfc" -}}
   {{- $value := . }}
@@ -208,12 +210,16 @@
     {{- $regex = $const.RFC.RFC1123 }}
     {{- $modeLabel = "RFC1123" }}
     {{- $maxLen = 63 }}
+  {{- else if eq $mode "1123sub" }}
+    {{- $regex = $const.RFC.RFC1123_SUBDOMAIN }}
+    {{- $modeLabel = "RFC1123 Subdomain" }}
+    {{- $maxLen = 253 }}
   {{- else if eq $mode "rbac" }}
     {{- $regex = $const.RFC.RFC1035_RBAC }}
     {{- $modeLabel = "RFC1035_RBAC" }}
     {{- $maxLen = 253 }}
   {{- else }}
-    {{- fail (printf "[base.rfc] mode: unknown mode '%s', expected one of: 1035, 1123, rbac" $mode) }}
+    {{- fail (printf "[base.rfc] mode: unknown mode '%s', expected one of: 1035, 1123, 1123sub, rbac" $mode) }}
   {{- end }}
 
   {{- /* 空字符串拦截 */ -}}
