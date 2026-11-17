@@ -140,7 +140,7 @@
     {{- if not (kindIs "map" $_item) }}
       {{- fail "[core.podSpec] containers: each item must be object type" }}
     {{- end }}
-    {{- $_rendered := include "definitions.container" (mustMerge (dict "containers" $_item "os" $os) $containerExtras) | fromYaml }}
+    {{- $_rendered := include "definitions.container" (mustMerge $_item (dict "os" $os) $containerExtras) | fromYaml }}
     {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
       {{- $containers = mustAppend $containers $_rendered }}
     {{- end }}
@@ -269,7 +269,7 @@
       {{- if not (kindIs "map" $_item) }}
         {{- fail "[core.podSpec] initContainers: each item must be object type" }}
       {{- end }}
-      {{- $_rendered := include "definitions.container" (mustMerge (dict "containers" $_item "os" $os) $containerExtras) | fromYaml }}
+      {{- $_rendered := include "definitions.container" (mustMerge $_item (dict "os" $os) $containerExtras) | fromYaml }}
       {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
         {{- $initContainers = mustAppend $initContainers $_rendered }}
       {{- end }}
