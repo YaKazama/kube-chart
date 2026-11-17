@@ -33,7 +33,7 @@
   {{- $sources := list
     (dict "key" "configMapKeyRef" "define" "definitions.configMapKeySelector" "slots" (list "name" "key" "optional") "required" 2)
     (dict "key" "fieldRef" "define" "definitions.objectFieldSelector" "slots" (list "fieldPath" "apiVersion") "required" 1)
-    (dict "key" "fileKeyRef" "define" "definitions.fileKeySelector" "slots" (list "volumeName" "path" "key" "optional") "required" 2)
+    (dict "key" "fileKeyRef" "define" "definitions.fileKeySelector" "slots" (list "volumeName" "path" "key" "optional") "required" 3)
     (dict "key" "resourceFieldRef" "define" "definitions.resourceFieldSelector" "slots" (list "resource" "containerName" "divisor") "required" 1)
     (dict "key" "secretKeyRef" "define" "definitions.secretKeySelector" "slots" (list "name" "key" "optional") "required" 1)
   }}
