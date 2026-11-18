@@ -52,6 +52,8 @@ K8S:
   DIVISOR_SIZE: "^\\d+(\\.\\d{1,3})?(?:Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)$"
   # Secret.data 与 ConfigMap.data 的键字符集，不限首尾字符与长度
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
+  # envFrom 字符串简写，依次捕获关键字、name、可选 prefix、可选 optional
+  ENV_FROM: "^((?i:cm|configmap|secret))[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+([^,\\s]+))?$"
   RESOURCE:
     # 资源简写中的括注，只匹配一对不含嵌套括号的分组
     HUGE_PAGES_PAIR: "\\([^()]*\\)"

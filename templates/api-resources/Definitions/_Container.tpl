@@ -5,7 +5,7 @@
     - args                 (string array, 可选): 非空数组时按数组输出。
     - command              (string array, 可选): 同 args。
     - env                  (EnvVar array, 可选): envFileRefs 有有效结果时优先，逐项委托 definitions.envVar。
-    - envFrom              (EnvFromSource array, 可选): envFromFileRefs 有有效结果时优先，逐项委托 definitions.envFromSource。
+    - envFrom              (EnvFromSource array, 可选): envFromFileRefs 有有效结果时优先；map 元素原样传递，string 元素按简写解析，归一化后逐项委托 definitions.envFromSource。
     - image                (string, 必填): 按 imageFileRefs > imageRefs > image 三级解析，最终为空时中断。
     - imagePullPolicy      (string, 可选): 按 Always、Never、IfNotPresent 枚举校验后以带引号标量输出。
     - lifecycle            (Lifecycle, 可选): 非空 map 时委托 definitions.lifecycle。
@@ -91,7 +91,7 @@
   {{- end }}
   {{- include "definitions.container.array" (dict "key" "env" "define" "definitions.envVar" "raw" $_envSource) }}
 
-  {{- /* envFrom（EnvFromSource array, 可选）: envFromFileRefs 有有效结果时优先，逐项委托 definitions.envFromSource。 */ -}}
+  {{- /* envFrom（EnvFromSource array, 可选）: envFromFileRefs 有有效结果时优先；map 元素原样传递，string 元素按 <configMap|cm|secret> <name> [prefix] [optional] 简写解析，归一化后逐项委托 definitions.envFromSource。 */ -}}
   {{- $_envFromSource := "" }}
   {{- $_envFromFileRefsRaw := include "base.get" (list . "envFromFileRefs") | trim }}
   {{- if $_envFromFileRefsRaw }}
@@ -100,7 +100,40 @@
   {{- if not $_envFromSource }}
     {{- $_envFromSource = include "base.get" (list . "envFrom") | trim }}
   {{- end }}
-  {{- include "definitions.container.array" (dict "key" "envFrom" "define" "definitions.envFromSource" "raw" $_envFromSource) }}
+  {{- if $_envFromSource }}
+    {{- $_envFromParsed := $_envFromSource | fromYamlArray }}
+    {{- if eq (include "base.isFromYamlArrayError" $_envFromParsed) "true" }}
+      {{- fail "[definitions.container] envFrom: must be array type" }}
+    {{- end }}
+
+    {{- $envFromItems := list }}
+    {{- range $_item := $_envFromParsed }}
+      {{- if kindIs "map" $_item }}
+        {{- $envFromItems = mustAppend $envFromItems $_item }}
+
+      {{- else if kindIs "string" $_item }}
+        {{- $_raw := trim $_item }}
+        {{- $_pattern := $const.K8S.ENV_FROM }}
+        {{- if not (mustRegexMatch $_pattern $_raw) }}
+          {{- fail (printf "[definitions.container] envFrom: invalid item '%s'" $_item) }}
+        {{- end }}
+        {{- $_keywords := dict "cm" "configMapRef" "configmap" "configMapRef" "secret" "secretRef" }}
+        {{- $_refKey := get $_keywords (lower (mustRegexReplaceAll $_pattern $_raw "$1" | trim)) }}
+        {{- $_ref := trim (printf "%s %s" (mustRegexReplaceAll $_pattern $_raw "$2" | trim) (mustRegexReplaceAll $_pattern $_raw "$4" | trim)) }}
+        {{- $_prefix := mustRegexReplaceAll $_pattern $_raw "$3" | trim }}
+        {{- $_normalized := dict $_refKey $_ref }}
+        {{- if $_prefix }}
+          {{- $_ := set $_normalized "prefix" $_prefix }}
+        {{- end }}
+        {{- $envFromItems = mustAppend $envFromItems $_normalized }}
+
+      {{- else }}
+        {{- fail "[definitions.container] envFrom: each item must be string or object type" }}
+      {{- end }}
+    {{- end }}
+
+    {{- include "definitions.container.array" (dict "key" "envFrom" "define" "definitions.envFromSource" "raw" (mustToJson $envFromItems)) }}
+  {{- end }}
 
   {{- /* image（string, 必填）: imageFileRefs 解析结果优先，其次 imageRefs，最后回退 image；最终为空时中断。 */ -}}
   {{- $image := "" }}
