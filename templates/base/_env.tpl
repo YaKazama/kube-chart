@@ -54,6 +54,11 @@ K8S:
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
   # envFrom 字符串简写，依次捕获关键字、name、可选 prefix、可选 optional
   ENV_FROM: "^((?i:cm|configmap|secret))[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+([^,\\s]+))?$"
+  LIFECYCLE_HANDLER:
+    # LifecycleHandler httpGet 字符串简写，依次捕获 schema、host、port、path 与 headers 括号内容
+    HTTP_GET: "^\\s*([^,\\s]*?)(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+headers[,\\s]*\\((.*)\\))?\\s*$"
+    # LifecycleHandler tcpSocket 字符串简写，依次捕获可选 host 与 port
+    TCP_SOCKET: "^\\s*(?:([^,\\s]+)[,\\s]+)?([^,\\s]+)\\s*$"
   RESOURCE:
     # 资源简写中的括注，只匹配一对不含嵌套括号的分组
     HUGE_PAGES_PAIR: "\\([^()]*\\)"
