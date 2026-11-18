@@ -8,7 +8,7 @@
     - envFrom              (EnvFromSource array, 可选): envFromFileRefs 有有效结果时优先；map 元素原样传递，string 元素按简写解析，归一化后逐项委托 definitions.envFromSource。
     - image                (string, 必填): 按 imageFileRefs > imageRefs > image 三级解析，最终为空时中断。
     - imagePullPolicy      (string, 可选): 按 Always、Never、IfNotPresent 枚举校验后以带引号标量输出。
-    - lifecycle            (Lifecycle, 可选): 非空 map 时委托 definitions.lifecycle。
+    - lifecycle            (Lifecycle, 可选): 非空 map 时注入同源 os 后委托 definitions.lifecycle。
     - livenessProbe        (Probe, 可选): 非空 map 时委托 definitions.probe。
     - name                 (string, 必填): 按 DNS_LABEL 校验后以带引号标量输出。
     - ports                (ContainerPort array, 可选): 逐项委托 definitions.containerPort。
@@ -36,7 +36,7 @@
   边界:
     - 只输出当前层字段，不输出 containers 父键、apiVersion 或 kind；name 与 image 必填，模板恒有输出。
     - 上下文为展开后的单个容器字段 map，与 os、Files、Values、Context 同层，不要求 containers 包装键。
-    - os 只透传给 definitions.securityContext，本模板不解析其内容。
+    - os 只注入给 definitions.securityContext 和 definitions.lifecycle，本模板不解析其内容。
     - 字符串字段缺失、为 null、为空字符串或只含空白时按未提供处理，跳过输出。
     - 字符串字段不是 string 时由 base.string.normalize 中断，不做类型归一化。
     - 枚举比较大小写敏感，未命中时由 base.field 中断并给出合法范围。
@@ -175,8 +175,12 @@
     {{- include "base.field" (list "imagePullPolicy" $imagePullPolicy "quote" (list "Always" "Never" "IfNotPresent")) }}
   {{- end }}
 
-  {{- /* lifecycle（Lifecycle, 可选）: 非空 map 时委托 definitions.lifecycle。 */ -}}
-  {{- include "definitions.container.struct" (dict "key" "lifecycle" "define" "definitions.lifecycle" "raw" (include "base.get" (list . "lifecycle"))) }}
+  {{- /* lifecycle（Lifecycle, 可选）: 非空 map 时注入同源 os 后委托 definitions.lifecycle。 */ -}}
+  {{- $_lifecycleExtra := dict }}
+  {{- if hasKey $ "os" }}
+    {{- $_lifecycleExtra = dict "os" (get $ "os") }}
+  {{- end }}
+  {{- include "definitions.container.struct" (dict "key" "lifecycle" "define" "definitions.lifecycle" "raw" (include "base.get" (list . "lifecycle")) "extra" $_lifecycleExtra) }}
 
   {{- /* livenessProbe（Probe, 可选）: 非空 map 时委托 definitions.probe。 */ -}}
   {{- include "definitions.container.struct" (dict "key" "livenessProbe" "define" "definitions.probe" "raw" (include "base.get" (list . "livenessProbe"))) }}
@@ -346,25 +350,28 @@
   行为:
     - 原始输出为空时跳过；非空时按 YAML map 解析，解析错误或非 map 时中断。
     - 空 map 视为未设置，不调用子模板也不输出字段。
-    - 以解析结果作为上下文调用指定子模板，回收非空结果；结果非法 YAML 时中断，非空时以 base.field 与 base.map 输出。
+    - 解析结果先与可选 extra map 合并，extra 优先且不修改原 map；合并结果作为上下文调用指定子模板，回收非空结果；结果非法 YAML 时中断，非空时以 base.field 与 base.map 输出。
 
   边界:
     - 只处理单个对象字段，不负责取值来源选择与别名识别；FileRefs 与内联字段的优先级由调用方决定。
+    - extra 只用于调用方明确要求注入的上下文，不改变字段取值来源或字段生效判断。
     - 失败消息使用 [definitions.container] 前缀并携带字段名，子模板失败消息保留其自身前缀。
 
   入参: 上下文 map，恒含以下字段:
     - key    (string, 必填) 输出字段名
     - define (string, 必填) 子模板名
     - raw    (string, 可选) 对象字段的原始 YAML 字符串
+    - extra  (map, 可选)    合并到解析结果的覆盖层，extra 优先
 
   返回值: 可嵌入 Container 的单字段 YAML 片段；无有效内容时为空内容。
 
   示例:
-    {{- include "definitions.container.struct" (dict "key" "lifecycle" "define" "definitions.lifecycle" "raw" (include "base.get" (list . "lifecycle"))) }}
+    {{- include "definitions.container.struct" (dict "key" "lifecycle" "define" "definitions.lifecycle" "raw" (include "base.get" (list . "lifecycle")) "extra" (dict "os" (dict "name" "linux"))) }}
 */ -}}
 {{- define "definitions.container.struct" -}}
   {{- $key := .key }}
   {{- $define := .define }}
+  {{- $extra := .extra | default dict }}
   {{- $_raw := .raw | trim }}
 
   {{- if $_raw }}
@@ -375,7 +382,11 @@
 
     {{- /* 空 map 表示该结构未设置，不调用子模板也不输出字段。 */ -}}
     {{- if $_parsed }}
-      {{- $_rendered := include $define $_parsed | fromYaml }}
+      {{- $_context := $_parsed }}
+      {{- if $extra }}
+        {{- $_context = mustMerge (mustDeepCopy $extra) $_parsed }}
+      {{- end }}
+      {{- $_rendered := include $define $_context | fromYaml }}
       {{- if eq (include "base.isFromYamlError" $_rendered) "true" }}
         {{- fail (printf "[definitions.container] %s: invalid YAML output from %s" $key $define) }}
       {{- end }}
