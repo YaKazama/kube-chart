@@ -168,15 +168,15 @@
 
 
 {{- /*
-  校验 IPv4 地址、域名或两者兼容的 DNS 地址。
+  校验 IPv4 地址、IPv6 地址、域名或主机名候选地址。
 
   行为:
-    - 默认使用 ip 模式；支持 ip（IPv4，可带 CIDR）、domain（仅域名）与 dns（IPv4 或域名）。
+    - 默认使用 ip 模式；支持 ip（IPv4，可带 CIDR）、domain（仅域名）与 dns（严格 IPv4、IPv6 或域名）。
     - 使用 base.env 的网络正则；类型、模式或格式非法时立即中断渲染。
 
   入参: list [地址, 模式]；模式可选，默认为 ip。
 
-  边界: 不支持 IPv6、URL、端口或 DNS 解析。
+  边界: ip 模式只接受 IPv4，domain 模式只接受域名，dns 模式不接受 CIDR；不支持 URL、端口或 DNS 解析。
 
   返回值: 校验通过的原字符串。
 
@@ -185,6 +185,8 @@
     {{- include "base.net" (list "10.0.0.0/24" "ip") }}     // 10.0.0.0/24
     {{- include "base.net" (list "example.com" "domain") }} // example.com
     {{- include "base.net" (list "1.2.3.4" "dns") }}        // 1.2.3.4
+    {{- include "base.net" (list "2001:db8::1" "dns") }}    // 2001:db8::1
+    {{- include "base.net" (list "10.0.0.0/24" "dns") }}    // [base.net] dns mode: invalid value '10.0.0.0/24' (kind: string)
     {{- include "base.net" (list "1.2.3.4") }}              // 1.2.3.4 (默认 ip)
     {{- include "base.net" (list "bad" "ip") }}             // [base.net] ip mode: invalid value 'bad' (kind: string)
     {{- include "base.net" (list "1.2.3.4" "foo") }}        // [base.net] parameter 1 (mode): unknown mode 'foo' (kind: string)
@@ -239,9 +241,11 @@
       {{- fail (printf "[base.net] domain mode: invalid value '%v' (kind: string)" $value) }}
     {{- end }}
 
-  {{- /* dns 模式: IPv4 或域名均可 */ -}}
+  {{- /* dns 模式: 严格 IPv4、IPv6 或域名均可 */ -}}
   {{- else if eq $mode "dns" }}
-    {{- if mustRegexMatch $const.NET.IP $value }}
+    {{- if mustRegexMatch $const.NET.IPV4 $value }}
+      {{- $value }}
+    {{- else if mustRegexMatch $const.NET.IPV6 $value }}
       {{- $value }}
     {{- else if mustRegexMatch $const.NET.DOMAIN_NAME $value }}
       {{- $value }}

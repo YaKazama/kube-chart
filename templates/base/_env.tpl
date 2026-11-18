@@ -18,6 +18,7 @@ SPLIT:
   ALL: "\\s*[\\s:,./|*^@#-]+\\s*"
   COMMA: "\\s*,\\s*"
   SPACE_COMMA: "\\s*[,\\s]+\\s*"
+  SPACE: " +"
 TYPES:
   INT: "^[+-]?\\d+$"
   POSITIVE_INT: "^\\d+$"
@@ -42,6 +43,10 @@ RFC:
   APISERVICE: "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?)*$"
 K8S:
   QUANTITY: "^[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3})([KMGTPE]i|[mkMGTPE]|[eE]\\s?[+-]?(\\d+\\.?\\d{0,3}|\\.\\d{1,3}))?$"
+  # IANA_SVC_NAME 的字符、首尾与连续连字符约束；长度与字母要求由调用方校验
+  IANA_SVC_NAME: "^[a-z0-9]+(-[a-z0-9]+)*$"
+  # IANA_SVC_NAME 至少包含一个字母
+  IANA_SVC_NAME_LETTER: "[a-z]"
   # ObjectFieldSelector.fieldPath 在 EnvVarSource 与 DownwardAPIVolumeFile 中的官方支持路径并集
   FIELD_REF: "^(metadata\\.(name|namespace|uid)|metadata\\.(labels|annotations)\\['[^']+'\\]|spec\\.(nodeName|serviceAccountName)|status\\.(hostIP|podIP|podIPs))$"
   # ResourceFieldSelector.resource 在 EnvVarSource 中的官方支持资源名
