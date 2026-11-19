@@ -13,7 +13,7 @@
     - name                 (string, 必填): 按 DNS_LABEL 校验后以带引号标量输出。
     - ports                (ContainerPort array, 可选): 元素可为简写 string 或 map，逐项委托 definitions.containerPort。
     - readinessProbe       (Probe, 可选): 非空 map 时委托 definitions.probe。
-    - resizePolicy         (ContainerResizePolicy array, 可选): 逐项委托 definitions.containerResizePolicy。
+    - resizePolicy         (ContainerResizePolicy array, 可选): 元素可为简写 string 或 map，逐项委托 definitions.containerResizePolicy。
     - resources            (ResourceRequirements, 可选): resourcesFileRefs 有有效结果时优先，非空 map 时委托 definitions.resourceRequirements。
     - restartPolicy        (string, 可选): 按 Always、OnFailure、Never 枚举校验后以带引号标量输出。
     - restartPolicyRules   (ContainerRestartRule array, 可选): 逐项委托 definitions.containerRestartRule。
@@ -41,7 +41,7 @@
     - 字符串字段不是 string 时由 base.string.normalize 中断，不做类型归一化。
     - 枚举比较大小写敏感，未命中时由 base.field 中断并给出合法范围。
     - *FileRefs 的 filePath 必填、必须是 Chart 内相对路径且不得逃逸根目录，由 base.fileRefs 中断。
-    - 数组字段非 array 或元素非对象时中断；委托结果为空时剔除该项，全部为空时不输出该字段。
+    - 数组字段非 array 时中断；元素除 ports 与 resizePolicy 允许 string 简写外必须为对象；委托结果为空时剔除该项，全部为空时不输出该字段。
     - base.get 默认开启别名识别，因此各字段同级 <字段>Alias 隐式生效；除上述字段及其同级别名以外的入参字段静默忽略，不输出 status。
 
   入参: 上下文 map，由 core.podSpec 传入容器字段并注入同源 os 与 Files、Values、Context。
@@ -198,8 +198,8 @@
   {{- /* readinessProbe（Probe, 可选）: 非空 map 时委托 definitions.probe。 */ -}}
   {{- include "definitions.container.struct" (dict "key" "readinessProbe" "define" "definitions.probe" "raw" (include "base.get" (list . "readinessProbe"))) }}
 
-  {{- /* resizePolicy（ContainerResizePolicy array, 可选）: 逐项委托 definitions.containerResizePolicy。 */ -}}
-  {{- include "definitions.container.array" (dict "key" "resizePolicy" "define" "definitions.containerResizePolicy" "raw" (include "base.get" (list . "resizePolicy"))) }}
+  {{- /* resizePolicy（ContainerResizePolicy array, 可选）: 元素可为简写 string 或 map，逐项委托 definitions.containerResizePolicy。 */ -}}
+  {{- include "definitions.container.array" (dict "key" "resizePolicy" "define" "definitions.containerResizePolicy" "raw" (include "base.get" (list . "resizePolicy")) "allowString" true) }}
 
   {{- /* resources（ResourceRequirements, 可选）: resourcesFileRefs 有有效结果时优先，非空 map 时委托 definitions.resourceRequirements。 */ -}}
   {{- $_resourcesSource := "" }}
