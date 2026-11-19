@@ -59,6 +59,8 @@ K8S:
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
   # envFrom 字符串简写，依次捕获关键字、name、可选 prefix、可选 optional
   ENV_FROM: "^((?i:cm|configmap|secret))[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+([^,\\s]+))?$"
+  # Probe grpc 字符串简写，依次捕获可选 service 与必填 port，分隔符为空白或逗号
+  GRPC_ACTION: "^\\s*(?:([^\\s,]+)[,\\s]+)?([^\\s,]+)\\s*$"
   LIFECYCLE_HANDLER:
     # LifecycleHandler httpGet 字符串简写，依次捕获 schema、host、port、path 与 headers 括号内容
     HTTP_GET: "^\\s*([^,\\s]*?)(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+([^,\\s]*?))?(?:[,\\s]+headers[,\\s]*\\((.*)\\))?\\s*$"
