@@ -57,6 +57,8 @@ K8S:
   DIVISOR_SIZE: "^\\d+(\\.\\d{1,3})?(?:Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)$"
   # Secret.data 与 ConfigMap.data 的键字符集，不限首尾字符与长度
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
+  # ContainerPort 字符串简写，依次捕获 hostIP、hostPort、containerPort、protocol 与 name；分隔符 , / # 两侧不允许空白，hostIP 段必须含 . 或 :
+  CONTAINER_PORT: "^(?:([^,\\s/#]*[.:][^,\\s/#]*),)?(?:(\\d+),)?(\\d+)(?:/([^,\\s/#]+))?(?:#([^,\\s/#]+))?$"
   # envFrom 字符串简写，依次捕获关键字、name、可选 prefix、可选 optional
   ENV_FROM: "^((?i:cm|configmap|secret))[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+([^,\\s]+))?$"
   # Probe grpc 字符串简写，依次捕获可选 service 与必填 port，分隔符为空白或逗号

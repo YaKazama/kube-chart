@@ -11,7 +11,7 @@
     - lifecycle            (Lifecycle, 可选): 非空 map 时注入同源 os 后委托 definitions.lifecycle。
     - livenessProbe        (Probe, 可选): 非空 map 时委托 definitions.probe。
     - name                 (string, 必填): 按 DNS_LABEL 校验后以带引号标量输出。
-    - ports                (ContainerPort array, 可选): 逐项委托 definitions.containerPort。
+    - ports                (ContainerPort array, 可选): 元素可为简写 string 或 map，逐项委托 definitions.containerPort。
     - readinessProbe       (Probe, 可选): 非空 map 时委托 definitions.probe。
     - resizePolicy         (ContainerResizePolicy array, 可选): 逐项委托 definitions.containerResizePolicy。
     - resources            (ResourceRequirements, 可选): resourcesFileRefs 有有效结果时优先，非空 map 时委托 definitions.resourceRequirements。
@@ -192,8 +192,8 @@
   {{- end }}
   {{- include "base.field" (list "name" (include "base.rfc" (list $name "1123")) "quote") }}
 
-  {{- /* ports（ContainerPort array, 可选）: 逐项委托 definitions.containerPort。 */ -}}
-  {{- include "definitions.container.array" (dict "key" "ports" "define" "definitions.containerPort" "raw" (include "base.get" (list . "ports"))) }}
+  {{- /* ports（ContainerPort array, 可选）: 元素可为简写 string 或 map，逐项委托 definitions.containerPort。 */ -}}
+  {{- include "definitions.container.array" (dict "key" "ports" "define" "definitions.containerPort" "raw" (include "base.get" (list . "ports")) "allowString" true) }}
 
   {{- /* readinessProbe（Probe, 可选）: 非空 map 时委托 definitions.probe。 */ -}}
   {{- include "definitions.container.struct" (dict "key" "readinessProbe" "define" "definitions.probe" "raw" (include "base.get" (list . "readinessProbe"))) }}
@@ -295,26 +295,29 @@
 
   行为:
     - 原始输出为空时跳过；非空时按 YAML 数组解析，解析错误或非数组时中断。
-    - 逐项要求为 map，以该项为上下文调用指定子模板，回收非空结果。
+    - 逐项要求为 map，allowString 为真时 string 亦可；以该项为上下文调用指定子模板，回收非空结果。
     - 子模板返回非法 YAML 时中断；全部结果为空时不输出该字段。
 
   边界:
     - 只处理单个数组字段，不负责取值来源选择与别名识别；FileRefs 与内联字段的优先级由调用方决定。
+    - allowString 默认关闭；开启后只放行 string 元素，其他非 map 元素仍然中断。
     - 失败消息使用 [definitions.container] 前缀并携带字段名，子模板失败消息保留其自身前缀。
 
   入参: 上下文 map，恒含以下字段:
-    - key    (string, 必填) 输出字段名
-    - define (string, 必填) 子模板名
-    - raw    (string, 可选) 数组字段的原始 YAML 字符串
+    - key         (string, 必填)  输出字段名
+    - define      (string, 必填)  子模板名
+    - raw         (string, 可选)  数组字段的原始 YAML 字符串
+    - allowString (boolean, 可选) 是否允许 string 元素，默认 false
 
   返回值: 可嵌入 Container 的单字段 YAML 片段；无有效内容时为空内容。
 
   示例:
-    {{- include "definitions.container.array" (dict "key" "ports" "define" "definitions.containerPort" "raw" (include "base.get" (list . "ports"))) }}
+    {{- include "definitions.container.array" (dict "key" "ports" "define" "definitions.containerPort" "raw" (include "base.get" (list . "ports")) "allowString" true) }}
 */ -}}
 {{- define "definitions.container.array" -}}
   {{- $key := .key }}
   {{- $define := .define }}
+  {{- $allowString := default false .allowString }}
   {{- $_raw := .raw | trim }}
 
   {{- if $_raw }}
@@ -325,8 +328,8 @@
 
     {{- $items := list }}
     {{- range $_item := $_parsed }}
-      {{- if not (kindIs "map" $_item) }}
-        {{- fail (printf "[definitions.container] %s: each item must be object type" $key) }}
+      {{- if not (or (kindIs "map" $_item) (and $allowString (kindIs "string" $_item))) }}
+        {{- fail (printf "[definitions.container] %s: each item must be %s type" $key (ternary "object or string" "object" $allowString)) }}
       {{- end }}
       {{- $_rendered := include $define $_item | fromYaml }}
       {{- if eq (include "base.isFromYamlError" $_rendered) "true" }}
