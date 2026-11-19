@@ -1,0 +1,158 @@
+# definitions.tcpSocketAction 设计
+
+## 技术目标
+
+- capability：`definitions.tcpSocketAction`
+- artifact-type：`Helm named template`
+- target：`definitions.tcpSocketAction`
+
+## 设计决策
+
+### Decision: 字段取值与输出顺序
+
+- requirements：`字段输出与顺序`
+- choice：通过 `base.get` 取得 `host` 与 `port`，`host` 经 `base.string.normalize` 还原并 trim；按 `host`、`port` 顺序完成各自闭环并调用 `base.field` 输出。
+- rationale：统一继承 `base.get` 的上下文优先级与别名行为，并按官方字段顺序直接渲染。
+
+### Decision: host 联合校验
+
+- requirements：`host 校验`
+- choice：非空 `host` 调用 `base.net` 的 `dns` 模式校验为严格 IPv4、IPv6 或域名，并以带引号标量输出；缺失或为空不输出。
+- rationale：复用既有网络校验能力即满足 `host` 对域名与 IP 地址的要求，并天然拒绝 CIDR 与 URL。
+
+### Decision: port 类型分派与命名端口校验
+
+- requirements：`port 校验`
+- choice：解析 `base.get` 输出的 YAML 标量；Helm 4 `fromYaml` 返回的无小数 `float64` 归一为 `int`，带小数 `float64` 与其他类型中断；归一后的 `int`、`int64` 和纯数字字符串委托 `base.port` 校验 1-65535，命名端口使用 `K8S.IANA_SVC_NAME`、`K8S.IANA_SVC_NAME_LETTER` 与 15 字符长度上限完成完整规则校验；数值以 `base.int` 输出，名称以带引号字符串输出。
+- rationale：数值范围复用既有 `base.port` 校验，命名端口按 Kubernetes `IsValidPortName` 完整规则实现；`float64` 归一仅适配 Helm 4 的 YAML 数值表示。
+
+### Decision: 实现同步复现
+
+- requirements：`字段输出与顺序`、`host 校验`、`port 校验`
+- choice：`host` 与 `port` 的取值、校验与类型分派在 `definitions.tcpSocketAction` 内以等价语句复现 `definitions.httpGetAction` 的对应实现，只使用 `base.*` 公共能力；不通过 `include` 调用 `definitions.httpGetAction`，不新增共享 base 模板，也不修改已实现的 `definitions.httpGetAction`。
+- rationale：`definitions.httpGetAction` 只输出完整 HTTPGetAction 片段，无法单独提供 `host` 与 `port` 供复用；draft 已确认接受该逻辑在两处模板内重复维护，以保持既有模板零改动。
+
+## 依赖契约
+
+### Dependency: `base.env`
+
+- availability：`existing`
+- source：`templates/base/_env.tpl`
+- operation：`consume`
+- input：空字符串 `""`
+- output：可由 `fromYaml` 恢复的常量 Map；使用既有 `TYPES.POSITIVE_INT`、`K8S.IANA_SVC_NAME`、`K8S.IANA_SVC_NAME_LETTER`，键值保持不变
+- ownership：依赖层负责常量集中声明；本模板负责常量读取与业务校验
+
+### Dependency: `base.get`
+
+- availability：`existing`
+- source：`templates/base/_get.tpl`
+- operation：`consume`
+- input：`list [上下文, 点分路径]`
+- output：YAML 字符串；字段缺失时为空输出
+- ownership：依赖层负责上下文优先级、别名与序列化；本模板负责业务字段校验
+
+### Dependency: `base.string.normalize`
+
+- availability：`existing`
+- source：`templates/base/_convert.tpl`
+- operation：`consume`
+- input：`base.get` 输出的 YAML 标量文本
+- output：string；非 string 标量或非法 YAML 中断
+- ownership：依赖层负责标量解码；本模板负责 trim 与业务校验
+
+### Dependency: `base.isFromYamlError`
+
+- availability：`existing`
+- source：`templates/base/_convert.tpl`
+- operation：`consume`
+- input：`fromYaml` 返回值
+- output：布尔字符串
+- ownership：依赖层负责识别解析错误形态；本模板负责在识别错误后中断
+
+### Dependency: `base.net`
+
+- availability：`existing`
+- source：`templates/base/_validate.tpl`
+- operation：`consume`
+- input：`list [string, "dns"]`
+- output：校验通过的原字符串；严格 IPv4、IPv6 或域名之外的值中断
+- ownership：依赖层负责地址与域名校验；本模板只处理空值省略与字段渲染
+
+### Dependency: `base.port`
+
+- availability：`existing`
+- source：`templates/base/_validate.tpl`
+- operation：`consume`
+- input：int、int64 或纯数字字符串
+- output：位于 1-65535 的 int；非法数值中断
+- ownership：依赖层负责数值范围校验；本模板负责类型分派与命名端口校验
+
+### Dependency: `base.field`
+
+- availability：`existing`
+- source：`templates/base/_field.tpl`
+- operation：`consume`
+- input：`list [键名, 已归一化值, 渲染模板]`
+- output：YAML 键值片段；空值不输出
+- ownership：依赖层负责最终字段渲染；本模板负责生效条件与类型归一化
+
+### Dependency: `base.int`
+
+- availability：`existing`
+- source：`templates/base/_types.tpl`
+- operation：`consume`
+- input：int、int64 或整数字符串
+- output：十进制整数文本；非法类型中断
+- ownership：依赖层只负责整数渲染
+
+## 代码边界
+
+### `templates/api-resources/Definitions/_TCPSocketAction.tpl`
+
+- access：`write`
+- operations：`add definitions.tcpSocketAction`
+- writable-scopes：新文件的完整内容
+
+### `templates/base/_env.tpl`
+
+- access：`read`
+- operations：`base.env`
+- writable-scopes：无
+
+### `templates/base/_get.tpl`
+
+- access：`read`
+- operations：`base.get`
+- writable-scopes：无
+
+### `templates/base/_convert.tpl`
+
+- access：`read`
+- operations：`base.string.normalize`、`base.isFromYamlError`
+- writable-scopes：无
+
+### `templates/base/_validate.tpl`
+
+- access：`read`
+- operations：`base.net`、`base.port`
+- writable-scopes：无
+
+### `templates/base/_field.tpl`
+
+- access：`read`
+- operations：`base.field`
+- writable-scopes：无
+
+### `templates/base/_types.tpl`
+
+- access：`read`
+- operations：`base.int`
+- writable-scopes：无
+
+## 验证设计
+
+- 最小有效：仅提供 `port: 8080`，输出只含数值 `port`。
+- 较完整有效：IPv6 `host` 与命名 `port`，验证 `host` 在前且命名端口为字符串；域名或 IPv4 `host` 与纯数字字符串 `port`，验证主机校验与数值归一。
+- 关键失败：缺少 `port`、`port` 为 `0` 或 `65536`、带小数数值、非法命名端口、CIDR 或 URL `host`、非字符串 `host`，均中断渲染。
+- 依赖边界：`base.*` 均为真实存在的实现，直接在 `/tmp/` 最小 application Chart 中加载当前模板与真实依赖执行 `helm template`，不使用同名 fixture。
