@@ -59,6 +59,8 @@ K8S:
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
   # ContainerPort 字符串简写，依次捕获 hostIP、hostPort、containerPort、protocol 与 name；分隔符 , / # 两侧不允许空白，hostIP 段必须含 . 或 :
   CONTAINER_PORT: "^(?:([^,\\s/#]*[.:][^,\\s/#]*),)?(?:(\\d+),)?(\\d+)(?:/([^,\\s/#]+))?(?:#([^,\\s/#]+))?$"
+  # ContainerRestartRule 字符串简写，依次捕获 action、operator 与括号内 values 原文；action 大小写不敏感，operator 为非空 token 且由子模板校验，段间分隔符为空白或逗号
+  CONTAINER_RESTART_RULE: "^((?i:restart))[\\s,]+([^\\s,()]+)[\\s,]+\\(([^()]+)\\)$"
   # envFrom 字符串简写，依次捕获关键字、name、可选 prefix、可选 optional
   ENV_FROM: "^((?i:cm|configmap|secret))[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+([^,\\s]+))?$"
   # Probe grpc 字符串简写，依次捕获可选 service 与必填 port，分隔符为空白或逗号
