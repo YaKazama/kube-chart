@@ -103,7 +103,7 @@
 ## 模板定义与排版
 
 - 新增或修改直接 `include` 时，被调用模板的 `define` 名称、传入上下文和最小返回边界必须由当前 spec、design 与适用规则唯一确定；否则不得生成执行契约。可以引用 design 标记为 unavailable 的被调用模板，但不得在当前 change 中创建未经授权的实现或占位 `define`。
-- 隔离验证调用方模板时，可以在 `/tmp/sandbox-2026/` 测试 Chart 中提供同名最小 fixture；结果不得作为真实依赖集成通过的证据。
+- 隔离验证调用方模板时，可以在 `/tmp/sd-kube-chart/` 测试 Chart 中提供同名最小 fixture；结果不得作为真实依赖集成通过的证据。
 - 每个命名模板必须使用中文整体契约注释，且紧邻对应 `{{- define "x.y" -}}` 之前，不得写入 `define` 块内；契约内容与排版遵循 [`命名模板注释`](../references/template-snippets.md#命名模板注释) 示例。
 - 直接渲染 Kubernetes API 字段时，按 API 字段顺序实现当前层负责的字段并遵守官方类型；委托字段不得重复实现子模板内部结构。
 - API 类型必须按官方字段表原样记录；Schema 约束与 Helm/Sprig 运行时类型不得替代或拼接为 API 类型。典型映射见 [`API 类型表达`](../references/template-snippets.md#api-类型表达)。
@@ -131,8 +131,8 @@
 - Pod 安全相关模板默认启用 `runAsNonRoot: true` 和 `readOnlyRootFilesystem: true`，默认禁用 `privileged`、`hostNetwork` 等高危权限。
 - values、样例和文档不得硬编码密钥、令牌、证书或私钥。
 - `/opsx:code` 修改 Helm 模板后，只对当前已变更的精确 write boundary 执行空白、冲突标记、明显 Go Template 结构和文件末尾换行等静态检查；不得在代码动作中扫描、lint 或渲染整个 Chart。
-- `/opsx:verify` 必须在 `/tmp/sandbox-2026/` 下新建最小 application Chart，加载当前 change 已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`；不得复用或修改已有 Chart，也不得与其他 change 的模板或 fixture 混用。
+- `/opsx:verify` 必须在 `/tmp/sd-kube-chart/` 下新建最小 application Chart，加载当前 change 已变更模板及其必要依赖，并实际执行 `/opt/homebrew/bin/helm template`；不得复用或修改已有 Chart，也不得与其他 change 的模板或 fixture 混用。
 - 最小 Chart 验证必须覆盖最小有效输入、较完整有效输入和关键失败输入。使用同名最小 fixture 时，只能证明当前模板自身的调用和分支行为，不得表述为真实依赖集成通过。
 - `/opsx:ck:publish` 必须对整个 Chart 实际执行 `/opt/homebrew/bin/helm lint .`，并用仓库真实存在的 Helm 命令验证完整 Chart 的核心样例和关键失败输入。
 - 轻量静态检查、隔离 Chart、Markdown checklist、静态推断或臆造的校验器不得替代 `/opsx:ck:publish` 的发布检查。
-- 临时验证文件只能创建于 `/tmp/sandbox-2026/`；验证完成后直接保留，由用户统一清理。
+- 临时验证文件只能创建于 `/tmp/sd-kube-chart/`；验证完成后直接保留，由用户统一清理。
