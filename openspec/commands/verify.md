@@ -2,7 +2,7 @@
 
 ## 职责
 
-在 `/tmp/` 创建最小 application Chart，加载当前 change 已变更 Helm 模板及其必要依赖，并实际执行 `helm template`；不生成或修复正式代码，不执行完整 Chart 发布检查。
+在 `/tmp/sandbox-2026/` 新建最小 application Chart，加载当前 change 已变更 Helm 模板及其必要依赖，并实际执行 `helm template`；每次验证只使用新建的独立 Chart，不复用或修改已有 Chart；不生成或修复正式代码，不执行完整 Chart 发布检查。
 
 ```text
 /opsx:verify <change-id>
@@ -18,11 +18,11 @@
 
 本动作只使用文件上下文，不使用聊天历史。读取当前 spec、design、tasks、design 中与验证直接相关的 write/read boundary、必要依赖、目标模板当前内容、可用的版本控制差异、[`../rules/helm-templates.md`](../rules/helm-templates.md) 和其他直接适用规则。
 
-当前未实现依赖只能按 design 已锁定的最小契约在 `/tmp/` 提供同名 fixture；不得读取无关实现或把 fixture 结果表述为真实依赖集成通过。
+当前未实现依赖只能按 design 已锁定的最小契约在 `/tmp/sandbox-2026/` 的新建 Chart 中提供同名 fixture；不得读取无关实现或把 fixture 结果表述为真实依赖集成通过。
 
 ## 输出
 
-- 仅在 `/tmp/` 创建最小 `type: application` Chart；验证完成后按项目规则保留临时目录供用户检查。
+- 仅在 `/tmp/sandbox-2026/` 下新建最小 `type: application` Chart，目录名以 `<change-id>` 开头；每次执行使用新的独立目录，不得复用、修改或继续使用已有 Chart，也不得混入其他 change 的模板、fixture 或 values；验证完成后按项目规则保留临时目录供用户检查。
 - 最小 Chart 只装载当前已变更模板和渲染所需的直接依赖，覆盖最小有效输入、较完整有效输入和关键失败输入。
 - 对每个场景实际执行 `/opt/homebrew/bin/helm template`，记录命令、退出码、关键输出和预期是否满足。
 - 只有相关场景全部获得预期结果时，才勾选 tasks 中精确对应的验证 checkbox；失败、跳过或 fixture 边界不清时不勾选。

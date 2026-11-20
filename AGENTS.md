@@ -33,7 +33,7 @@
 | `/opsx:explore <change-id>` | [`openspec/commands/explore.md`](openspec/commands/explore.md) | 分析意图并把共识或开放问题沉淀到文件。 |
 | `/opsx:spec <change-id>` | [`openspec/commands/spec.md`](openspec/commands/spec.md) | 创建、校对和闭包检查 spec、design、tasks。 |
 | `/opsx:code <change-id>` | [`openspec/commands/code.md`](openspec/commands/code.md) | 按已确认制品生成或局部修改代码。 |
-| `/opsx:verify <change-id>` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 在 `/tmp/` 最小 application Chart 中实际执行 `helm template`。 |
+| `/opsx:verify <change-id>` | [`openspec/commands/verify.md`](openspec/commands/verify.md) | 在 `/tmp/sandbox-2026/` 新建的最小 application Chart 中实际执行 `helm template`。 |
 | `/opsx:sync <change-id>` | [`openspec/commands/sync.md`](openspec/commands/sync.md) | 把代码与测试事实反向同步到执行制品，并保持 draft 与 spec 对齐。 |
 | `/opsx:docs [change-id]` | [`openspec/commands/docs.md`](openspec/commands/docs.md) | 从指定 change 或全部归档内容生成最终用户文档。 |
 | `/opsx:archive <change-id>` | [`openspec/commands/archive.md`](openspec/commands/archive.md) | 轻量核对、总结并归档 change。 |
