@@ -18,6 +18,7 @@ SPLIT:
   ALL: "\\s*[\\s:,./|*^@#-]+\\s*"
   COMMA: "\\s*,\\s*"
   SPACE_COMMA: "\\s*[,\\s]+\\s*"
+  SPACE_COMMA_SEMICOLON: "\\s*[;,\\s]+\\s*"
   SPACE: " +"
 TYPES:
   INT: "^[+-]?\\d+$"
@@ -57,6 +58,8 @@ K8S:
   DIVISOR_SIZE: "^\\d+(\\.\\d{1,3})?(?:Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)$"
   # Secret.data 与 ConfigMap.data 的键字符集，不限首尾字符与长度
   DATA_KEY: "^[-._a-zA-Z0-9]+$"
+  # Linux capability 名称：可选 CAP_ 前缀，大小写不敏感；只校验字符形态，不校验已知集合
+  CAPABILITY_NAME: "^(?i:cap_)?[A-Za-z][A-Za-z0-9_]*$"
   # ContainerPort 字符串简写，依次捕获 hostIP、hostPort、containerPort、protocol 与 name；分隔符 , / # 两侧不允许空白，hostIP 段必须含 . 或 :
   CONTAINER_PORT: "^(?:([^,\\s/#]*[.:][^,\\s/#]*),)?(?:(\\d+),)?(\\d+)(?:/([^,\\s/#]+))?(?:#([^,\\s/#]+))?$"
   # ContainerRestartRule 字符串简写，依次捕获 action、operator 与括号内 values 原文；action 大小写不敏感，operator 为非空 token 且由子模板校验，段间分隔符为空白或逗号

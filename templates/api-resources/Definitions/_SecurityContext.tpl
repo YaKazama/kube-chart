@@ -4,7 +4,7 @@
   行为 (按 K8s API 规范字段顺序):
     - allowPrivilegeEscalation (boolean, 可选): 去引号后非空即生效，显式 false 有效；类型门禁与输出委托 base.bool。
     - appArmorProfile (AppArmorProfile, 可选): 非空 map 时委托 definitions.appArmorProfile 渲染。
-    - capabilities (Capabilities, 可选): 非空 map 时委托 definitions.capabilities 渲染；该模板当前不存在，非空输入中断。
+    - capabilities (Capabilities, 可选): 非空 map 时委托 definitions.capabilities 渲染。
     - privileged (boolean, 可选): 同 allowPrivilegeEscalation。
     - procMount (string, 可选): 归一后非空时以 Default、Unmasked 枚举校验并输出。
     - readOnlyRootFilesystem (boolean, 可选): 同 allowPrivilegeEscalation。
@@ -24,7 +24,7 @@
     - procMount 官方类型为 string，枚举为 Default、Unmasked；boolean、数字等非 string 输入中断。
     - 本模板自身产生的失败消息使用 [definitions.securityContext] 前缀并携带字段名；委托 base.* 与子模板时保留其自身前缀。
     - base.get 默认开启别名识别，因此各字段同级 <字段>Alias 隐式生效；除 os 与上述字段及其同级别名以外的入参字段静默忽略。
-    - 委托的 definitions.capabilities 由后续 change 实现，本模板只按名称调用，不创建其 define。
+    - 委托的 definitions.capabilities 由同一 Definitions 层实现，本模板只按名称调用，不创建其 define。
 
   入参: 上下文 map，由 definitions.container 传入 securityContext 副本并注入同源 os，可包含以下字段:
     - os                          (PodOS, 可选)                        仅用于适用性判定，不参与输出
@@ -77,7 +77,7 @@
   {{- /* appArmorProfile（AppArmorProfile, 可选）: 原始输出非空时委托 definitions.appArmorProfile。 */ -}}
   {{- include "definitions.securityContext.struct" (dict "key" "appArmorProfile" "define" "definitions.appArmorProfile" "raw" (include "base.get" (list . "appArmorProfile"))) }}
 
-  {{- /* capabilities（Capabilities, 可选）: 原始输出非空时委托 definitions.capabilities；该模板当前不存在。 */ -}}
+  {{- /* capabilities（Capabilities, 可选）: 原始输出非空时委托 definitions.capabilities。 */ -}}
   {{- include "definitions.securityContext.struct" (dict "key" "capabilities" "define" "definitions.capabilities" "raw" (include "base.get" (list . "capabilities"))) }}
 
   {{- /* privileged（boolean, 可选）: 同 allowPrivilegeEscalation。 */ -}}
