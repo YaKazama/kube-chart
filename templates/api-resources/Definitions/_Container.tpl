@@ -24,7 +24,7 @@
     - terminationMessagePath (string, 可选): 非空时以带引号标量输出。
     - terminationMessagePolicy (string, 可选): 按 File、FallbackToLogsOnError 枚举校验后以带引号标量输出。
     - tty                  (boolean, 可选): 同 stdin。
-    - volumeDevices        (VolumeDevice array, 可选): 逐项委托 definitions.volumeDevice。
+    - volumeDevices        (VolumeDevice array, 可选): 元素可为简写 string 或 map，string 归一化后逐项委托 definitions.volumeDevice；完全重复项去重。
     - volumeMounts         (VolumeMount array, 可选): 逐项委托 definitions.volumeMount。
     - workingDir           (string, 可选): 非空时以带引号标量输出。
 
@@ -41,7 +41,7 @@
     - 字符串字段不是 string 时由 base.string.normalize 中断，不做类型归一化。
     - 枚举比较大小写敏感，未命中时由 base.field 中断并给出合法范围。
     - *FileRefs 的 filePath 必填、必须是 Chart 内相对路径且不得逃逸根目录，由 base.fileRefs 中断。
-    - 数组字段非 array 时中断；元素除 ports、resizePolicy 与 restartPolicyRules 允许 string 简写外必须为对象；委托结果为空时剔除该项，全部为空时不输出该字段。
+    - 数组字段非 array 时中断；元素除 ports、resizePolicy、restartPolicyRules 与 volumeDevices 允许 string 简写外必须为对象；委托结果为空时剔除该项，全部为空时不输出该字段。
     - base.get 默认开启别名识别，因此各字段同级 <字段>Alias 隐式生效；除上述字段及其同级别名以外的入参字段静默忽略，不输出 status。
 
   入参: 上下文 map，由 core.podSpec 传入容器字段并注入同源 os 与 Files、Values、Context。
@@ -276,8 +276,8 @@
     {{- include "base.field" (list "tty" (include "base.bool" (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_ttyRaw "$1" | trim)) "base.bool") }}
   {{- end }}
 
-  {{- /* volumeDevices（VolumeDevice array, 可选）: 逐项委托 definitions.volumeDevice。 */ -}}
-  {{- include "definitions.container.array" (dict "key" "volumeDevices" "define" "definitions.volumeDevice" "raw" (include "base.get" (list . "volumeDevices"))) }}
+  {{- /* volumeDevices（VolumeDevice array, 可选）: 元素可为简写 string 或 map，string 归一化后逐项委托 definitions.volumeDevice；完全重复项去重。 */ -}}
+  {{- include "definitions.container.array" (dict "key" "volumeDevices" "define" "definitions.volumeDevice" "normalize" "definitions.container.array.normalize" "dedupe" true "raw" (include "base.get" (list . "volumeDevices"))) }}
 
   {{- /* volumeMounts（VolumeMount array, 可选）: 逐项委托 definitions.volumeMount。 */ -}}
   {{- include "definitions.container.array" (dict "key" "volumeMounts" "define" "definitions.volumeMount" "raw" (include "base.get" (list . "volumeMounts"))) }}
@@ -295,29 +295,35 @@
 
   行为:
     - 原始输出为空时跳过；非空时按 YAML 数组解析，解析错误或非数组时中断。
-    - 逐项要求为 map，allowString 为真时 string 亦可；以该项为上下文调用指定子模板，回收非空结果。
+    - 逐项要求为 map；allowString 为真时 string 可原样传递，normalize 非空时 string 先经归一化模板转为 map；以该项为上下文调用指定子模板，回收非空结果。
     - 子模板返回非法 YAML 时中断；全部结果为空时不输出该字段。
+    - dedupe 为真时对渲染结果执行 mustUniq，保留首个完全重复项。
 
   边界:
     - 只处理单个数组字段，不负责取值来源选择与别名识别；FileRefs 与内联字段的优先级由调用方决定。
-    - allowString 默认关闭；开启后只放行 string 元素，其他非 map 元素仍然中断。
+    - allowString 默认关闭；normalize 只作用于 string 元素，非 string 元素不经过归一化；归一化后仍不是 map 且不满足 allowString 时中断。
     - 失败消息使用 [definitions.container] 前缀并携带字段名，子模板失败消息保留其自身前缀。
 
   入参: 上下文 map，恒含以下字段:
     - key         (string, 必填)  输出字段名
     - define      (string, 必填)  子模板名
     - raw         (string, 可选)  数组字段的原始 YAML 字符串
-    - allowString (boolean, 可选) 是否允许 string 元素，默认 false
+    - allowString (boolean, 可选) 是否允许 string 元素直接传给子模板，默认 false
+    - normalize   (string, 可选)  string 元素的归一化模板名；设置后 string 先转为 map
+    - dedupe      (boolean, 可选) 是否对渲染结果去重，默认 false
 
   返回值: 可嵌入 Container 的单字段 YAML 片段；无有效内容时为空内容。
 
   示例:
     {{- include "definitions.container.array" (dict "key" "ports" "define" "definitions.containerPort" "raw" (include "base.get" (list . "ports")) "allowString" true) }}
+    {{- include "definitions.container.array" (dict "key" "volumeDevices" "define" "definitions.volumeDevice" "normalize" "definitions.container.array.normalize" "dedupe" true "raw" (include "base.get" (list . "volumeDevices"))) }}
 */ -}}
 {{- define "definitions.container.array" -}}
   {{- $key := .key }}
   {{- $define := .define }}
   {{- $allowString := default false .allowString }}
+  {{- $normalize := .normalize | default "" }}
+  {{- $dedupe := default false .dedupe }}
   {{- $_raw := .raw | trim }}
 
   {{- if $_raw }}
@@ -328,6 +334,14 @@
 
     {{- $items := list }}
     {{- range $_item := $_parsed }}
+      {{- if and $normalize (kindIs "string" $_item) }}
+        {{- $_normalizedRaw := include $normalize $_item | trim }}
+        {{- $_normalized := $_normalizedRaw | fromYaml }}
+        {{- if eq (include "base.isFromYamlError" $_normalized) "true" }}
+          {{- fail (printf "[definitions.container] %s: invalid YAML output from %s" $key $normalize) }}
+        {{- end }}
+        {{- $_item = $_normalized }}
+      {{- end }}
       {{- if not (or (kindIs "map" $_item) (and $allowString (kindIs "string" $_item))) }}
         {{- fail (printf "[definitions.container] %s: each item must be %s type" $key (ternary "object or string" "object" $allowString)) }}
       {{- end }}
@@ -340,10 +354,49 @@
       {{- end }}
     {{- end }}
 
+    {{- if $dedupe }}
+      {{- $items = mustUniq $items }}
+    {{- end }}
+
     {{- if $items }}
       {{- include "base.field" (list $key $items "base.slice") }}
     {{- end }}
   {{- end }}
+{{- end }}
+
+
+{{- /*
+  把 VolumeDevice 的字符串简写归一化为字段 map。
+
+  行为:
+    - trim 后使用 base.env 的 K8S.VOLUME_DEVICE 按捕获组提取 name 与 devicePath。
+    - 正则允许首尾与连续分隔符；0 段返回两个字段均为空的 map，1 段保留 devicePath 为空，2 段按位置赋值。
+    - 超过 2 个非空段时不匹配，以 [definitions.container] 前缀中断。
+
+  边界:
+    - 只解析字符串简写，不校验 name 的 RFC1123 Label 格式，也不校验 devicePath 是否为绝对路径；两者由 definitions.volumeDevice 负责。
+    - 只接受 string 输入；调用方保证元素类型。
+    - 输出是含 name、devicePath 的 YAML map，供父模板或 definitions.volumeDevice 通过 fromYaml 恢复。
+
+  入参: <name> <devicePath> 形式的 string。
+
+  返回值: 含 name、devicePath 的 YAML map；空或仅分隔符输入返回两个字段均为空的 map。
+
+  示例:
+    {{- include "definitions.container.array.normalize" "data /dev/xvda" }}
+      // devicePath: /dev/xvda
+      // name: data
+*/ -}}
+{{- define "definitions.container.array.normalize" -}}
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- $_text := trim . }}
+  {{- if not (mustRegexMatch $const.K8S.VOLUME_DEVICE $_text) }}
+    {{- fail (printf "[definitions.container] volumeDevices: '%s' does not match '<name> <devicePath>' with at most two items" $_text) }}
+  {{- end }}
+
+  {{- $name := mustRegexReplaceAll $const.K8S.VOLUME_DEVICE $_text "$1" | trim }}
+  {{- $devicePath := mustRegexReplaceAll $const.K8S.VOLUME_DEVICE $_text "$2" | trim }}
+  {{- toYaml (dict "name" $name "devicePath" $devicePath) }}
 {{- end }}
 
 

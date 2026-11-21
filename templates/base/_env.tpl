@@ -82,6 +82,8 @@ K8S:
     CPU: "^(\\d+)(\\.\\d{1,3})?(m?)$"
   TIME: "^[-+]?(\\d+(\\.\\d+)?(ns|us|µs|ms|s|m|h))+$"
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
+  # VolumeDevice 字符串简写，依次捕获 name 与 devicePath；分隔符为空白或逗号，允许首尾与连续分隔符，最多两个非空段
+  VOLUME_DEVICE: "^[,\\s]*([^,\\s]*)(?:[,\\s]+([^,\\s]*))?[,\\s]*$"
   VOLUME:
     SHORT: "^((?i:cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi))(?:\\s+(.*?))(?:\\s+(.*?))?$"
   SELECTOR:
