@@ -376,7 +376,7 @@
   边界:
     - 只解析字符串简写，不校验 name 的 RFC1123 Label 格式，也不校验 devicePath 是否为绝对路径；两者由 definitions.volumeDevice 负责。
     - 只接受 string 输入；调用方保证元素类型。
-    - 输出是含 name、devicePath 的 YAML map，供父模板或 definitions.volumeDevice 通过 fromYaml 恢复。
+    - 输出是含 name、devicePath 的 YAML map，供父模板通过 fromYaml 恢复。
 
   入参: <name> <devicePath> 形式的 string。
 
