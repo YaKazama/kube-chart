@@ -84,6 +84,10 @@ K8S:
   FIELDS_V1: "^(\\.|f\\:[^\\:]+|i\\:\\d+|v\\:.+|k\\:.+)$"
   # VolumeDevice 字符串简写，依次捕获 name 与 devicePath；分隔符为空白或逗号，允许首尾与连续分隔符，最多两个非空段
   VOLUME_DEVICE: "^[,\\s]*([^,\\s]*)(?:[,\\s]+([^,\\s]*))?[,\\s]*$"
+  # VolumeMount 字符串简写，依次捕获 name、mountPath、subPath/subPathExpr、readOnly、recursiveReadOnly 与 mountPropagation；分隔符为空白或逗号，格式匹配不区分大小写
+  VOLUME_MOUNT: "(?i)^([^,\\s]+)[,\\s]+([^,\\s]+)(?:[,\\s]+([^,\\s]+))?(?:[,\\s]+(true|false))?(?:[,\\s]+(Disabled|IfPossible|Enabled))?(?:[,\\s]+(Bidirectional|HostToContainer|None))?$"
+  # VolumeMount 字符串简写第 3 段是否为完整变量形式
+  VOLUME_MOUNT_SUB_PATH_LIKE: "^\\$\\([^)]+\\)$"
   VOLUME:
     SHORT: "^((?i:cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi))(?:\\s+(.*?))(?:\\s+(.*?))?$"
   SELECTOR:

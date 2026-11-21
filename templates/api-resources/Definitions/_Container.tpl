@@ -25,7 +25,7 @@
     - terminationMessagePolicy (string, 可选): 按 File、FallbackToLogsOnError 枚举校验后以带引号标量输出。
     - tty                  (boolean, 可选): 同 stdin。
     - volumeDevices        (VolumeDevice array, 可选): 元素可为简写 string 或 map，string 归一化后逐项委托 definitions.volumeDevice；完全重复项去重。
-    - volumeMounts         (VolumeMount array, 可选): 逐项委托 definitions.volumeMount。
+    - volumeMounts         (VolumeMount array, 可选): 元素可为简写 string 或 map，逐项委托 definitions.volumeMount。
     - workingDir           (string, 可选): 非空时以带引号标量输出。
 
   引用字段优先级:
@@ -41,7 +41,7 @@
     - 字符串字段不是 string 时由 base.string.normalize 中断，不做类型归一化。
     - 枚举比较大小写敏感，未命中时由 base.field 中断并给出合法范围。
     - *FileRefs 的 filePath 必填、必须是 Chart 内相对路径且不得逃逸根目录，由 base.fileRefs 中断。
-    - 数组字段非 array 时中断；元素除 ports、resizePolicy、restartPolicyRules 与 volumeDevices 允许 string 简写外必须为对象；委托结果为空时剔除该项，全部为空时不输出该字段。
+    - 数组字段非 array 时中断；元素除 ports、resizePolicy、restartPolicyRules、volumeDevices 与 volumeMounts 允许 string 简写外必须为对象；委托结果为空时剔除该项，全部为空时不输出该字段。
     - base.get 默认开启别名识别，因此各字段同级 <字段>Alias 隐式生效；除上述字段及其同级别名以外的入参字段静默忽略，不输出 status。
 
   入参: 上下文 map，由 core.podSpec 传入容器字段并注入同源 os 与 Files、Values、Context。
@@ -279,8 +279,8 @@
   {{- /* volumeDevices（VolumeDevice array, 可选）: 元素可为简写 string 或 map，string 归一化后逐项委托 definitions.volumeDevice；完全重复项去重。 */ -}}
   {{- include "definitions.container.array" (dict "key" "volumeDevices" "define" "definitions.volumeDevice" "normalize" "definitions.container.array.normalize" "dedupe" true "raw" (include "base.get" (list . "volumeDevices"))) }}
 
-  {{- /* volumeMounts（VolumeMount array, 可选）: 逐项委托 definitions.volumeMount。 */ -}}
-  {{- include "definitions.container.array" (dict "key" "volumeMounts" "define" "definitions.volumeMount" "raw" (include "base.get" (list . "volumeMounts"))) }}
+  {{- /* volumeMounts（VolumeMount array, 可选）: 元素可为简写 string 或 map，逐项委托 definitions.volumeMount。 */ -}}
+  {{- include "definitions.container.array" (dict "key" "volumeMounts" "define" "definitions.volumeMount" "allowString" true "raw" (include "base.get" (list . "volumeMounts"))) }}
 
   {{- /* workingDir（string, 可选）: 非空时以带引号标量输出。 */ -}}
   {{- $workingDir := include "base.string.normalize" (include "base.get" (list . "workingDir")) | trim }}
