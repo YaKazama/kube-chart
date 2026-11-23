@@ -126,19 +126,20 @@
 
 
 {{- /*
-  校验 Unix 文件模式是否位于八进制 0000–0777（十进制 0–511）。
+  校验并归一化 Unix 文件模式是否位于八进制 0000–0777（十进制 0–511）。
 
-  行为: 数值截断为 int 后委托 base.int.range 校验；字符串按 SYS.FILE_MODE 正则校验并原样返回。
+  行为: 数值截断为 int 后委托 base.int.range 校验；字符串按 SYS.FILE_MODE 正则校验后，用 YAML 标量语义解析为十进制 int（八进制 0xxx 与十进制均按 YAML 1.1 规则解释）。
 
   入参: int、int64、float64，或八进制/十进制文件模式字符串。
 
   边界: 只验证文件权限位，不处理 setuid、setgid、sticky bit 或文件系统语义。
 
-  返回值: 数值输入返回 int，字符串输入返回原字符串。
+  返回值: 十进制 int。
 
   示例:
     {{- include "base.fileMode" 493 }}      // 493
-    {{- include "base.fileMode" "0755" }}  // 0755
+    {{- include "base.fileMode" "0755" }}  // 493
+    {{- include "base.fileMode" "9" }}     // 9
     {{- include "base.fileMode" 1.5 }}     // 1 (截断, 非 1.5)
     {{- include "base.fileMode" 999 }}     // [base.int.range] num 999 not in [0, 511] (kind: int)
     {{- include "base.fileMode" "9999" }}  // [base.fileMode] parameter: expected file mode string, got '9999' (kind: string)
@@ -156,13 +157,14 @@
     {{- $val := int . }}
     {{- include "base.int.range" (list $val 0 511) }}
 
-  {{- /* 字符串分支: 通过 SYS.FILE_MODE 正则校验格式 */ -}}
+  {{- /* 字符串分支: 通过 SYS.FILE_MODE 正则校验格式, 再按 YAML 标量语义解析为十进制 int */ -}}
   {{- else }}
     {{- $const := include "base.env" "" | fromYaml }}
     {{- if not (mustRegexMatch $const.SYS.FILE_MODE .) }}
       {{- fail (printf "[base.fileMode] parameter: expected file mode string, got '%v' (kind: string)" .) }}
     {{- end }}
-    {{- . }}
+    {{- $_decoded := fromYaml (printf "v: %s" .) }}
+    {{- int $_decoded.v }}
   {{- end }}
 {{- end }}
 
