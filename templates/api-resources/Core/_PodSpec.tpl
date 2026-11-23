@@ -521,54 +521,58 @@
     {{- end }}
   {{- end }}
 
-  {{- /* volumes（Volume array, 可选）: 原生对象拆分为 type/name/data，字符串短写按常量捕获。 */ -}}
+  {{- /* volumes（Volume array, 可选）: 原生对象与字符串短写统一归一化为 name + source，交给 definitions.volume。 */ -}}
   {{- $_volumesRaw := include "base.get" (list . "volumes") | trim }}
   {{- if $_volumesRaw }}
     {{- $_volumesArr := $_volumesRaw | fromYamlArray }}
     {{- if eq (include "base.isFromYamlArrayError" $_volumesArr) "true" }}
       {{- fail "[core.podSpec] volumes: must be array type" }}
     {{- end }}
-    {{- $volumeTypes := dict "cm" "configMap" "configmap" "configMap" "secret" "secret" "pvc" "persistentVolumeClaim" "persistentvolumeclaim" "persistentVolumeClaim" "emptydir" "emptyDir" "hostpath" "hostPath" "nfs" "nfs" "image" "image" "fc" "fc" "iscsi" "iscsi" }}
+    {{- $volumeTypes := dict "cm" "configMap" "configmap" "configMap" "secret" "secret" "pvc" "persistentVolumeClaim" "persistentvolumeclaim" "persistentVolumeClaim" "emptydir" "emptyDir" "hostpath" "hostPath" "nfs" "nfs" "image" "image" "fc" "fc" "iscsi" "iscsi" "csi" "csi" "downwardapi" "downwardAPI" "api" "downwardAPI" }}
     {{- $volumes := list }}
     {{- range $_entry := $_volumesArr }}
       {{- $volume := dict }}
       {{- if kindIs "map" $_entry }}
-        {{- $_ = set $volume "volumeName" (toString (get $_entry "name" | default "")) }}
+        {{- $_ = set $volume "name" (get $_entry "name") }}
         {{- $_volumeType := "" }}
+        {{- $_volumeData := "" }}
         {{- range $_key, $_value := $_entry }}
           {{- if ne $_key "name" }}
             {{- if $_volumeType }}
-              {{- fail (printf "[core.podSpec] volumes: '%s' has more than one volume type key" (get $volume "volumeName")) }}
+              {{- fail (printf "[core.podSpec] volumes: '%v' has more than one volume source key" (get $volume "name")) }}
             {{- end }}
             {{- $_volumeType = $_key }}
-            {{- $_ = set $volume "volumeType" $_key }}
-            {{- $_ = set $volume "volumeData" $_value }}
+            {{- $_volumeData = $_value }}
           {{- end }}
         {{- end }}
         {{- if not $_volumeType }}
-          {{- fail (printf "[core.podSpec] volumes: '%s' must contain exactly one volume type key" (get $volume "volumeName")) }}
+          {{- fail (printf "[core.podSpec] volumes: '%v' must contain exactly one volume source key" (get $volume "name")) }}
         {{- end }}
+        {{- if hasKey $volumeTypes (lower $_volumeType) }}
+          {{- $_volumeType = get $volumeTypes (lower $_volumeType) }}
+        {{- end }}
+        {{- if and (or (eq $_volumeType "ephemeral") (eq $_volumeType "projected")) (kindIs "string" $_volumeData) }}
+          {{- fail (printf "[core.podSpec] volumes: '%v' %s: string input is not supported, use object/map format" (get $volume "name") $_volumeType) }}
+        {{- end }}
+        {{- $_ = set $volume $_volumeType $_volumeData }}
       {{- else if kindIs "string" $_entry }}
-        {{- $_text := mustRegexReplaceAll $_const.SPLIT.SPACE_COMMA (trim $_entry) " " | trim }}
+        {{- $_text := trim $_entry }}
+        {{- if mustRegexMatch $_const.K8S.VOLUME.UNSUPPORTED_SHORT $_text }}
+          {{- fail (printf "[core.podSpec] volumes: '%s': string input is not supported, use object/map format" $_text) }}
+        {{- end }}
         {{- if not (mustRegexMatch $_const.K8S.VOLUME.SHORT $_text) }}
           {{- fail (printf "[core.podSpec] volumes: '%s' does not match the short form" $_entry) }}
         {{- end }}
         {{- $_volumeType := mustRegexReplaceAll $_const.K8S.VOLUME.SHORT $_text "$1" | trim }}
         {{- $_volumeName := mustRegexReplaceAll $_const.K8S.VOLUME.SHORT $_text "$2" | trim }}
         {{- $_volumeData := mustRegexReplaceAll $_const.K8S.VOLUME.SHORT $_text "$3" | trim }}
-        {{- $_ = set $volume "volumeType" $_volumeType }}
-        {{- $_ = set $volume "volumeName" $_volumeName }}
-        {{- if $_volumeData }}
-          {{- $_ = set $volume "volumeData" $_volumeData }}
-        {{- end }}
+        {{- $_volumeType = get $volumeTypes (lower $_volumeType) }}
+        {{- $_ = set $volume "name" $_volumeName }}
+        {{- $_ = set $volume $_volumeType $_volumeData }}
       {{- else }}
         {{- fail "[core.podSpec] volumes: each item must be string or object type" }}
       {{- end }}
-      {{- $_volumeType := toString (get $volume "volumeType") }}
-      {{- if hasKey $volumeTypes (lower $_volumeType) }}
-        {{- $_ = set $volume "volumeType" (get $volumeTypes (lower $_volumeType)) }}
-      {{- end }}
-      {{- $_rendered := include "definitions.Volume" $volume | fromYaml }}
+      {{- $_rendered := include "definitions.volume" $volume | fromYaml }}
       {{- if and (ne (include "base.isFromYamlError" $_rendered) "true") $_rendered }}
         {{- $volumes = mustAppend $volumes $_rendered }}
       {{- end }}

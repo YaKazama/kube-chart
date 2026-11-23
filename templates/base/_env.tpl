@@ -89,7 +89,40 @@ K8S:
   # VolumeMount 字符串简写第 3 段是否为完整变量形式
   VOLUME_MOUNT_SUB_PATH_LIKE: "^\\$\\([^)]+\\)$"
   VOLUME:
-    SHORT: "^((?i:cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi))(?:\\s+(.*?))(?:\\s+(.*?))?$"
+    # Volume 字符串简写，依次捕获 type、name 与余下原文；顶层分隔符只使用空白
+    SHORT: "^((?i:cm|configMap|secret|pvc|persistentVolumeClaim|emptyDir|hostPath|nfs|image|fc|iscsi|csi|api|downwardAPI))(?:\\s+([^\\s]+))(?:\\s+(.*))?$"
+    # 只接受原生 map 的 volume source 短写前缀
+    UNSUPPORTED_SHORT: "^(?i:ephemeral|projected)(?:\\s|$)"
+    # configMap/secret 简写，依次捕获 name、optional、defaultMode、items 关键字与内容
+    KEY_TO_PATH_SOURCE: "^\\s*([^\\s,]+)(?:\\s+((?i:true|false)))?(?:\\s+(\\d+))?(?:\\s+(?i:(items))\\s*\\((.*)\\))?\\s*$"
+    # configMap/secret items 元素，依次捕获 key、path 与可选 mode
+    KEY_TO_PATH_ITEM: "^\\s*([^\\s,]+)\\s+([^\\s,]+)(?:\\s+([^\\s,]+))?\\s*$"
+    # csi 简写，依次捕获 driver、nodePublishSecretRef、fsType、readOnly、属性关键字与内容
+    CSI: "^\\s*([^\\s,]+)\\s+(\\S+)(?:\\s+((?i:ext4|xfs|ntfs)))?(?:\\s+((?i:true|false)))?(?:\\s+(?i:(attr|volumeAttributes))\\s*\\((.*)\\))?\\s*$"
+    # csi 属性段，依次捕获 key 与 value，分隔符为空白或冒号
+    CSI_ATTRIBUTE: "^\\s*([^:\\s]+)\\s*[: ]+\\s*(.*?)\\s*$"
+    # downwardAPI 简写，捕获 defaultMode 或 items 的两种组合及内容
+    DOWNWARD_API: "^\\s*(?:(\\d+)(?:\\s+(?i:(items))\\s*\\((.*)\\))?|(?i:(items))\\s*\\((.*)\\))?\\s*$"
+    # downwardAPI field 元素，依次捕获 path、fieldPath 与可选 mode
+    DOWNWARD_API_FIELD_ITEM: "^\\s*([^\\s,]+)\\s+(?i:field)\\s+(\\S+)(?:\\s+([^\\s,]+))?\\s*$"
+    # downwardAPI resource 元素，依次捕获 path、resource、containerName、divisor 与可选 mode
+    DOWNWARD_API_RESOURCE_ITEM: "^\\s*([^\\s,]+)\\s+(?i:resource)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?\\s*$"
+    # emptyDir 简写，依次捕获 medium 与 sizeLimit
+    EMPTY_DIR: "^\\s*(?:(?i:(memory))(?:\\s+|$))?(\\S+)?\\s*$"
+    # fc 简写，依次捕获 lun、fsType、readOnly、targetWWNs 关键字与内容、wwids 关键字与内容
+    FC: "^\\s*(?:(\\d+)\\s+)?((?i:ext4|xfs|ntfs))(?:\\s+((?i:true|false)))?(?:\\s+(?i:(targetWWNs))\\s*\\((.*?)\\))?(?:\\s+(?i:(wwids))\\s*\\((.*?)\\))?\\s*$"
+    # hostPath 简写，依次捕获绝对路径与可选 type
+    HOST_PATH: "^\\s*(/\\S*)(?:\\s+(\"\"|[^\\s]+))?\\s*$"
+    # image 简写，依次捕获 reference 与可选 pullPolicy
+    IMAGE: "^\\s*(\\S+)(?:\\s+((?i:always|ifnotpresent|never)))?\\s*$"
+    # iscsi 简写，依次捕获 iqn、lun、5 个位置段、chap/portals 关键字与内容、secretRef.name
+    ISCSI: "^\\s*(\\S+)\\s+(\\d+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(?i:(chap))\\s*\\(\\s*([^(),]+)\\s*,\\s*([^(),]+)\\s*\\))?(?:\\s+(?i:(portals))\\s*\\((.*?)\\))?(?:\\s+(\\S+))?\\s*$"
+    # iscsi targetPortal 与 portals 元素：IPv4 或端口号，可带 :port
+    ISCSI_PORTAL: "^(?:\\d{1,3}(?:\\.\\d{1,3}){3}|\\d+)(?::\\d+)?$"
+    # nfs 简写，依次捕获 server、绝对路径与可选 readOnly
+    NFS: "^\\s*(\\S+)\\s+(/\\S*)(?:\\s+((?i:true|false)))?\\s*$"
+    # persistentVolumeClaim 简写，依次捕获 claimName 与可选 readOnly
+    PERSISTENT_VOLUME_CLAIM: "^\\s*(\\S+)(?:\\s+((?i:true|false)))?\\s*$"
   SELECTOR:
     EQUALITY_FOR_APPS: "^([A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?)(?:\\s+([=]{1,2}|!=))(?:\\s+([A-Za-z0-9._-]+))$"
     # 集合选择器 (In/NotIn, 操作符大小写不敏感, 捕获 key/op/values)
