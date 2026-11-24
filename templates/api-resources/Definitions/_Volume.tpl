@@ -209,7 +209,7 @@
           {{- $__itemText := trim $_itemText }}
           {{- if $__itemText }}
             {{- if not (or (mustRegexMatch $const.K8S.VOLUME.DOWNWARD_API_FIELD_ITEM $__itemText) (mustRegexMatch $const.K8S.VOLUME.DOWNWARD_API_RESOURCE_ITEM $__itemText)) }}
-              {{- fail (printf "[definitions.volume] downwardAPI: item '%s' does not match '<path> field <fieldPath> [mode]' or '<path> resource <resource> [containerName] [divisor] [mode]'" $__itemText) }}
+              {{- fail (printf "[definitions.volume] downwardAPI: item '%s' does not match '<path> [mode] field <fieldPath> [apiVersion]' or '<path> [mode] resource <resource> [containerName] [divisor]'" $__itemText) }}
             {{- end }}
             {{- $items = mustAppend $items $__itemText }}
           {{- end }}

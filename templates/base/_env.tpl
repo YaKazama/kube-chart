@@ -103,10 +103,10 @@ K8S:
     CSI_ATTRIBUTE: "^\\s*([^:\\s]+)\\s*[: ]+\\s*(.*?)\\s*$"
     # downwardAPI 简写，捕获 defaultMode 或 items 的两种组合及内容
     DOWNWARD_API: "^\\s*(?:(\\d+)(?:\\s+(?i:(items))\\s*\\((.*)\\))?|(?i:(items))\\s*\\((.*)\\))?\\s*$"
-    # downwardAPI field 元素，依次捕获 path、fieldPath 与可选 mode
-    DOWNWARD_API_FIELD_ITEM: "^\\s*([^\\s,]+)\\s+(?i:field)\\s+(\\S+)(?:\\s+([^\\s,]+))?\\s*$"
-    # downwardAPI resource 元素，依次捕获 path、resource、containerName、divisor 与可选 mode
-    DOWNWARD_API_RESOURCE_ITEM: "^\\s*([^\\s,]+)\\s+(?i:resource)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?\\s*$"
+    # downwardAPI field 元素，依次捕获 path、可选 mode、fieldPath 与可选 apiVersion
+    DOWNWARD_API_FIELD_ITEM: "^\\s*([^\\s,]+)(?:\\s+([^\\s,]+))?\\s+(?i:field)\\s+(\\S+)(?:\\s+([^\\s,]+))?\\s*$"
+    # downwardAPI resource 元素，依次捕获 path、可选 mode、resource、containerName 与 divisor
+    DOWNWARD_API_RESOURCE_ITEM: "^\\s*([^\\s,]+)(?:\\s+([^\\s,]+))?\\s+(?i:resource)\\s+(\\S+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?\\s*$"
     # emptyDir 简写，依次捕获 medium 与 sizeLimit
     EMPTY_DIR: "^\\s*(?:(?i:(memory))(?:\\s+|$))?(\\S+)?\\s*$"
     # fc 简写，依次捕获 lun、fsType、readOnly、targetWWNs 关键字与内容、wwids 关键字与内容
