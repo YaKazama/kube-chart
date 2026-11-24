@@ -98,7 +98,7 @@ K8S:
     # configMap/secret items 元素，依次捕获 key、path 与可选 mode
     KEY_TO_PATH_ITEM: "^\\s*([^\\s,]+)\\s+([^\\s,]+)(?:\\s+([^\\s,]+))?\\s*$"
     # csi 简写，依次捕获 driver、nodePublishSecretRef、fsType、readOnly、属性关键字与内容
-    CSI: "^\\s*([^\\s,]+)\\s+(\\S+)(?:\\s+((?i:ext4|xfs|ntfs)))?(?:\\s+((?i:true|false)))?(?:\\s+(?i:(attr|volumeAttributes))\\s*\\((.*)\\))?\\s*$"
+    CSI: "^\\s*([^\\s,]+)(?:\\s+(\\S+))?(?:\\s+((?i:ext4|xfs|ntfs)))?(?:\\s+((?i:true|false)))?(?:\\s+(?i:(attr|volumeAttributes))\\s*\\((.*)\\))?\\s*$"
     # csi 属性段，依次捕获 key 与 value，分隔符为空白或冒号
     CSI_ATTRIBUTE: "^\\s*([^:\\s]+)\\s*[: ]+\\s*(.*?)\\s*$"
     # downwardAPI 简写，捕获 defaultMode 或 items 的两种组合及内容

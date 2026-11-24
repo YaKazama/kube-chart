@@ -128,11 +128,11 @@
         {{- $_ = set $context "items" $items }}
       {{- end }}
 
-    {{- /* csi: <driver> <nodePublishSecretRef> [fsType] [readOnly] [attr|volumeAttributes (key value, ...)]。 */ -}}
+    {{- /* csi: <driver> [nodePublishSecretRef] [fsType] [readOnly] [attr|volumeAttributes (key value, ...)]，nodePublishSecretRef 位置命中 fsType 枚举时归属 fsType。 */ -}}
     {{- else if eq $source "csi" }}
       {{- $_pattern := $const.K8S.VOLUME.CSI }}
       {{- if not (mustRegexMatch $_pattern $sourceValue) }}
-        {{- fail (printf "[definitions.volume] csi: '%s' does not match '<driver> <nodePublishSecretRef> [fsType] [readOnly] [attr|volumeAttributes (key value, ...)]'" $sourceValue) }}
+        {{- fail (printf "[definitions.volume] csi: '%s' does not match '<driver> [nodePublishSecretRef] [fsType] [readOnly] [attr|volumeAttributes (key value, ...)]'" $sourceValue) }}
       {{- end }}
       {{- $_driver := mustRegexReplaceAll $_pattern $sourceValue "$1" | trim }}
       {{- $_secretRefRaw := mustRegexReplaceAll $_pattern $sourceValue "$2" | trim }}
@@ -141,8 +141,19 @@
       {{- $_attrKeyword := mustRegexReplaceAll $_pattern $sourceValue "$5" | trim }}
       {{- $_attrRaw := mustRegexReplaceAll $_pattern $sourceValue "$6" }}
 
+      {{- /* 位置归属: RE2 无法在捕获时排除枚举字面量，命中 ext4/xfs/ntfs 时把该位置前移为 fsType，两个位置同时给出则中断。 */ -}}
+      {{- if and $_secretRefRaw (has (lower $_secretRefRaw) (list "ext4" "xfs" "ntfs")) }}
+        {{- if $_fsTypeRaw }}
+          {{- fail (printf "[definitions.volume] csi: fsType is set twice, got '%s' and '%s'" $_secretRefRaw $_fsTypeRaw) }}
+        {{- end }}
+        {{- $_fsTypeRaw = $_secretRefRaw }}
+        {{- $_secretRefRaw = "" }}
+      {{- end }}
+
       {{- $context = dict "driver" $_driver }}
-      {{- $_ = set $context "nodePublishSecretRef" $_secretRefRaw }}
+      {{- if $_secretRefRaw }}
+        {{- $_ = set $context "nodePublishSecretRef" $_secretRefRaw }}
+      {{- end }}
       {{- if $_fsTypeRaw }}
         {{- $_ = set $context "fsType" (lower $_fsTypeRaw) }}
       {{- end }}
