@@ -1,9 +1,9 @@
 ---
+name: opsx-archive
 description: "[8/9] OPSX /opsx:archive — 轻量核对后归档整个 change 目录"
+disable-model-invocation: true
 argument-hint: "<change-id>"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:archive`。
 
 change-id：${input:changeId:输入 kebab-case 的 change-id}

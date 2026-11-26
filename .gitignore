@@ -4,11 +4,11 @@
 **/.vscode
 **/.idea
 
-# ide / 仅放行 .github/prompts 下的 Copilot Prompt 文件，其余 .github 内容继续排除
+# ide / 仅放行 .github/skills 下的 Copilot Prompt 文件，其余 .github 内容继续排除
 !**/.github/
 **/.github/*
-!**/.github/prompts/
-!**/.github/prompts/**
+!**/.github/skills/
+!**/.github/skills/**
 
 # build
 **/build*

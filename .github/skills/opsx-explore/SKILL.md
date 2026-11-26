@@ -1,9 +1,9 @@
 ---
+name: opsx-explore
 description: "[2/9] OPSX /opsx:explore — 讨论并把共识或开放问题写入 draft"
+disable-model-invocation: true
 argument-hint: "<change-id> [讨论主题或笔记路径]"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:explore`。
 
 参数：${input:args:输入 <change-id>，可选追加讨论主题或当前 change 目录内的笔记路径}

@@ -1,8 +1,8 @@
 ---
+name: opsx-ck-publish
 description: "[9/9] OPSX /opsx:ck:publish — 对整个 Chart 执行只读发布检查"
-agent: "agent"
+disable-model-invocation: true
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:ck:publish`。本动作不接受 change-id。
 
 ## 读取顺序

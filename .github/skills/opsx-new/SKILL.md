@@ -1,9 +1,9 @@
 ---
+name: opsx-new
 description: "[1/9] OPSX /opsx:new — 新建 change 目录与轻量 draft.md"
+disable-model-invocation: true
 argument-hint: "<change-id>（kebab-case）"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:new`。
 
 change-id：${input:changeId:输入 kebab-case 的 change-id}

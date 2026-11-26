@@ -1,9 +1,9 @@
 ---
+name: opsx-docs
 description: "[7/9] OPSX /opsx:docs — 从指定 change 或全部归档生成最终用户文档"
+disable-model-invocation: true
 argument-hint: "[change-id]"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:docs`。
 
 change-id：${input:changeId:输入 kebab-case 的 change-id；留空表示处理全部归档内容}

@@ -1,9 +1,9 @@
 ---
+name: opsx-code
 description: "[4/9] OPSX /opsx:code — 按闭包成立的三制品生成或局部修改代码"
+disable-model-invocation: true
 argument-hint: "<change-id> [实现说明]"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:code`。
 
 参数：${input:args:输入 <change-id>，可选追加实现说明}

@@ -1,9 +1,9 @@
 ---
+name: opsx-spec
 description: "[3/9] OPSX /opsx:spec — 创建或校对 spec/design/tasks 并做四向闭包检查"
+disable-model-invocation: true
 argument-hint: "<change-id>"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:spec`。
 
 参数：${input:args:输入 <change-id>}

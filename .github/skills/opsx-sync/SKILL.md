@@ -1,9 +1,9 @@
 ---
+name: opsx-sync
 description: "[6/9] OPSX /opsx:sync — 预览代码事实差异，经精确确认后反向同步三制品"
+disable-model-invocation: true
 argument-hint: "<change-id> [简短同步说明]"
-agent: "agent"
 ---
-
 执行 kube-chart 的 OPSX 动作 `/opsx:sync`。
 
 参数：${input:args:输入 <change-id>，可选追加简短同步说明}
