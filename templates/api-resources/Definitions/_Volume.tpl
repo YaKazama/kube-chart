@@ -296,7 +296,7 @@
         {{- fail "[definitions.volume] fc: targetWWNs or wwids is required" }}
       {{- end }}
 
-    {{- /* hostPath: <path> [type]，type 允许显式空字符串。 */ -}}
+    {{- /* hostPath: <path> [type]，type 为空时不渲染。 */ -}}
     {{- else if eq $source "hostPath" }}
       {{- $_pattern := $const.K8S.VOLUME.HOST_PATH }}
       {{- if not (mustRegexMatch $_pattern $sourceValue) }}
@@ -310,13 +310,7 @@
         {{- $_type := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_typeRaw "$1" | trim }}
         {{- if $_type }}
           {{- $types := dict "blockdevice" "BlockDevice" "chardevice" "CharDevice" "directory" "Directory" "directoryorcreate" "DirectoryOrCreate" "file" "File" "fileorcreate" "FileOrCreate" "socket" "Socket" }}
-          {{- $_canonicalType := get $types (lower $_type) }}
-          {{- if not $_canonicalType }}
-            {{- fail (printf "[definitions.volume] hostPath: type '%s' is not one of \"\", BlockDevice, CharDevice, Directory, DirectoryOrCreate, File, FileOrCreate, Socket" $_type) }}
-          {{- end }}
-          {{- $_ = set $context "type" $_canonicalType }}
-        {{- else }}
-          {{- $_ = set $context "type" "" }}
+          {{- $_ = set $context "type" (get $types (lower $_type)) }}
         {{- end }}
       {{- end }}
 

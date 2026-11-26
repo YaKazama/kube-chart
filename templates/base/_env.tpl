@@ -112,7 +112,7 @@ K8S:
     # fc 简写，依次捕获 lun、fsType、readOnly、targetWWNs 关键字与内容、wwids 关键字与内容
     FC: "^\\s*(?:(\\d+)\\s+)?((?i:ext4|xfs|ntfs))(?:\\s+((?i:true|false)))?(?:\\s+(?i:(targetWWNs))\\s*\\((.*?)\\))?(?:\\s+(?i:(wwids))\\s*\\((.*?)\\))?\\s*$"
     # hostPath 简写，依次捕获绝对路径与可选 type
-    HOST_PATH: "^\\s*(/\\S*)(?:\\s+(\"\"|[^\\s]+))?\\s*$"
+    HOST_PATH: "^\\s*(/\\S*)(?:\\s+((?i:\"\"|DirectoryOrCreate|Directory|FileOrCreate|File|Socket|CharDevice|BlockDevice)))?\\s*$"
     # image 简写，依次捕获 reference 与可选 pullPolicy
     IMAGE: "^\\s*(\\S+)(?:\\s+((?i:always|ifnotpresent|never)))?\\s*$"
     # iscsi 简写，依次捕获 iqn、lun、5 个位置段、chap/portals 关键字与内容、secretRef.name
