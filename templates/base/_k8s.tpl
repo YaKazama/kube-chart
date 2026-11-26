@@ -465,6 +465,82 @@
 
 
 {{- /*
+  比较两个 Kubernetes Quantity 的数值大小。
+
+  行为:
+    - 入参为两个 Quantity 字符串；先按 K8S Quantity 规则校验格式。
+    - 将数值部分与后缀换算为 float64 后比较：K/M/G/T/P/E 与 k 按 1000 的幂，Ki/Mi/Gi/Ti/Pi/Ei 按 1024 的幂，m 为 0.001，e/E 指数形式按 10 的幂。
+    - 首个 Quantity 大于或等于第二个时返回 true，其他返回 false。
+
+  边界:
+    - 参数不是长度 2 的 list 或元素不是 string 时立即中断。
+    - 任一项不是合法 Quantity 时由 base.quantity 中断并保留其自身前缀。
+    - e/E 指数只接受整数指数；非整数指数由本模板中断。
+    - 使用 float64 比较，极端大值可能受精度限制；不判断单位语义或资源类型。
+
+  入参: list [left Quantity string, right Quantity string]。
+
+  返回值: "true" 或 "false"。
+
+  示例:
+    {{- include "base.quantity.ge" (list "1Gi" "1024Mi") }}  // true
+    {{- include "base.quantity.ge" (list "500m" "1") }}      // false
+*/ -}}
+{{- define "base.quantity.ge" -}}
+  {{- if or (not (kindIs "slice" .)) (ne (len .) 2) }}
+    {{- fail (printf "[base.quantity.ge] parameter: must be slice with 2 elements, got '%v'" .) }}
+  {{- end }}
+  {{- $left := index . 0 }}
+  {{- $right := index . 1 }}
+  {{- if not (kindIs "string" $left) }}
+    {{- fail (printf "[base.quantity.ge] parameter 0: must be string type, got '%s'" (kindOf $left)) }}
+  {{- end }}
+  {{- if not (kindIs "string" $right) }}
+    {{- fail (printf "[base.quantity.ge] parameter 1: must be string type, got '%s'" (kindOf $right)) }}
+  {{- end }}
+
+  {{- $_left := include "base.quantity" $left }}
+  {{- $_right := include "base.quantity" $right }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- $factors := dict "k" 1000.0 "K" 1000.0 "M" 1000000.0 "G" 1000000000.0 "T" 1000000000000.0 "P" 1000000000000000.0 "E" 1000000000000000000.0 "Ki" 1024.0 "Mi" 1048576.0 "Gi" 1073741824.0 "Ti" 1099511627776.0 "Pi" 1125899906842624.0 "Ei" 1152921504606846976.0 }}
+
+  {{- $numbers := list }}
+  {{- range $_value := list $_left $_right }}
+    {{- $_sign := 1.0 }}
+    {{- if hasPrefix "-" $_value }}
+      {{- $_sign = -1.0 }}
+    {{- end }}
+
+    {{- $_number := mustRegexReplaceAll $const.K8S.QUANTITY $_value "$1" }}
+    {{- if hasSuffix "." $_number }}
+      {{- $_number = printf "%s0" $_number }}
+    {{- end }}
+    {{- $_suffix := mustRegexReplaceAll $const.K8S.QUANTITY $_value "$2" }}
+
+    {{- $_factor := 1.0 }}
+    {{- if hasSuffix "i" $_suffix }}
+      {{- $_factor = get $factors $_suffix }}
+    {{- else if eq $_suffix "m" }}
+      {{- $_factor = 0.001 }}
+    {{- else if and (or (hasPrefix "e" $_suffix) (hasPrefix "E" $_suffix)) (gt (len $_suffix) 1) }}
+      {{- $_exponent := trim (trimPrefix "e" (trimPrefix "E" $_suffix)) }}
+      {{- if not (mustRegexMatch $const.TYPES.INT $_exponent) }}
+        {{- fail (printf "[base.quantity.ge] exponent: must be integer, got '%s'" $_exponent) }}
+      {{- end }}
+      {{- $_factor = float64 (printf "1e%s" $_exponent) }}
+    {{- else if $_suffix }}
+      {{- $_factor = get $factors $_suffix }}
+    {{- end }}
+
+    {{- $numbers = mustAppend $numbers (mulf (mulf $_sign (float64 $_number)) $_factor) }}
+  {{- end }}
+
+  {{- ge (index $numbers 0) (index $numbers 1) }}
+{{- end }}
+
+
+{{- /*
   校验并转换 Kubernetes Time 格式。参考 https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta
 
   行为:
