@@ -240,7 +240,9 @@
         {{- end }}
       {{- end }}
 
-    {{- /* fc: [lun] <fsType> [readOnly] [targetWWNs (<value>, ...)] [wwids (<value>, ...)]。 */ -}}
+    {{- /* fc: [lun] <fsType> [readOnly] [targetWWNs (<value>, ...)] [wwids (<value>, ...)]。
+       lun 仅在 targetWWNs 出现时以原生整数写入上下文；targetWWNs 缺 lun 时由 definitions.fcVolumeSource 中断；
+       wwids 分支忽略 lun；两组共存时由子模板按 targetWWNs 优先抑制 wwids。 */ -}}
     {{- else if eq $source "fc" }}
       {{- $_pattern := $const.K8S.VOLUME.FC }}
       {{- if not (mustRegexMatch $_pattern $sourceValue) }}
@@ -256,7 +258,7 @@
 
       {{- $context = dict "fsType" (lower $_fsTypeRaw) }}
       {{- if $_lunRaw }}
-        {{- $_lun := include "base.int.positive" $_lunRaw }}
+        {{- $_lun := int (include "base.int.positive" $_lunRaw) }}
         {{- if $_targetKeyword }}
           {{- $_ = set $context "lun" $_lun }}
         {{- end }}
