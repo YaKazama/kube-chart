@@ -114,7 +114,7 @@ K8S:
     # hostPath 简写，依次捕获绝对路径与可选 type
     HOST_PATH: "^\\s*(/\\S*)(?:\\s+((?i:\"\"|DirectoryOrCreate|Directory|FileOrCreate|File|Socket|CharDevice|BlockDevice)))?\\s*$"
     # image 简写，依次捕获 reference 与可选 pullPolicy
-    IMAGE: "^\\s*(\\S+)(?:\\s+((?i:always|ifnotpresent|never)))?\\s*$"
+    IMAGE: "^\\s*(\\S+)(?:\\s+((?i:Always|IfNotPresent|Never)))?\\s*$"
     # iscsi 简写，依次捕获 iqn、lun、5 个位置段、chap/portals 关键字与内容、secretRef.name
     ISCSI: "^\\s*(\\S+)\\s+(\\d+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(?i:(chap))\\s*\\(\\s*([^(),]+)\\s*,\\s*([^(),]+)\\s*\\))?(?:\\s+(?i:(portals))\\s*\\((.*?)\\))?(?:\\s+(\\S+))?\\s*$"
     # iscsi targetPortal 与 portals 元素：IPv4 或端口号，可带 :port
