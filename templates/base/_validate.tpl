@@ -263,6 +263,122 @@
 
 
 {{- /*
+  归一化 IPv4/IPv6 host:port。
+
+  行为:
+    - 接受 IPv4、IPv4:port、IPv6、[IPv6] 与 [IPv6]:port。
+    - 未提供端口时使用 defaultPort；defaultPort 为空或非法时视为非法。
+    - IPv6 输出始终使用方括号。
+    - strict=true 非法中断；strict=false 非法返回空字符串。
+
+  入参: list [value, defaultPort, strict]；value 必填。
+
+  边界: 只解析 IP 地址与端口，不解析域名、CIDR 或其他 host 形态。
+
+  返回值: 归一化 host:port 字符串；非严格模式非法时为空字符串。
+
+  示例:
+    {{- include "base.net.hostPort" (list "10.0.2.15" "3260") }}        // 10.0.2.15:3260
+    {{- include "base.net.hostPort" (list "2001:db8::1" "3260") }}      // [2001:db8::1]:3260
+    {{- include "base.net.hostPort" (list "[2001:db8::1]:3260" "") }}   // [2001:db8::1]:3260
+    {{- include "base.net.hostPort" (list "3260" "" false) }}           // (空)
+*/ -}}
+{{- define "base.net.hostPort" -}}
+  {{- if not (kindIs "slice" .) }}
+    {{- fail (printf "[base.net.hostPort] parameter: must be slice type, got '%s'" (kindOf .)) }}
+  {{- end }}
+  {{- $len := len . }}
+  {{- if or (lt $len 1) (gt $len 3) }}
+    {{- fail (printf "[base.net.hostPort] parameter: count must be 1-3, format: '[value defaultPort strict]', got '%d'" $len) }}
+  {{- end }}
+
+  {{- $value := index . 0 }}
+  {{- if not (kindIs "string" $value) }}
+    {{- fail (printf "[base.net.hostPort] parameter 0 (value): expected string type, got '%v' (kind: %s)" $value (kindOf $value)) }}
+  {{- end }}
+  {{- $defaultPort := "" }}
+  {{- if ge $len 2 }}
+    {{- $defaultPort = index . 1 }}
+    {{- if not (kindIs "string" $defaultPort) }}
+      {{- fail (printf "[base.net.hostPort] parameter 1 (defaultPort): expected string type, got '%v' (kind: %s)" $defaultPort (kindOf $defaultPort)) }}
+    {{- end }}
+  {{- end }}
+  {{- $strict := true }}
+  {{- if ge $len 3 }}
+    {{- $strict = index . 2 }}
+    {{- if not (kindIs "bool" $strict) }}
+      {{- fail (printf "[base.net.hostPort] parameter 2 (strict): expected bool type, got '%v' (kind: %s)" $strict (kindOf $strict)) }}
+    {{- end }}
+  {{- end }}
+
+  {{- $const := include "base.env" "" | fromYaml }}
+  {{- $text := trim $value }}
+  {{- $host := "" }}
+  {{- $port := "" }}
+  {{- $isIPv6 := false }}
+  {{- $valid := false }}
+
+  {{- if hasPrefix "[" $text }}
+    {{- $_parts := splitList "]" $text }}
+    {{- if eq (len $_parts) 2 }}
+      {{- $host = trimPrefix "[" (index $_parts 0) }}
+      {{- $_rest := index $_parts 1 }}
+      {{- if eq $_rest "" }}
+        {{- $valid = mustRegexMatch $const.NET.IPV6 $host }}
+        {{- $isIPv6 = $valid }}
+      {{- else if hasPrefix ":" $_rest }}
+        {{- $port = trim (trimPrefix ":" $_rest) }}
+        {{- if and (mustRegexMatch $const.NET.IPV6 $host) (mustRegexMatch $const.TYPES.POSITIVE_INT $port) }}
+          {{- $valid = true }}
+          {{- $isIPv6 = true }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+  {{- else if mustRegexMatch $const.NET.IPV4 $text }}
+    {{- $host = $text }}
+    {{- $valid = true }}
+
+  {{- else if mustRegexMatch $const.NET.IPV6 $text }}
+    {{- $host = $text }}
+    {{- $valid = true }}
+    {{- $isIPv6 = true }}
+
+  {{- else }}
+    {{- $_parts := splitList ":" $text }}
+    {{- if eq (len $_parts) 2 }}
+      {{- $host = index $_parts 0 }}
+      {{- $port = index $_parts 1 }}
+      {{- if and (mustRegexMatch $const.NET.IPV4 $host) (mustRegexMatch $const.TYPES.POSITIVE_INT $port) }}
+        {{- $valid = true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- if $valid }}
+    {{- if eq $port "" }}
+      {{- $port = $defaultPort }}
+    {{- end }}
+    {{- if or (eq $port "") (not (mustRegexMatch $const.TYPES.POSITIVE_INT $port)) }}
+      {{- $valid = false }}
+    {{- end }}
+  {{- end }}
+
+  {{- if not $valid }}
+    {{- if $strict }}
+      {{- fail (printf "[base.net.hostPort] value: '%s' is not a valid IPv4/IPv6 host:port" $value) }}
+    {{- else }}
+      {{- "" }}
+    {{- end }}
+  {{- else if $isIPv6 }}
+    {{- printf "[%s]:%s" $host $port }}
+  {{- else }}
+    {{- printf "%s:%s" $host $port }}
+  {{- end }}
+{{- end }}
+
+
+{{- /*
   校验并归一化绝对、相对或 URI 路径。
 
   行为:

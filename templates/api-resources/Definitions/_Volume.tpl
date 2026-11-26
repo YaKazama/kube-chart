@@ -328,15 +328,15 @@
         {{- $_ = set $context "pullPolicy" (get (dict "always" "Always" "ifnotpresent" "IfNotPresent" "never" "Never") (lower $_pullPolicyRaw)) }}
       {{- end }}
 
-    {{- /* iscsi: <iqn> <lun> [targetPortal] [fsType] [readOnly] [iscsiInterface] [initiatorName] [chap (...)] [portals (...)] [secretRef.name]。 */ -}}
+    {{- /* iscsi: <iqn> <lun> <targetPortal> [fsType] [readOnly] [iscsiInterface] [initiatorName] [chap (...)] [portals (...)] [secretRef.name]。 */ -}}
     {{- else if eq $source "iscsi" }}
       {{- $_pattern := $const.K8S.VOLUME.ISCSI }}
       {{- if not (mustRegexMatch $_pattern $sourceValue) }}
-        {{- fail (printf "[definitions.volume] iscsi: '%s' does not match '<iqn> <lun> [targetPortal] [fsType] [readOnly] [iscsiInterface] [initiatorName] [chap (<chapAuthDiscovery>, <chapAuthSession>)] [portals (<ip>, ...)] [secretRef.name]'" $sourceValue) }}
+        {{- fail (printf "[definitions.volume] iscsi: '%s' does not match '<iqn> <lun> <targetPortal> [fsType] [readOnly] [iscsiInterface] [initiatorName] [chap (<chapAuthDiscovery>, <chapAuthSession>)] [portals (<ip>, ...)] [secretRef.name]'" $sourceValue) }}
       {{- end }}
       {{- $_iqn := mustRegexReplaceAll $_pattern $sourceValue "$1" | trim }}
       {{- $_lunRaw := mustRegexReplaceAll $_pattern $sourceValue "$2" | trim }}
-      {{- $_targetPortalRaw := mustRegexReplaceAll $_pattern $sourceValue "$3" | trim }}
+      {{- $_targetPortal := mustRegexReplaceAll $_pattern $sourceValue "$3" | trim }}
       {{- $_fsTypeRaw := mustRegexReplaceAll $_pattern $sourceValue "$4" | trim }}
       {{- $_readOnlyRaw := mustRegexReplaceAll $_pattern $sourceValue "$5" | trim }}
       {{- $_iscsiInterfaceRaw := mustRegexReplaceAll $_pattern $sourceValue "$6" | trim }}
@@ -348,66 +348,26 @@
       {{- $_portalsRaw := mustRegexReplaceAll $_pattern $sourceValue "$12" }}
       {{- $_secretRefRaw := mustRegexReplaceAll $_pattern $sourceValue "$13" | trim }}
 
-      {{- $context = dict "iqn" $_iqn "lun" (include "base.int.positive" $_lunRaw) }}
-
-      {{- $_targetPortal := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_targetPortalRaw "$1" | trim }}
-      {{- if $_targetPortal }}
-        {{- if not (mustRegexMatch $const.K8S.VOLUME.ISCSI_PORTAL $_targetPortal) }}
-          {{- fail (printf "[definitions.volume] iscsi: targetPortal '%s' must be an IPv4 address or port number, optionally with ':port'" $_targetPortal) }}
-        {{- end }}
-        {{- $_ = set $context "targetPortal" $_targetPortal }}
+      {{- $context = dict "iqn" $_iqn "lun" $_lunRaw "targetPortal" $_targetPortal }}
+      {{- if $_fsTypeRaw }}
+        {{- $_ = set $context "fsType" $_fsTypeRaw }}
       {{- end }}
-
-      {{- $_fsType := lower (mustRegexReplaceAll $const.SYS.YAML_QUOTED $_fsTypeRaw "$1" | trim) }}
-      {{- if $_fsType }}
-        {{- if not (has $_fsType (list "ext4" "xfs" "ntfs")) }}
-          {{- fail (printf "[definitions.volume] iscsi: fsType '%s' is not one of ext4, xfs, ntfs" $_fsType) }}
-        {{- end }}
-        {{- $_ = set $context "fsType" $_fsType }}
+      {{- if $_readOnlyRaw }}
+        {{- $_ = set $context "readOnly" $_readOnlyRaw }}
       {{- end }}
-
-      {{- $_readOnly := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_readOnlyRaw "$1" | trim }}
-      {{- if $_readOnly }}
-        {{- $_ = set $context "readOnly" (include "base.bool" (lower $_readOnly)) }}
+      {{- if $_iscsiInterfaceRaw }}
+        {{- $_ = set $context "iscsiInterface" $_iscsiInterfaceRaw }}
       {{- end }}
-
-      {{- $_iscsiInterface := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_iscsiInterfaceRaw "$1" | trim }}
-      {{- if $_iscsiInterface }}
-        {{- $_ = set $context "iscsiInterface" $_iscsiInterface }}
+      {{- if $_initiatorNameRaw }}
+        {{- $_ = set $context "initiatorName" $_initiatorNameRaw }}
       {{- end }}
-
-      {{- $_initiatorName := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_initiatorNameRaw "$1" | trim }}
-      {{- if $_initiatorName }}
-        {{- $_ = set $context "initiatorName" $_initiatorName }}
-      {{- end }}
-
       {{- if $_chapKeyword }}
-        {{- $_chapDiscovery := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_chapDiscoveryRaw "$1" | trim }}
-        {{- $_chapSession := mustRegexReplaceAll $const.SYS.YAML_QUOTED $_chapSessionRaw "$1" | trim }}
-        {{- if or (not $_chapDiscovery) (not $_chapSession) }}
-          {{- fail "[definitions.volume] iscsi: chap requires both chapAuthDiscovery and chapAuthSession values" }}
-        {{- end }}
-        {{- $_ = set $context "chapAuthDiscovery" (include "base.bool" (lower $_chapDiscovery)) }}
-        {{- $_ = set $context "chapAuthSession" (include "base.bool" (lower $_chapSession)) }}
+        {{- $_ = set $context "chapAuthDiscovery" $_chapDiscoveryRaw }}
+        {{- $_ = set $context "chapAuthSession" $_chapSessionRaw }}
       {{- end }}
-
       {{- if $_portalsKeyword }}
-        {{- $portals := list }}
-        {{- range $_portal := mustRegexSplit $const.SPLIT.COMMA (trim $_portalsRaw) -1 }}
-          {{- $__portal := trim $_portal }}
-          {{- if $__portal }}
-            {{- if not (mustRegexMatch $const.K8S.VOLUME.ISCSI_PORTAL $__portal) }}
-              {{- fail (printf "[definitions.volume] iscsi: portal '%s' must be an IPv4 address or port number, optionally with ':port'" $__portal) }}
-            {{- end }}
-            {{- $portals = mustAppend $portals $__portal }}
-          {{- end }}
-        {{- end }}
-        {{- if not $portals }}
-          {{- fail "[definitions.volume] iscsi: portals must contain at least one element" }}
-        {{- end }}
-        {{- $_ = set $context "portals" $portals }}
+        {{- $_ = set $context "portals" (trim $_portalsRaw) }}
       {{- end }}
-
       {{- if $_secretRefRaw }}
         {{- $_ = set $context "secretRef" $_secretRefRaw }}
       {{- end }}

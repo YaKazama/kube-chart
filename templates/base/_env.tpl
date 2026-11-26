@@ -116,9 +116,9 @@ K8S:
     # image 简写，依次捕获 reference 与可选 pullPolicy
     IMAGE: "^\\s*(\\S+)(?:\\s+((?i:Always|IfNotPresent|Never)))?\\s*$"
     # iscsi 简写，依次捕获 iqn、lun、5 个位置段、chap/portals 关键字与内容、secretRef.name
-    ISCSI: "^\\s*(\\S+)\\s+(\\d+)(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(?i:(chap))\\s*\\(\\s*([^(),]+)\\s*,\\s*([^(),]+)\\s*\\))?(?:\\s+(?i:(portals))\\s*\\((.*?)\\))?(?:\\s+(\\S+))?\\s*$"
-    # iscsi targetPortal 与 portals 元素：IPv4 或端口号，可带 :port
-    ISCSI_PORTAL: "^(?:\\d{1,3}(?:\\.\\d{1,3}){3}|\\d+)(?::\\d+)?$"
+    ISCSI: "^\\s*(\\S+)\\s+([0-9]+)\\s+(\\S+)(?:\\s+((?i:ext4|xfs|ntfs)))?(?:\\s+((?i:true|false)))?(?:\\s+(\\S+))?(?:\\s+(\\S+))?(?:\\s+(?i:(chap))\\s*\\(\\s*((?i:true|false))\\s*,\\s*((?i:true|false))\\s*\\))?(?:\\s+(?i:(portals))\\s*\\((.*?)\\))?(?:\\s+(\\S+))?\\s*$"
+    # iscsi targetPortal 与 portals 元素：IPv4/IPv6 地址，可带可选 :port
+    ISCSI_PORTAL: "^(?:\\[[0-9A-Fa-f:.%]+\\](?::[0-9]+)?|[0-9]{1,3}(?:\\.[0-9]{1,3}){3}(?::[0-9]+)?|[0-9A-Fa-f]*[:.][0-9A-Fa-f:.%]*)$"
     # nfs 简写，依次捕获 server、绝对路径与可选 readOnly
     NFS: "^\\s*(\\S+)\\s+(/\\S*)(?:\\s+((?i:true|false)))?\\s*$"
     # persistentVolumeClaim 简写，依次捕获 claimName 与可选 readOnly
