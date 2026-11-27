@@ -6,7 +6,7 @@
     - command              (string array, 可选): 同 args。
     - env                  (EnvVar array, 可选): envFileRefs 有有效结果时优先，逐项委托 definitions.envVar。
     - envFrom              (EnvFromSource array, 可选): envFromFileRefs 有有效结果时优先；map 元素原样传递，string 元素按简写解析，归一化后逐项委托 definitions.envFromSource。
-    - image                (string, 必填): 按 imageFileRefs > imageRefs > image 三级解析，最终为空时中断。
+    - image                (string, 必填): 按 imageFileRefs > image 两级解析，最终为空时中断。
     - imagePullPolicy      (string, 可选): 按 Always、Never、IfNotPresent 枚举校验后以带引号标量输出。
     - lifecycle            (Lifecycle, 可选): 非空 map 时注入同源 os 后委托 definitions.lifecycle。
     - livenessProbe        (Probe, 可选): 非空 map 时委托 definitions.probe。
@@ -29,9 +29,9 @@
     - workingDir           (string, 可选): 非空时以带引号标量输出。
 
   引用字段优先级:
-    - imageFileRefs、envFileRefs、envFromFileRefs、resourcesFileRefs 为 slice，imageRefs 为 map。
+    - imageFileRefs、envFileRefs、envFromFileRefs、resourcesFileRefs 为 slice。
     - 同类 *FileRefs 有有效结果时取代对应内联字段，无有效结果时回退内联字段。
-    - imageFileRefs 内容解析为 map 时按 imageRefs 规则拼接，否则按标量直接使用。
+    - imageFileRefs 的解析结果只接受 string；解析结果为 map 或其他非 string 值时中断。
 
   边界:
     - 只输出当前层字段，不输出 containers 父键、apiVersion 或 kind；name 与 image 必填，模板恒有输出。
@@ -135,30 +135,17 @@
     {{- include "definitions.container.array" (dict "key" "envFrom" "define" "definitions.envFromSource" "raw" (mustToJson $envFromItems)) }}
   {{- end }}
 
-  {{- /* image（string, 必填）: imageFileRefs 解析结果优先，其次 imageRefs，最后回退 image；最终为空时中断。 */ -}}
+  {{- /* image（string, 必填）: imageFileRefs 解析结果优先，其次回退 image；解析结果只接受 string，最终为空时中断。 */ -}}
   {{- $image := "" }}
   {{- $_imageFileRefsRaw := include "base.get" (list . "imageFileRefs") | trim }}
   {{- if $_imageFileRefsRaw }}
     {{- $_imageFromFile := include "base.fileRefs" (list . $_imageFileRefsRaw) }}
     {{- if $_imageFromFile }}
       {{- $_imageParsed := $_imageFromFile | fromYaml }}
-      {{- if eq (include "base.isFromYamlError" $_imageParsed) "true" }}
-        {{- $image = include "base.string.normalize" $_imageFromFile | trim }}
-      {{- else }}
-        {{- $image = include "definitions.container.imageRef" $_imageParsed }}
+      {{- if ne (include "base.isFromYamlError" $_imageParsed) "true" }}
+        {{- fail "[definitions.container] imageFileRefs: resolved value must be string" }}
       {{- end }}
-    {{- end }}
-  {{- end }}
-  {{- if not $image }}
-    {{- $_imageRefsRaw := include "base.get" (list . "imageRefs") | trim }}
-    {{- if $_imageRefsRaw }}
-      {{- $_imageRefsParsed := $_imageRefsRaw | fromYaml }}
-      {{- if eq (include "base.isFromYamlError" $_imageRefsParsed) "true" }}
-        {{- fail "[definitions.container] imageRefs: must be object type" }}
-      {{- end }}
-      {{- if $_imageRefsParsed }}
-        {{- $image = include "definitions.container.imageRef" $_imageRefsParsed }}
-      {{- end }}
+      {{- $image = include "base.string.normalize" $_imageFromFile | trim }}
     {{- end }}
   {{- end }}
   {{- if not $image }}
@@ -451,65 +438,4 @@
       {{- end }}
     {{- end }}
   {{- end }}
-{{- end }}
-
-
-{{- /*
-  按 imageRefs 字段拼接完整镜像引用。
-
-  行为:
-    - registry、namespace 去除首尾 `/`；repository 必填，归一后为空时中断。
-    - tag 与 digest 均为空时不产生尾缀；digest 非空且 tag 为空时 tag 取 latest。
-    - digest 不以 sha256 开头时补全 sha256: 前缀。
-    - 按 registry/namespace/repository:tag@digest 的顺序拼接，空段被剔除。
-
-  边界:
-    - 只拼接 imageRefs 结构，不读取 imageFileRefs 或 image，也不校验引用整体是否合法。
-    - 失败消息使用 [definitions.container] 前缀并携带字段路径。
-
-  入参: 上下文 map，可包含以下字段:
-    - registry   (string, 可选) 镜像仓库地址
-    - namespace  (string, 可选) 仓库命名空间
-    - repository (string, 必填) 镜像仓库名
-    - tag        (string, 可选) 镜像标签
-    - digest     (string, 可选) 镜像摘要
-
-  返回值: 拼接后的镜像引用字符串。
-
-  示例:
-    {{- include "definitions.container.imageRef" (dict "repository" "nginx" "tag" "1.27") }}  // nginx:1.27
-    {{- include "definitions.container.imageRef" (dict "registry" "docker.io" "repository" "nginx" "digest" "abc") }}
-      // docker.io/nginx:latest@sha256:abc
-*/ -}}
-{{- define "definitions.container.imageRef" -}}
-  {{- $registry := include "base.string.normalize" (include "base.get" (list . "registry")) | trim | trimPrefix "/" | trimSuffix "/" }}
-  {{- $namespace := include "base.string.normalize" (include "base.get" (list . "namespace")) | trim | trimPrefix "/" | trimSuffix "/" }}
-  {{- $repository := include "base.string.normalize" (include "base.get" (list . "repository")) | trim }}
-
-  {{- /* repository（string, 必填）: 归一后为空时中断，其余字段均可省略。 */ -}}
-  {{- if not $repository }}
-    {{- fail "[definitions.container] imageRefs.repository: required field is missing or empty" }}
-  {{- end }}
-
-  {{- $tag := include "base.string.normalize" (include "base.get" (list . "tag")) | trim }}
-  {{- $digest := include "base.string.normalize" (include "base.get" (list . "digest")) | trim }}
-
-  {{- /* tag 与 digest 均空时不产生尾缀；仅有 digest 时补 latest 标签。 */ -}}
-  {{- if and $digest (not $tag) }}
-    {{- $tag = "latest" }}
-  {{- end }}
-
-  {{- /* digest 不以 sha256 开头时补全前缀。 */ -}}
-  {{- if and $digest (not (hasPrefix "sha256" $digest)) }}
-    {{- $digest = printf "sha256:%s" $digest }}
-  {{- end }}
-
-  {{- $image := join "/" (list $registry $namespace $repository | compact) }}
-  {{- if $tag }}
-    {{- $image = printf "%s:%s" $image $tag }}
-  {{- end }}
-  {{- if $digest }}
-    {{- $image = printf "%s@%s" $image $digest }}
-  {{- end }}
-  {{- $image }}
 {{- end }}
